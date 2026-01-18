@@ -309,6 +309,16 @@ class SetupWizardView(ui.View):
             await interaction.followup.edit_message(message_id=interaction.message.id, embed=final_embed, view=self)
             self.stop()
             
+            self.bot.logger.audit(
+            "SETUP_APPLY", 
+            f"Setup applied for Guild: {interaction.guild.name}", # Tambah nama guild
+            guild_id=interaction.guild_id,
+            guild_name=interaction.guild.name, # Masuk ke JSONL
+            actor_id=interaction.user.id,
+            actor_name=interaction.user.name,  # Masuk ke JSONL (biar tau siapa pelakunya)
+            mode=self.draft.announcement_mode
+        )   
+            
         except Exception as e:
             # [UPGRADE UX] Error Handling
             print(f"Wizard Error: {e}")

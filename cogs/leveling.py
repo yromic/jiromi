@@ -69,6 +69,9 @@ class Leveling(commands.Cog):
         if result['new_level'] > result['old_level']:
             await self.handle_level_up(member, result['new_level'])
 
+        self.bot.stats_buffer['voice_xp_events'] += 1
+        self.bot.stats_buffer['voice_minutes'] += minutes
+        
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not message.guild:
@@ -106,6 +109,8 @@ class Leveling(commands.Cog):
 
         if result['new_level'] > result['old_level']:
             await self.handle_level_up(message.author, result['new_level'])
+            
+        self.bot.stats_buffer['chat_xp_events'] += 1
 
     # Di dalam cogs/leveling.py -> handle_level_up()
 
@@ -129,6 +134,36 @@ class Leveling(commands.Cog):
         if mode == "loud":
             # Umumkan setiap naik level, baik ada role maupun tidak
             await self.handle_announcement(member, new_level, reward_role)
+            
+        rewards = await self.db.get_level_rewards(member.guild.id)
+        
+        for reward in rewards:
+            if reward['level_required'] == new_level:
+                role_id = reward['role_id']
+                role = member.guild.get_role(role_id)
+                
+                if role:
+                    try:
+                        await member.add_roles(role, reason=f"Level Up to {new_level}")
+                        # Log Sukses (Opsional, Info aja)
+                        self.bot.logger.info("ROLE_GIVE", f"Gave role {role.name} to {member.name}", guild_id=member.guild.id)
+                        
+                    except discord.Forbidden:
+                        # [FIX 5] Ganti print dengan Logger Error
+                        self.bot.logger.error(
+                            "ROLE_FORBIDDEN", 
+                            f"Missing perms to give role {role.name}",
+                            guild_id=member.guild.id,
+                            user_id=member.id,
+                            role_id=role.id
+                        )
+                    except Exception as e:
+                        self.bot.logger.error(
+                            "ROLE_FAIL", 
+                            "Unknown error giving role",
+                            e,
+                            guild_id=member.guild.id
+                        )
 
     async def check_role_rewards(self, member, level):
         rewards = await self.db.fetch_all(

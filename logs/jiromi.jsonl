@@ -1,0 +1,60 @@
+{"ts": "2026-01-18T20:10:31.206297", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized."}
+{"ts": "2026-01-18T20:10:31.206297", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-18T20:10:31.206297", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-18T20:10:31.234893", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-18T20:10:31.252736", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-18T20:10:31.260660", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-18T20:10:31.263982", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-18T20:10:31.270011", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-18T20:10:31.273138", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-18T20:10:31.308827", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-18T20:10:31.311136", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-18T20:10:31.928681", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-18T20:10:34.892807", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-18T20:10:34.893887", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 4 guilds."}
+{"ts": "2026-01-18T20:10:34.893887", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "266ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-18T20:22:41.775099", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized."}
+{"ts": "2026-01-18T20:22:41.776129", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-18T20:22:41.782301", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-18T20:22:41.814718", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-18T20:22:41.818725", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-18T20:22:41.822225", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-18T20:22:41.826193", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-18T20:22:41.827558", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-18T20:22:41.829595", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-18T20:22:41.848014", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-18T20:22:41.849329", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-18T20:22:42.377839", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-18T20:22:45.196807", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-18T20:22:45.198740", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 4 guilds."}
+{"ts": "2026-01-18T20:22:45.198740", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "261ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-18T20:27:29.618908", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized."}
+{"ts": "2026-01-18T20:27:29.625473", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-18T20:27:29.630346", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-18T20:27:29.634160", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-18T20:27:29.635627", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-18T20:27:29.644197", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-18T20:27:29.646381", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-18T20:27:29.649378", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-18T20:27:29.656047", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-18T20:27:29.658951", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-18T20:27:29.661951", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-18T20:27:30.241334", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-18T20:27:33.117709", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-18T20:27:33.118901", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 4 guilds."}
+{"ts": "2026-01-18T20:27:33.119688", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-18T20:30:26.502763", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized."}
+{"ts": "2026-01-18T20:30:26.509868", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-18T20:30:26.510890", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-18T20:30:26.514466", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-18T20:30:26.515829", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-18T20:30:26.522009", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-18T20:30:26.524514", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-18T20:30:26.526513", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-18T20:30:26.528547", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-18T20:30:26.528547", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-18T20:30:26.530808", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-18T20:30:27.076532", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-18T20:30:29.803812", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-18T20:30:29.805030", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 4 guilds."}
+{"ts": "2026-01-18T20:30:29.807040", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
