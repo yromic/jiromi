@@ -1,3 +1,4 @@
+#cogs/setup_wizard
 import discord
 from discord import app_commands, ui
 from discord.ext import commands

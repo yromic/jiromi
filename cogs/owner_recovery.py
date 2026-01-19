@@ -8,23 +8,44 @@ import asyncio
 # --- KONFIGURASI SAFETY ---
 MAX_XP_ACTION = 100000  # Batas maksimal XP sekali perintah (Anti Typo)
 
-class ConfirmView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=30)
+# Import dulu
+from utils.views import ExecutorView 
+
+# Ganti class ConfirmView sepenuhnya:
+# Di file: cogs/owner_recovery.py
+
+class ConfirmView(ExecutorView):
+    def __init__(self, author_id):
+        super().__init__(author_id=author_id, timeout=30)
         self.value = None
+        self._finished = False # [FIX 5] Anti Double Click
 
     @discord.ui.button(label="YA, EKSEKUSI", style=discord.ButtonStyle.danger)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self._finished: return
+        self._finished = True
+
+        for child in self.children: child.disabled = True
+        
+        # Kita tandai view selesai, tapi biarkan command di bawah memproses logic-nya
+        # Kita cuma perlu matikan tombol dan kasih loading state
+        await interaction.response.edit_message(view=self) 
         self.value = True
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
         self.stop()
 
     @discord.ui.button(label="BATAL", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self._finished: return
+        self._finished = True
+
+        for child in self.children: child.disabled = True
+        
+        await interaction.response.edit_message(
+            content="❌ **Dibatalkan.**", 
+            embed=None, 
+            view=None
+        )
         self.value = False
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
         self.stop()
 
 class OwnerRecovery(commands.GroupCog, name="recovery"):
@@ -76,13 +97,14 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
         if amount > MAX_XP_ACTION:
             return await interaction.response.send_message(f"⛔ **Safety Limit:** Maksimal {MAX_XP_ACTION:,} XP per aksi.", ephemeral=True)
 
-        view = ConfirmView()
+        view = ConfirmView(author_id=interaction.user.id)
         embed = discord.Embed(
             title="⚠️ Konfirmasi XP Grant",
             description=f"Target: {member.mention}\nAksi: **{mode.name} {amount:,} XP**",
             color=discord.Color.orange()
         )
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        view.message = await interaction.original_response()
         await view.wait()
 
         if not view.value:
@@ -122,7 +144,7 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
         if count == 0:
             return await interaction.response.send_message("❌ Role ini tidak memiliki member manusia.", ephemeral=True)
 
-        view = ConfirmView()
+        view = ConfirmView(author_id=interaction.user.id)
         embed = discord.Embed(
             title="🚨 MASS XP RECOVERY",
             description=(
@@ -133,6 +155,7 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
             color=discord.Color.red()
         )
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        view.message = await interaction.original_response()
         await view.wait()
 
         if not view.value:

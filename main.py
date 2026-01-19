@@ -4,7 +4,7 @@ from discord.ext import commands
 import os
 import asyncio
 from dotenv import load_dotenv  
-from utils.db_handler import init_db, DatabaseHandler
+from utils.db_handler import init_db, close_db
 from utils.logger import JiromiLogger
 
 load_dotenv()  
@@ -22,7 +22,6 @@ class PresenceBot(commands.Bot):
             help_command=None
         )
 
-        self.db = DatabaseHandler()
         self.logger = JiromiLogger()
 
         self.stats_buffer = {
@@ -33,8 +32,8 @@ class PresenceBot(commands.Bot):
         }
 
     async def setup_hook(self):
-        await init_db()
-        self.logger.info("SYSTEM", "Database initialized.")
+        self.db = await init_db()
+        self.logger.info("SYSTEM", "Database initialized (Shared Connection).")
 
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py") and filename != "__init__.py":
@@ -46,6 +45,10 @@ class PresenceBot(commands.Bot):
 
         await self.tree.sync()
         self.logger.info("SYSTEM", "Slash commands synced.")
+
+    async def close(self):
+        await close_db()
+        await super().close()
 
     async def on_ready(self):
         self.logger.info("BOT_READY", f"Logged in as: {self.user.name} ({self.user.id})")

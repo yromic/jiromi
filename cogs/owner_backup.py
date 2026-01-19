@@ -30,20 +30,17 @@ class OwnerBackup(commands.GroupCog, name="owner"):
 
     # --- LOGIC INTI BACKUP ---
     async def perform_backup_logic(self):
-        """Logic inti: Copy DB -> Zip -> Return File Object & Metadata"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        db_source = "database/schema.db"
         backup_folder = "backups"
-        
-        if not os.path.exists(backup_folder):
-            os.makedirs(backup_folder)
+        if not os.path.exists(backup_folder): os.makedirs(backup_folder)
 
         temp_db_name = f"{backup_folder}/schema_backup_{timestamp}.db"
         zip_name = f"{backup_folder}/backup_{timestamp}.zip"
 
         try:
-            # Copy file DB (Snapshot)
-            shutil.copy2(db_source, temp_db_name)
+            # [FIX] Gunakan SQLite Online Backup via SQL
+            # Ini aman dilakukan walau DB sedang jalan (WAL Mode support)
+            await self.db.execute(f"VACUUM INTO '{temp_db_name}'")
 
             # Kompresi ZIP
             with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:

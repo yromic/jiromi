@@ -2,150 +2,190 @@
 import aiosqlite
 import os
 import time
+import asyncio
 from datetime import datetime, timezone, timedelta
 
+# Variabel Global untuk menyimpan instance DB
+_db_instance = None
+_db_init_lock = asyncio.Lock()
+
 async def init_db():
-    """Menginisialisasi folder database dan membuat tabel jika belum ada."""
-    if not os.path.exists('database'):
-        os.makedirs('database')
+    """Wrapper untuk inisialisasi database global (Thread-safe)."""
+    global _db_instance
+    # Pastikan hanya 1 proses yang bisa init dalam satu waktu
+    async with _db_init_lock:
+        if _db_instance is None:
+            _db_instance = DatabaseHandler()
+            await _db_instance.connect()
+    return _db_instance
 
-    async with aiosqlite.connect("database/schema.db") as db:
-        # Tabel User: Menyimpan progres individu
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER, 
-                guild_id INTEGER, 
-                xp INTEGER DEFAULT 0, 
-                level INTEGER DEFAULT 0, 
-                total_voice_mins INTEGER DEFAULT 0,
-                last_chat_ts REAL DEFAULT 0, 
-                PRIMARY KEY (user_id, guild_id)
-            )
-        """)
-
-        # Tabel Config: Pengaturan per server
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS guild_config (
-                guild_id INTEGER PRIMARY KEY, 
-                announce_channel_id INTEGER,
-                chat_xp_val INTEGER DEFAULT 5, 
-                voice_xp_val INTEGER DEFAULT 10, 
-                min_members_voice INTEGER DEFAULT 2,
-                announcement_mode TEXT DEFAULT 'balanced'
-            )
-        """)
-
-        # Tabel Filters: Whitelist/Blacklist Role & Channel
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS filters (
-                guild_id INTEGER, 
-                target_id INTEGER, 
-                type TEXT, 
-                category TEXT,
-                PRIMARY KEY (guild_id, target_id, category)
-            )
-        """)
-
-        # Tabel Rewards: Level Reward Role
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS rewards (
-                guild_id INTEGER, 
-                level_required INTEGER, 
-                role_id INTEGER,
-                PRIMARY KEY (guild_id, level_required)
-            )
-        """)
-
-        # Tabel Grace Period: Untuk user yang keluar server
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS left_members (
-                user_id INTEGER, 
-                guild_id INTEGER, 
-                xp INTEGER, 
-                level INTEGER, 
-                total_voice_mins INTEGER,
-                left_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (user_id, guild_id)
-            )
-        """)
-
-        # [ADD THIS] Tabel Event Config (Welcome, Leave, Ban, Boost)
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS event_configs (
-                guild_id INTEGER,
-                event_type TEXT,
-                channel_id INTEGER,
-                is_enabled INTEGER DEFAULT 0,
-                message_text TEXT,
-                use_embed INTEGER DEFAULT 0,
-                embed_title TEXT,
-                embed_description TEXT,
-                embed_color INTEGER DEFAULT 0,
-                image_url TEXT,
-                PRIMARY KEY (guild_id, event_type)
-            )
-        """)
-        
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS bot_settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            )
-        """)
-        
-        # [NEW] Tabel Statistik Mingguan (History tersimpan, reset otomatis by Key)
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS weekly_stats (
-                guild_id INTEGER,
-                user_id INTEGER,
-                week_key TEXT,                 
-                weekly_xp INTEGER DEFAULT 0,
-                weekly_voice_mins INTEGER DEFAULT 0,
-                updated_at REAL DEFAULT 0,
-                PRIMARY KEY (guild_id, user_id, week_key)
-            )
-        """)
-        
-        try:
-            await db.execute("ALTER TABLE weekly_stats ADD COLUMN weekly_chat_xp INTEGER DEFAULT 0")
-        except Exception:
-            pass
-
-        # [NEW] Konfigurasi Recap Mingguan per Guild
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS weekly_config (
-                guild_id INTEGER PRIMARY KEY,
-                recap_channel_id INTEGER,
-                is_enabled INTEGER DEFAULT 0,
-                last_posted_week_key TEXT
-            )
-        """)
-        
-        await db.commit()
+async def close_db():
+    """Wrapper untuk menutup database global."""
+    global _db_instance
+    if _db_instance:
+        await _db_instance.close()
+        _db_instance = None
 
 class DatabaseHandler:
     def __init__(self, db_path="database/schema.db"):
         self.db_path = db_path
+        self._conn = None  # Single Connection
+        self._write_lock = asyncio.Lock()  # Serialize Writes
         self._config_cache = {} 
         self._filter_cache = {}
-        self.TTL = 60  # Cache valid selama 60 detik
+        self.TTL = 60
+
+    async def connect(self):
+        """Membuka koneksi database persisten."""
+        if not os.path.exists('database'):
+            os.makedirs('database')
+
+        # Connect sekali saja
+        self._conn = await aiosqlite.connect(self.db_path)
+        self._conn.row_factory = aiosqlite.Row # Agar hasil query bisa diakses via nama kolom
+
+        # PRAGMA Optimization (Saran Senior)
+        await self._conn.execute("PRAGMA journal_mode=WAL;") # Concurrency
+        await self._conn.execute("PRAGMA busy_timeout=3000;") # Retry tolerance 3s
+        await self._conn.execute("PRAGMA synchronous=NORMAL;") # Performance
+        await self._conn.commit()
+
+        # Init Schema
+        await self._init_tables()
+        print("✅ Database Connected (WAL Mode + Shared Connection)")
+
+    async def close(self):
+        """Menutup koneksi."""
+        if self._conn:
+            await self._conn.close()
+            print("✅ Database Closed")
+
+    async def _init_tables(self):
+        """Membuat tabel & index jika belum ada."""
+        # --- TABEL (Schema Lama Tetap Aman) ---
+        queries = [
+            # Users
+            """CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER, guild_id INTEGER, xp INTEGER DEFAULT 0, 
+                level INTEGER DEFAULT 0, total_voice_mins INTEGER DEFAULT 0,
+                last_chat_ts REAL DEFAULT 0, PRIMARY KEY (user_id, guild_id)
+            )""",
+            # Config
+            """CREATE TABLE IF NOT EXISTS guild_config (
+                guild_id INTEGER PRIMARY KEY, announce_channel_id INTEGER,
+                chat_xp_val INTEGER DEFAULT 5, voice_xp_val INTEGER DEFAULT 10, 
+                min_members_voice INTEGER DEFAULT 2, announcement_mode TEXT DEFAULT 'balanced'
+            )""",
+            # Filters
+            """CREATE TABLE IF NOT EXISTS filters (
+                guild_id INTEGER, target_id INTEGER, type TEXT, category TEXT,
+                PRIMARY KEY (guild_id, target_id, category)
+            )""",
+            # Rewards
+            """CREATE TABLE IF NOT EXISTS rewards (
+                guild_id INTEGER, level_required INTEGER, role_id INTEGER,
+                PRIMARY KEY (guild_id, level_required)
+            )""",
+            # Left Members
+            """CREATE TABLE IF NOT EXISTS left_members (
+                user_id INTEGER, guild_id INTEGER, xp INTEGER, level INTEGER, 
+                total_voice_mins INTEGER, left_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, guild_id)
+            )""",
+            # Event Config
+            """CREATE TABLE IF NOT EXISTS event_configs (
+                guild_id INTEGER, event_type TEXT, channel_id INTEGER,
+                is_enabled INTEGER DEFAULT 0, message_text TEXT, use_embed INTEGER DEFAULT 0,
+                embed_title TEXT, embed_description TEXT, embed_color INTEGER DEFAULT 0,
+                image_url TEXT, PRIMARY KEY (guild_id, event_type)
+            )""",
+            # Bot Settings
+            """CREATE TABLE IF NOT EXISTS bot_settings (key TEXT PRIMARY KEY, value TEXT)""",
+            # Weekly Stats
+            """CREATE TABLE IF NOT EXISTS weekly_stats (
+                guild_id INTEGER, user_id INTEGER, week_key TEXT,                 
+                weekly_xp INTEGER DEFAULT 0, weekly_voice_mins INTEGER DEFAULT 0,
+                weekly_chat_xp INTEGER DEFAULT 0, updated_at REAL DEFAULT 0,
+                PRIMARY KEY (guild_id, user_id, week_key)
+            )""",
+            # Weekly Config
+            """CREATE TABLE IF NOT EXISTS weekly_config (
+                guild_id INTEGER PRIMARY KEY, recap_channel_id INTEGER,
+                is_enabled INTEGER DEFAULT 0, last_posted_week_key TEXT
+            )"""
+        ]
+        
+        # --- INDEXING (Saran Senior Step E) ---
+        indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_users_xp ON users(guild_id, xp DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_weekly_stats_rank ON weekly_stats(guild_id, week_key, weekly_voice_mins DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_filters_lookup ON filters(guild_id, type)"
+        ]
+
+        async with self._write_lock:
+            # 1. Buat Tabel
+            for q in queries:
+                await self._conn.execute(q)
+            
+            # 2. [FIX 4] Migrasi Cerdas: Cek dulu apakah kolom sudah ada
+            # Cek kolom weekly_chat_xp di tabel weekly_stats
+            async with self._conn.execute("PRAGMA table_info(weekly_stats)") as cursor:
+                columns = await cursor.fetchall()
+                # columns[1] biasanya adalah nama kolom
+                col_names = [col[1] for col in columns]
+                
+                if 'weekly_chat_xp' not in col_names:
+                    print("⚠️ Migrating DB: Adding weekly_chat_xp column...")
+                    await self._conn.execute("ALTER TABLE weekly_stats ADD COLUMN weekly_chat_xp INTEGER DEFAULT 0")
+
+            # 3. Buat Index
+            for idx in indexes:
+                await self._conn.execute(idx)
+            
+            await self._conn.commit()
+
+    # --- CORE QUERY METHODS (Revised) ---
 
     async def execute(self, query, vars=()):
-        async with aiosqlite.connect(self.db_path) as db:
-            await db.execute(query, vars)
-            await db.commit()
+        """Execute WRITE query dengan Lock."""
+        if not self._conn: 
+            await self.connect() # Auto-connect safeguard
+        
+        try:
+            async with self._write_lock:
+                await self._conn.execute(query, vars)
+                await self._conn.commit()
+        except Exception as e:
+            print(f"❌ DB WRITE ERROR: {e} | Query: {query}")
+            raise e # Re-raise agar caller tau errornya
 
     async def fetch_one(self, query, vars=()):
-        async with aiosqlite.connect(self.db_path) as db:
-            db.row_factory = aiosqlite.Row 
-            async with db.execute(query, vars) as cursor:
-                return await cursor.fetchone()
+        """Execute READ query."""
+        if not self._conn: 
+            await self.connect()
+
+        try:
+            # [FIX] Tambahkan Lock di sini agar tidak tabrakan dengan VACUUM
+            async with self._write_lock:
+                async with self._conn.execute(query, vars) as cursor:
+                    return await cursor.fetchone()
+        except Exception as e:
+            print(f"❌ DB READ ERROR: {e}")
+            return None
 
     async def fetch_all(self, query, vars=()):
-        async with aiosqlite.connect(self.db_path) as db:
-            db.row_factory = aiosqlite.Row
-            async with db.execute(query, vars) as cursor:
-                return await cursor.fetchall()
+        """Execute READ ALL query."""
+        if not self._conn: 
+            await self.connect()
+
+        try:
+            # [FIX] Tambahkan Lock di sini juga
+            async with self._write_lock:
+                async with self._conn.execute(query, vars) as cursor:
+                    return await cursor.fetchall()
+        except Exception as e:
+            print(f"❌ DB READ ALL ERROR: {e}")
+            return []
 
     # --- USER DATA & XP LOGIC ---
 
@@ -155,11 +195,16 @@ class DatabaseHandler:
             (user_id, guild_id)
         )
         if not user:
+            # Jika user baru, buat row baru
             await self.execute("INSERT INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
+            # Return dict default
             return {"xp": 0, "level": 0, "total_voice_mins": 0, "last_chat_ts": 0}
-        return user
+        
+        # [FIX 3] Konversi aiosqlite.Row menjadi standard Dict agar konsisten
+        return dict(user)
 
     async def add_voice_time(self, user_id, guild_id, minutes, xp_per_min):
+        # Transaction implicit via write lock di execute
         user = await self.get_user_data(user_id, guild_id)
         new_xp = user['xp'] + (minutes * xp_per_min)
         new_mins = user['total_voice_mins'] + minutes
@@ -179,7 +224,6 @@ class DatabaseHandler:
         from utils.math_utils import calculate_level
         new_level = calculate_level(new_xp)
         
-        import time
         await self.execute(
             "UPDATE users SET xp = ?, level = ?, last_chat_ts = ? WHERE user_id = ? AND guild_id = ?",
             (new_xp, new_level, time.time(), user_id, guild_id)
@@ -226,8 +270,10 @@ class DatabaseHandler:
         channel_whitelist = [f['target_id'] for f in filters if f['type'] == 'channel' and f['category'] == 'allow']
         channel_blacklist = [f['target_id'] for f in filters if f['type'] == 'channel' and f['category'] == 'exclude']
 
-        if channel_id in channel_blacklist: return False
-        if channel_whitelist and channel_id not in channel_whitelist: return False
+        if channel_id in channel_blacklist: 
+            return False
+        if channel_whitelist and channel_id not in channel_whitelist: 
+            return False
         return True
 
     async def add_filter(self, guild_id, target_id, f_type, category):
@@ -240,7 +286,7 @@ class DatabaseHandler:
         
     async def remove_filter(self, guild_id, target_id):
         """
-        Menghapus filter berdasark  an ID target (Role/Channel).
+        Menghapus filter berdasarkan ID target (Role/Channel).
         Ini akan menghapus target tersebut dari whitelist MAUPUN blacklist sekaligus.
         """
         # Kita tidak pakai f_type/category di WHERE agar pembersihan tuntas
@@ -282,6 +328,7 @@ class DatabaseHandler:
             "INSERT OR REPLACE INTO rewards (guild_id, level_required, role_id) VALUES (?, ?, ?)",
             (guild_id, level, role_id)
         )
+        
     async def update_announcement_mode(self, guild_id, mode):
         """Memperbarui mode notifikasi: quiet, balanced, atau loud."""
         await self.execute(
@@ -290,7 +337,6 @@ class DatabaseHandler:
         )
         
         self._invalidate_config_cache(guild_id)
-        
     
     # --- SOCIAL SAFETY LOGIC ---
 
@@ -299,14 +345,17 @@ class DatabaseHandler:
         guild_id = member.guild.id
         filters = await self.get_filters(guild_id)
         
-        if not await self.is_channel_allowed(guild_id, channel.id): return False
+        if not await self.is_channel_allowed(guild_id, channel.id): 
+            return False
 
         role_blacklist = [f['target_id'] for f in filters if f['type'] == 'role' and f['category'] == 'exclude']
         role_whitelist = [f['target_id'] for f in filters if f['type'] == 'role' and f['category'] == 'allow']
 
         member_role_ids = [role.id for role in member.roles]
-        if any(r_id in role_blacklist for r_id in member_role_ids): return False
-        if role_whitelist and not any(r_id in role_whitelist for r_id in member_role_ids): return False
+        if any(r_id in role_blacklist for r_id in member_role_ids): 
+            return False
+        if role_whitelist and not any(r_id in role_whitelist for r_id in member_role_ids): 
+            return False
         
         return True
     
@@ -319,7 +368,16 @@ class DatabaseHandler:
         )
 
     async def set_event_config(self, guild_id, event_type, col_name, value):
-        """Update satu kolom konfigurasi event. Jika belum ada row, buat baru."""
+        """Update satu kolom konfigurasi event."""
+        
+        # [FIX 2] Security Whitelist: Cegah SQL Injection
+        ALLOWED_COLS = {
+            "channel_id", "is_enabled", "message_text", "use_embed",
+            "embed_title", "embed_description", "embed_color", "image_url"
+        }
+        if col_name not in ALLOWED_COLS:
+            raise ValueError(f"❌ Security Alert: Kolom '{col_name}' tidak valid/diizinkan.")
+
         # 1. Pastikan row ada
         exists = await self.fetch_one(
             "SELECT 1 FROM event_configs WHERE guild_id = ? AND event_type = ?",
@@ -331,33 +389,35 @@ class DatabaseHandler:
                 (guild_id, event_type)
             )
         
-        # 2. Update kolom target
+        # 2. Update kolom target (Aman karena col_name sudah divalidasi)
         query = f"UPDATE event_configs SET {col_name} = ? WHERE guild_id = ? AND event_type = ?"
         await self.execute(query, (value, guild_id, event_type))
-
-    # Tambahkan di utils/db_handler.py dalam class DatabaseHandler
+    
+    # --- RESET XP LOGIC ---
     async def reset_guild_xp(self, guild_id):
         """Mereset XP & Level semua member di guild tertentu. Mengembalikan jumlah user yang terdampak."""
-        async with aiosqlite.connect(self.db_path) as db:
-            # Query UPDATE massal - Sangat efisien
-            cursor = await db.execute(
+        if not self._conn: 
+            await self.connect()
+        async with self._write_lock:
+            cursor = await self._conn.execute(
                 "UPDATE users SET xp = 0, level = 0 WHERE guild_id = ?", 
                 (guild_id,)
             )
             affected_rows = cursor.rowcount
-            await db.commit()
+            await self._conn.commit()
             return affected_rows
     
-    # Tambahkan di dalam class DatabaseHandler (utils/db_handler.py)
     async def reset_user_xp(self, guild_id, user_id):
         """Mereset XP satu member spesifik. Return 1 jika berhasil, 0 jika data tidak ditemukan."""
-        async with aiosqlite.connect(self.db_path) as db:
-            cursor = await db.execute(
+        if not self._conn: 
+            await self.connect()
+        async with self._write_lock:
+            cursor = await self._conn.execute(
                 "UPDATE users SET xp = 0, level = 0 WHERE guild_id = ? AND user_id = ?",
                 (guild_id, user_id)
             )
             affected = cursor.rowcount
-            await db.commit()
+            await self._conn.commit()
             return affected
         
     # --- BOT GLOBAL SETTINGS ---
@@ -371,17 +431,10 @@ class DatabaseHandler:
         row = await self.fetch_one("SELECT value FROM bot_settings WHERE key = ?", (key,))
         return row['value'] if row else None
     
-    # Tambahkan di utils/db_handler.py
-    
     async def get_total_users(self):
         """Menghitung total user yang tercatat di database."""
         row = await self.fetch_one("SELECT COUNT(*) as count FROM users")
         return row['count'] if row else 0
-
-    # Pastikan method get_bot_setting dan set_bot_setting (dari diskusi sebelumnya) 
-    # sudah ada di sini ya.
-
-    # Tambahkan di utils/db_handler.py
 
     async def update_user_xp_direct(self, user_id, guild_id, xp_value, mode="add"):
         """
@@ -396,7 +449,8 @@ class DatabaseHandler:
         else: # mode "set"
             new_xp = xp_value
         
-        if new_xp < 0: new_xp = 0
+        if new_xp < 0: 
+            new_xp = 0
 
         from utils.math_utils import calculate_level
         new_level = calculate_level(new_xp)
@@ -414,14 +468,13 @@ class DatabaseHandler:
             "UPDATE guild_config SET min_members_voice = ? WHERE guild_id = ?",
             (value, guild_id)
         )
-        # Jangan lupa Invalidation (Saran Senior sebelumnya)
         self._invalidate_config_cache(guild_id)
         
     async def update_weekly_stats(self, guild_id, user_id, xp_add=0, voice_mins_add=0, chat_xp_add=0):
         week_key = self.get_current_week_key()
         now_ts = time.time()
         
-        # [BARU] SQL Upsert dengan kolom weekly_chat_xp
+        # SQL Upsert dengan kolom weekly_chat_xp
         await self.execute("""
             INSERT INTO weekly_stats (guild_id, user_id, week_key, weekly_xp, weekly_voice_mins, weekly_chat_xp, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -437,7 +490,8 @@ class DatabaseHandler:
         week_key = self.get_current_week_key()
         # Validasi metric agar tidak SQL Injection
         valid_metrics = ["weekly_voice_mins", "weekly_xp"]
-        if metric not in valid_metrics: metric = "weekly_voice_mins"
+        if metric not in valid_metrics: 
+            metric = "weekly_voice_mins"
         
         return await self.fetch_all(f"""
             SELECT user_id, weekly_xp, weekly_voice_mins 
@@ -447,7 +501,15 @@ class DatabaseHandler:
             LIMIT ?
         """, (guild_id, week_key, limit))
     
-    # --- [2. HELPER INVALIDATION (PEMBERSIH CACHE)] ---
+    async def get_level_rewards(self, guild_id):
+        """Mengambil daftar reward role untuk guild tertentu."""
+        # Kita urutkan dari level terkecil ke terbesar
+        return await self.fetch_all(
+            "SELECT level_required, role_id FROM rewards WHERE guild_id = ? ORDER BY level_required ASC",
+            (guild_id,)
+        )
+    
+    # --- HELPER INVALIDATION (PEMBERSIH CACHE) ---
     def _invalidate_config_cache(self, guild_id):
         """Membuang cache config lama agar bot mengambil data baru."""
         self._config_cache.pop(guild_id, None) 
@@ -457,18 +519,7 @@ class DatabaseHandler:
         if guild_id in self._filter_cache:
             self._filter_cache.pop(guild_id, None)
             
-    # Tambahkan di import paling atas file:
-    # from datetime import datetime, timezone
-    
-    def get_current_week_key(self):
-        """Mengembalikan format YYYY-Wxx (ISO Week). Contoh: 2026-W03"""
-        now = datetime.now(timezone.utc)
-        # isocalendar() return (year, week, weekday)
-        iso = now.isocalendar()
-        return f"{iso[0]}-W{iso[1]:02d}"
-    
-    # Taruh di dekat get_current_week_key
-
+    # --- WEEK KEY HELPER ---
     def get_week_key_for_date(self, dt: datetime) -> str:
         """Helper stabil untuk ubah tanggal apapun jadi 'YYYY-Wxx'."""
         iso = dt.isocalendar()
@@ -477,3 +528,64 @@ class DatabaseHandler:
     def get_current_week_key(self):
         """Mengambil key minggu SAAT INI (UTC)."""
         return self.get_week_key_for_date(datetime.now(timezone.utc))
+    
+    # --- WEEKLY CONFIG METHODS ---
+    async def get_weekly_config(self, guild_id):
+        """Mengambil konfigurasi weekly recap untuk guild tertentu."""
+        return await self.fetch_one(
+            "SELECT * FROM weekly_config WHERE guild_id = ?",
+            (guild_id,)
+        )
+    
+    async def set_weekly_config(self, guild_id, recap_channel_id=None, is_enabled=None, last_posted_week_key=None):
+        """Mengupdate atau membuat konfigurasi weekly recap."""
+        # Cek apakah sudah ada konfigurasi
+        existing = await self.get_weekly_config(guild_id)
+        
+        if existing:
+            # Update existing
+            updates = []
+            params = []
+            
+            if recap_channel_id is not None:
+                updates.append("recap_channel_id = ?")
+                params.append(recap_channel_id)
+            if is_enabled is not None:
+                updates.append("is_enabled = ?")
+                params.append(is_enabled)
+            if last_posted_week_key is not None:
+                updates.append("last_posted_week_key = ?")
+                params.append(last_posted_week_key)
+            
+            if updates:
+                params.append(guild_id)
+                query = f"UPDATE weekly_config SET {', '.join(updates)} WHERE guild_id = ?"
+                await self.execute(query, tuple(params))
+        else:
+            # Insert new
+            await self.execute(
+                "INSERT INTO weekly_config (guild_id, recap_channel_id, is_enabled, last_posted_week_key) VALUES (?, ?, ?, ?)",
+                (guild_id, recap_channel_id or 0, is_enabled or 0, last_posted_week_key or "")
+            )
+    
+    # --- LEFT MEMBERS METHODS ---
+    async def save_left_member(self, user_id, guild_id, xp, level, total_voice_mins):
+        """Menyimpan data member yang keluar dari server."""
+        await self.execute(
+            "INSERT OR REPLACE INTO left_members (user_id, guild_id, xp, level, total_voice_mins) VALUES (?, ?, ?, ?, ?)",
+            (user_id, guild_id, xp, level, total_voice_mins)
+        )
+    
+    async def get_left_member(self, user_id, guild_id):
+        """Mengambil data member yang pernah keluar dari server."""
+        return await self.fetch_one(
+            "SELECT * FROM left_members WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+        )
+    
+    async def delete_left_member(self, user_id, guild_id):
+        """Menghapus data member yang sudah kembali ke server."""
+        await self.execute(
+            "DELETE FROM left_members WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+        )

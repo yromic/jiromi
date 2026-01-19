@@ -4,32 +4,55 @@ from discord import app_commands
 from discord.ext import commands
 
 # UI Konfirmasi Reset
-class ResetConfirmView(discord.ui.View):
-    def __init__(self, db, guild_id):
-        super().__init__(timeout=30) # Timeout 30 detik agar tidak dipencet tidak sengaja nanti
+# Di bagian import paling atas cogs/admin_config.py
+from utils.views import ExecutorView # <--- Import class baru tadi
+
+# Di file: cogs/admin_config.py
+
+class ResetConfirmView(ExecutorView):
+    def __init__(self, db, guild_id, author_id):
+        super().__init__(author_id=author_id, timeout=30)
         self.db = db
         self.guild_id = guild_id
         self.value = None
+        # [FIX 5] Flag internal untuk mencegah Double Click (Race Condition)
+        self._finished = False 
 
     @discord.ui.button(label="YA, HAPUS SEMUA XP", style=discord.ButtonStyle.danger)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Disable button setelah diklik agar tidak bisa double click
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
+        # [FIX 5] Cek flag dulu
+        if self._finished: return
+        self._finished = True
+
+        # Disable UI visual segera
+        for child in self.children: child.disabled = True
         
-        # Eksekusi Reset
+        # Proses Reset
         count = await self.db.reset_guild_xp(self.guild_id)
         
-        await interaction.followup.send(
-            f"✅ **RESET BERHASIL.** XP dan Level dari {count} member telah dikembalikan ke 0.",
-            ephemeral=True
+        # [FIX 6] UX Rapi: Edit pesan asli, jangan spam followup
+        embed = discord.Embed(
+            description=f"✅ **RESET BERHASIL.**\nXP dan Level dari {count} member telah dikembalikan ke 0.",
+            color=discord.Color.green()
         )
+        await interaction.response.edit_message(content=None, embed=embed, view=None)
+        
         self.value = True
         self.stop()
 
     @discord.ui.button(label="BATAL", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="❌ **Operasi Dibatalkan.** Data aman.", view=None, embed=None)
+        if self._finished: return
+        self._finished = True
+
+        for child in self.children: child.disabled = True
+            
+        # UX Rapi: Update status jadi dibatalkan
+        await interaction.response.edit_message(
+            content="❌ **Operasi Dibatalkan.** Data aman.", 
+            embed=None, 
+            view=None
+        )
         self.value = False
         self.stop()
 
@@ -327,10 +350,11 @@ class AdminConfig(commands.GroupCog, name="xp"):
         )
         
         # 2. Attach View Konfirmasi
-        view = ResetConfirmView(self.db, interaction.guild_id)
+        view = ResetConfirmView(self.db, interaction.guild_id, interaction.user.id)
         
         # 3. Kirim sebagai Ephemeral (Hanya admin yang lihat)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        view.message = await interaction.original_response()
 
     # --- COMMAND RESET PER USER ---
     # Letakkan di dalam class AdminConfig
