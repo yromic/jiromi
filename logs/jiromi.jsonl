@@ -341,3 +341,44 @@
 {"ts": "2026-01-19T23:16:21.016215", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 4 guilds."}
 {"ts": "2026-01-19T23:16:21.017154", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "249ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
 {"ts": "2026-01-19T23:26:21.020820", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "262ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-19T23:36:21.031311", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "270ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-19T23:46:21.031263", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "263ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-19T23:54:22.528225", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role \ud83c\udf61 Chibi Mochi to itszenn.", "guild_id": 1111237228023251035}
+{"ts": "2026-01-19T23:56:21.028453", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "247ms", "chat_ev": 0, "voice_ev": 54, "voice_mins": 54}
+{"ts": "2026-01-20T00:06:21.021177", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "268ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-20T00:16:21.030232", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "260ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-20T04:55:19.432070", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-20T04:55:19.439138", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-20T04:55:19.440796", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-20T04:55:19.443710", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-20T04:55:19.445099", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-20T04:55:19.451070", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-20T04:55:19.452932", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-20T04:55:19.455170", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-20T04:55:19.457741", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-20T04:55:19.460220", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-20T04:55:19.462306", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-20T04:55:20.039203", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-20T04:55:22.858804", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-20T04:55:22.860061", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 4 guilds."}
+{"ts": "2026-01-20T04:55:22.861353", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-20T05:05:22.872207", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "273ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-20T05:15:22.870219", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-20T05:25:22.861420", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "255ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-20T05:35:22.861902", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-20T05:43:45.182668", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-20T05:43:45.190173", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-20T05:43:45.208246", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-20T05:43:45.210768", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-20T05:43:45.223477", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-20T05:43:45.228835", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-20T05:43:45.230508", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-20T05:43:45.232321", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-20T05:43:45.234650", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-20T05:43:45.236739", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-20T05:43:45.253718", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-20T05:43:45.865939", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-20T05:43:48.610281", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-20T05:43:48.610862", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 4 guilds."}
+{"ts": "2026-01-20T05:43:48.611342", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "242ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-20T05:53:48.621462", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "245ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
