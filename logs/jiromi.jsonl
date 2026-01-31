@@ -382,3 +382,812 @@
 {"ts": "2026-01-20T05:43:48.610862", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 4 guilds."}
 {"ts": "2026-01-20T05:43:48.611342", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "242ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
 {"ts": "2026-01-20T05:53:48.621462", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 4, "users": 200, "latency": "245ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-23T15:44:01.530265", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-23T15:44:01.618933", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-23T15:44:01.622223", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-23T15:44:01.628209", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-23T15:44:01.630517", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-23T15:44:01.638426", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-23T15:44:01.643920", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-23T15:44:01.648642", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-23T15:44:01.656879", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-23T15:44:01.662351", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-23T15:44:01.667048", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-23T15:44:02.204059", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-23T15:44:05.134752", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-23T15:44:05.135209", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-23T15:44:05.135619", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-23T15:45:07.104486", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-23T15:45:07.108802", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-23T15:45:07.110344", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-23T15:45:07.112996", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-23T15:45:07.114120", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-23T15:45:07.120866", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-23T15:45:07.124668", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-23T15:45:07.128521", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-23T15:45:07.132939", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-23T15:45:07.136731", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-23T15:45:07.138930", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-23T15:45:07.666831", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-23T15:45:10.716999", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-23T15:45:10.717444", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-23T15:45:10.717863", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-23T15:55:10.733163", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "251ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-23T16:05:10.722652", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "250ms", "chat_ev": 11, "voice_ev": 33, "voice_mins": 33}
+{"ts": "2026-01-23T16:15:10.720405", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "244ms", "chat_ev": 4, "voice_ev": 39, "voice_mins": 39}
+{"ts": "2026-01-23T16:25:10.724593", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 5, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-23T16:35:10.731779", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "245ms", "chat_ev": 2, "voice_ev": 42, "voice_mins": 42}
+{"ts": "2026-01-23T16:45:10.725198", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "259ms", "chat_ev": 1, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-23T16:47:09.474540", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-23T16:47:09.475009", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-23T16:55:10.729577", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "247ms", "chat_ev": 0, "voice_ev": 45, "voice_mins": 45}
+{"ts": "2026-01-23T17:00:31.398444", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-23T17:00:31.403328", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-23T17:00:31.404511", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-23T17:00:31.407425", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-23T17:00:31.408405", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-23T17:00:31.413725", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-23T17:00:31.415178", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-23T17:00:31.417252", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-23T17:00:31.419701", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-23T17:00:31.422185", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-23T17:00:31.423992", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-23T17:00:31.954417", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-23T17:00:35.051530", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-23T17:00:35.051818", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-23T17:00:35.052070", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "341ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-23T17:10:35.061574", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "250ms", "chat_ev": 0, "voice_ev": 31, "voice_mins": 31}
+{"ts": "2026-01-23T17:20:35.059682", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "556ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-23T17:30:35.064116", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "804ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-23T17:40:35.061125", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "1743ms", "chat_ev": 0, "voice_ev": 34, "voice_mins": 34}
+{"ts": "2026-01-23T17:50:35.055034", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "257ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-23T18:00:35.061797", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "251ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-23T18:10:35.059700", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "536ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-23T18:20:35.063067", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "250ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-23T18:30:35.065981", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-23T18:40:35.052657", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-23T18:50:35.060052", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "247ms", "chat_ev": 0, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-23T19:00:35.056163", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "249ms", "chat_ev": 0, "voice_ev": 14, "voice_mins": 14}
+{"ts": "2026-01-23T19:10:35.061012", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "241ms", "chat_ev": 0, "voice_ev": 2, "voice_mins": 2}
+{"ts": "2026-01-23T19:20:35.059835", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "511ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-23T19:30:35.057703", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "800ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-23T19:40:35.053795", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "256ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-23T19:50:35.063198", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "259ms", "chat_ev": 1, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-23T19:52:37.228003", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role DRIFTER to askura_48_11936", "guild_id": 884983115917967381}
+{"ts": "2026-01-23T20:00:35.064675", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "529ms", "chat_ev": 0, "voice_ev": 44, "voice_mins": 44}
+{"ts": "2026-01-23T20:10:35.064913", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "254ms", "chat_ev": 1, "voice_ev": 54, "voice_mins": 54}
+{"ts": "2026-01-23T20:14:36.941683", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role RESONANT to askura_48_11936", "guild_id": 884983115917967381}
+{"ts": "2026-01-23T20:20:35.066138", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "242ms", "chat_ev": 4, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-23T20:30:35.056160", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "242ms", "chat_ev": 1, "voice_ev": 67, "voice_mins": 67}
+{"ts": "2026-01-23T20:37:37.640018", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role \ud83c\udf61 Chibi Mochi to cyberpsychosiss.", "guild_id": 1111237228023251035}
+{"ts": "2026-01-23T20:40:35.060391", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "247ms", "chat_ev": 1, "voice_ev": 111, "voice_mins": 111}
+{"ts": "2026-01-23T20:50:35.056438", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "251ms", "chat_ev": 0, "voice_ev": 125, "voice_mins": 125}
+{"ts": "2026-01-23T21:00:35.054236", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "266ms", "chat_ev": 1, "voice_ev": 120, "voice_mins": 120}
+{"ts": "2026-01-23T21:10:35.057550", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "251ms", "chat_ev": 0, "voice_ev": 117, "voice_mins": 117}
+{"ts": "2026-01-23T21:20:35.060454", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "252ms", "chat_ev": 0, "voice_ev": 120, "voice_mins": 120}
+{"ts": "2026-01-23T21:26:37.008692", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role VANGUARD to el.gato.ru", "guild_id": 884983115917967381}
+{"ts": "2026-01-23T21:30:35.057996", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "250ms", "chat_ev": 0, "voice_ev": 128, "voice_mins": 128}
+{"ts": "2026-01-23T21:40:35.059546", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 1, "voice_ev": 121, "voice_mins": 121}
+{"ts": "2026-01-23T21:50:35.057918", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "245ms", "chat_ev": 0, "voice_ev": 115, "voice_mins": 115}
+{"ts": "2026-01-23T22:00:35.058458", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 0, "voice_ev": 110, "voice_mins": 110}
+{"ts": "2026-01-23T22:10:35.057415", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "250ms", "chat_ev": 0, "voice_ev": 110, "voice_mins": 110}
+{"ts": "2026-01-23T22:20:35.060321", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "271ms", "chat_ev": 0, "voice_ev": 124, "voice_mins": 124}
+{"ts": "2026-01-23T22:21:38.138838", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role PILLAR to herovangers", "guild_id": 884983115917967381}
+{"ts": "2026-01-23T22:30:35.059370", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "252ms", "chat_ev": 0, "voice_ev": 130, "voice_mins": 130}
+{"ts": "2026-01-23T22:40:35.052989", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "254ms", "chat_ev": 2, "voice_ev": 137, "voice_mins": 137}
+{"ts": "2026-01-23T22:50:35.055768", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "252ms", "chat_ev": 0, "voice_ev": 130, "voice_mins": 130}
+{"ts": "2026-01-23T23:00:35.060292", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "256ms", "chat_ev": 0, "voice_ev": 130, "voice_mins": 130}
+{"ts": "2026-01-23T23:10:35.052244", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 0, "voice_ev": 125, "voice_mins": 125}
+{"ts": "2026-01-23T23:20:35.061170", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "250ms", "chat_ev": 0, "voice_ev": 130, "voice_mins": 130}
+{"ts": "2026-01-23T23:30:35.063006", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "260ms", "chat_ev": 0, "voice_ev": 126, "voice_mins": 126}
+{"ts": "2026-01-23T23:40:35.062949", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "249ms", "chat_ev": 0, "voice_ev": 92, "voice_mins": 92}
+{"ts": "2026-01-23T23:50:35.059857", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "523ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-23T23:55:36.659218", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role \ud83c\udfa4 Idol Pinggiran to itszenn.", "guild_id": 1111237228023251035}
+{"ts": "2026-01-24T00:00:35.054181", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 0, "voice_ev": 97, "voice_mins": 97}
+{"ts": "2026-01-24T00:10:33.184915", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "246ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T00:20:35.063187", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "254ms", "chat_ev": 1, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T00:30:35.063700", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "254ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T00:40:35.058387", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "260ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T00:50:35.063737", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "249ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T01:00:35.062705", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "245ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T01:10:35.057046", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "288ms", "chat_ev": 0, "voice_ev": 85, "voice_mins": 85}
+{"ts": "2026-01-24T01:14:36.713812", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role \u2694\ufe0f Samurai Karaoke to juushinyy", "guild_id": 1111237228023251035}
+{"ts": "2026-01-24T01:20:35.056010", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "249ms", "chat_ev": 0, "voice_ev": 71, "voice_mins": 71}
+{"ts": "2026-01-24T01:30:35.057521", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "242ms", "chat_ev": 0, "voice_ev": 63, "voice_mins": 63}
+{"ts": "2026-01-24T01:40:35.061038", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "241ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-24T01:50:35.064013", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "249ms", "chat_ev": 0, "voice_ev": 57, "voice_mins": 57}
+{"ts": "2026-01-24T02:00:35.065854", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "534ms", "chat_ev": 0, "voice_ev": 32, "voice_mins": 32}
+{"ts": "2026-01-24T02:10:35.062900", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "1227ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-24T09:15:38.607797", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-24T09:15:38.656714", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-24T09:15:38.669170", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-24T09:15:38.726321", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-24T09:15:38.727944", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-24T09:15:38.743136", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-24T09:15:38.752064", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-24T09:15:38.754771", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-24T09:15:38.765870", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-24T09:15:38.781153", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-24T09:15:38.790811", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-24T09:15:39.480392", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-24T09:15:43.674316", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-24T09:15:43.674710", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-24T09:15:43.675171", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "241ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T09:25:43.680086", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "243ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T09:35:43.688076", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "243ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T09:44:55.597738", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-24T09:44:55.598067", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-24T09:45:43.684587", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T09:55:43.687317", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "250ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T10:05:43.681672", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T10:15:43.684477", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T10:25:43.688770", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T10:35:43.690400", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "515ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T10:45:43.686150", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T10:55:43.679296", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T11:05:43.688182", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T11:15:43.681724", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "263ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T11:25:43.678135", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "260ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T11:35:43.683611", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "250ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T11:45:43.689150", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 242, "latency": "258ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T11:55:43.679737", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T12:05:43.681089", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "239ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T12:15:43.675566", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "244ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T12:25:43.686066", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "243ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T12:35:43.681715", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "255ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T12:45:43.686042", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "261ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T12:55:43.678825", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T13:05:43.687397", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "265ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T13:15:43.681846", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T13:25:43.681361", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "264ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T13:35:43.680847", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T13:45:43.675677", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 239, "latency": "242ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T13:55:43.685273", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "245ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T14:05:43.685345", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T14:15:43.677938", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T14:25:43.679198", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T14:35:43.679976", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "278ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T14:45:43.690054", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "240ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T14:55:43.685645", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "242ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T15:05:43.687600", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "267ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T15:15:43.678658", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "243ms", "chat_ev": 0, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-24T15:25:43.678844", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "277ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-24T15:35:43.685766", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "241ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-24T15:45:43.681032", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-24T15:55:43.680538", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "243ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T16:05:43.676570", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T16:15:43.686235", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "245ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T16:25:43.677823", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "258ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T16:35:43.680705", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "270ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T16:45:43.678130", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "255ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T16:55:43.680228", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T17:05:43.679737", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "551ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T17:15:43.690171", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T17:25:43.688437", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "536ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-24T17:35:43.680713", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 0, "voice_ev": 21, "voice_mins": 21}
+{"ts": "2026-01-24T17:45:43.678891", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 3, "voice_mins": 3}
+{"ts": "2026-01-24T17:55:43.676752", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T18:05:43.682689", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "260ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T18:15:43.682804", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "313ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T18:25:41.785046", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "306ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T18:35:43.684962", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "975ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T18:45:43.685763", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "306ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T18:55:43.683877", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "271ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T19:05:43.679836", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "267ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T19:15:43.682990", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "243ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T19:25:43.681879", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T19:35:43.686782", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T19:45:43.676805", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T19:55:43.689042", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "265ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T20:05:43.675177", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T20:15:43.676712", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "267ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T20:25:43.681340", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T20:35:43.683208", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T20:45:43.687429", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-24T20:55:43.691187", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 2, "voice_ev": 22, "voice_mins": 22}
+{"ts": "2026-01-24T21:05:43.688691", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "265ms", "chat_ev": 0, "voice_ev": 59, "voice_mins": 59}
+{"ts": "2026-01-24T21:15:43.685861", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-24T21:20:45.349272", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role DRIFTER to wallenstain_", "guild_id": 884983115917967381}
+{"ts": "2026-01-24T21:25:43.678231", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "266ms", "chat_ev": 0, "voice_ev": 66, "voice_mins": 66}
+{"ts": "2026-01-24T21:35:43.681923", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 1, "voice_ev": 72, "voice_mins": 72}
+{"ts": "2026-01-24T21:41:45.079383", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role RESONANT to wallenstain_", "guild_id": 884983115917967381}
+{"ts": "2026-01-24T21:45:43.675174", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 92, "voice_mins": 92}
+{"ts": "2026-01-24T21:55:43.680356", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "264ms", "chat_ev": 3, "voice_ev": 109, "voice_mins": 109}
+{"ts": "2026-01-24T22:05:43.681006", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "286ms", "chat_ev": 0, "voice_ev": 101, "voice_mins": 101}
+{"ts": "2026-01-24T22:15:43.680565", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "297ms", "chat_ev": 0, "voice_ev": 100, "voice_mins": 100}
+{"ts": "2026-01-24T22:25:43.679983", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 96, "voice_mins": 96}
+{"ts": "2026-01-24T22:35:43.675053", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T22:45:43.686319", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 1, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T22:55:43.680704", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "268ms", "chat_ev": 0, "voice_ev": 76, "voice_mins": 76}
+{"ts": "2026-01-24T23:05:43.687662", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "262ms", "chat_ev": 0, "voice_ev": 70, "voice_mins": 70}
+{"ts": "2026-01-24T23:15:43.689563", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 75, "voice_mins": 75}
+{"ts": "2026-01-24T23:25:43.678812", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "255ms", "chat_ev": 0, "voice_ev": 86, "voice_mins": 86}
+{"ts": "2026-01-24T23:35:43.684347", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T23:45:43.676701", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-24T23:55:43.678471", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "261ms", "chat_ev": 0, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-25T00:05:43.679797", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "267ms", "chat_ev": 0, "voice_ev": 91, "voice_mins": 91}
+{"ts": "2026-01-25T00:15:43.680280", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 100, "voice_mins": 100}
+{"ts": "2026-01-25T00:25:43.685264", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 100, "voice_mins": 100}
+{"ts": "2026-01-25T00:35:43.683200", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 100, "voice_mins": 100}
+{"ts": "2026-01-25T00:43:45.237360", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role \u2694\ufe0f Samurai Karaoke to quackgod.", "guild_id": 1111237228023251035}
+{"ts": "2026-01-25T00:45:43.683921", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 100, "voice_mins": 100}
+{"ts": "2026-01-25T00:55:43.677524", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 1, "voice_ev": 90, "voice_mins": 90}
+{"ts": "2026-01-25T01:05:43.680937", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "242ms", "chat_ev": 0, "voice_ev": 70, "voice_mins": 70}
+{"ts": "2026-01-25T01:06:45.069420", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role PILLAR to el.gato.ru", "guild_id": 884983115917967381}
+{"ts": "2026-01-25T01:15:43.676403", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 1, "voice_ev": 62, "voice_mins": 62}
+{"ts": "2026-01-25T01:25:43.682209", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 1, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-25T01:35:43.684534", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "245ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-25T01:45:43.675005", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "243ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-25T01:55:43.687930", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-25T02:05:43.675846", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-25T08:56:18.142493", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-25T08:56:18.202026", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-25T08:56:18.214278", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-25T08:56:18.237940", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-25T08:56:18.239101", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-25T08:56:18.254508", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-25T08:56:18.263780", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-25T08:56:18.270691", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-25T08:56:18.277510", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-25T08:56:18.292960", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-25T08:56:18.302713", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-25T08:56:18.835351", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-25T08:56:21.904409", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-25T08:56:21.904762", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-25T08:56:21.905078", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T09:06:21.912533", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T09:16:21.881050", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "244ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T09:26:21.851188", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T09:36:21.865275", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T09:46:21.864795", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "258ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T09:56:21.874717", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T10:06:21.886819", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "266ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T10:16:21.889655", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T10:26:21.894698", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T10:36:21.892572", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T10:46:21.894904", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T10:56:21.894442", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T11:06:21.910257", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T11:16:21.907198", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T11:26:21.912736", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "261ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T11:36:21.902597", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "243ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T11:46:21.913328", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T11:56:21.916306", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T12:06:21.916277", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T12:16:21.904317", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "245ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T12:26:21.902542", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T12:36:21.916333", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "614ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T12:46:21.912353", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T12:56:21.916794", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T13:06:21.919617", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T13:16:21.913353", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T13:26:21.914747", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T13:36:21.909041", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T13:46:21.917477", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T13:56:21.916516", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "511ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T14:06:21.917157", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T14:16:21.905468", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "804ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T14:26:21.914220", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T14:36:21.916389", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T14:46:21.906198", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T14:56:21.909112", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T15:06:21.914169", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T15:16:21.916814", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T15:26:21.917559", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T15:36:21.919025", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "526ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T15:46:21.907736", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "522ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T15:56:21.914278", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T16:06:21.910611", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T16:16:21.913709", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T16:26:21.909950", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T16:36:21.905565", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "535ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T16:46:21.906643", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T16:56:21.917944", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "261ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T17:06:21.914397", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "243ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T17:16:21.916442", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T17:26:21.912545", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "244ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T17:36:21.915429", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "244ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T17:46:21.916523", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "242ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T17:56:21.917791", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "241ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T18:06:19.998193", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "241ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T18:16:21.918720", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "241ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T18:26:21.905526", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "241ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T18:36:21.915077", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "240ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T18:46:21.918670", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T18:56:21.905440", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 2, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-25T19:06:21.915659", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "244ms", "chat_ev": 0, "voice_ev": 8, "voice_mins": 8}
+{"ts": "2026-01-25T19:16:21.906321", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-25T19:26:21.905348", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-25T19:36:21.907442", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-25T19:46:21.906315", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 1, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-25T19:56:21.916988", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 1, "voice_ev": 19, "voice_mins": 19}
+{"ts": "2026-01-25T20:06:21.912820", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "267ms", "chat_ev": 2, "voice_ev": 10, "voice_mins": 10}
+{"ts": "2026-01-25T20:16:21.917790", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-25T20:26:21.909859", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 2, "voice_ev": 29, "voice_mins": 29}
+{"ts": "2026-01-25T20:36:21.913940", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-25T20:46:21.916188", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "258ms", "chat_ev": 2, "voice_ev": 54, "voice_mins": 54}
+{"ts": "2026-01-25T20:56:21.913819", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-25T21:06:21.912397", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "287ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-25T21:16:21.910085", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-25T21:26:21.907975", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-25T21:36:21.911122", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-25T21:46:21.913173", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-25T21:56:21.910621", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 2, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-25T22:06:21.905505", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-25T22:16:21.910855", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 32, "voice_mins": 32}
+{"ts": "2026-01-25T22:26:21.914992", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-25T22:36:21.905929", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-25T22:46:21.910785", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 1, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-25T22:56:21.909403", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "260ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-25T23:06:21.905733", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 45, "voice_mins": 45}
+{"ts": "2026-01-25T23:16:21.911249", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "255ms", "chat_ev": 0, "voice_ev": 49, "voice_mins": 49}
+{"ts": "2026-01-25T23:26:21.911265", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-25T23:36:21.906784", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 1, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-25T23:46:21.908047", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 45, "voice_mins": 45}
+{"ts": "2026-01-25T23:56:21.908674", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "260ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-26T00:06:21.912661", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-26T00:16:21.914398", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-26T04:56:26.489345", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-26T04:56:26.576407", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-26T04:56:26.588393", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-26T04:56:26.600936", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-26T04:56:26.602368", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-26T04:56:26.618172", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-26T04:56:26.626947", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-26T04:56:26.633689", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-26T04:56:26.651941", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-26T04:56:26.667102", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-26T04:56:26.676836", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-26T04:56:27.151701", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-26T04:56:30.204026", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-26T04:56:30.204400", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-26T04:56:30.204776", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "244ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T05:06:30.211606", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "272ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T05:16:30.211360", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T05:26:30.219770", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T05:36:30.206108", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T05:46:30.213472", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T05:56:30.210904", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "288ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T06:06:30.215785", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T06:16:30.218937", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T06:26:30.216635", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T06:36:30.215432", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T06:46:30.208848", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T06:56:30.215264", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "255ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T16:46:49.289819", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-26T16:46:49.404638", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-26T16:46:49.418535", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-26T16:46:49.431068", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-26T16:46:49.432484", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-26T16:46:49.448568", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-26T16:46:49.457132", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-26T16:46:49.463899", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-26T16:46:49.482230", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-26T16:46:49.497214", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-26T16:46:49.507049", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-26T16:46:50.222846", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-26T16:46:53.334863", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-26T16:46:53.335150", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-26T16:46:53.335457", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T16:47:39.987265", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-26T16:47:39.991638", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-26T16:47:39.992963", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-26T16:47:39.995112", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-26T16:47:39.996056", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-26T16:47:40.000675", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-26T16:47:40.002190", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-26T16:47:40.003697", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-26T16:47:40.005738", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-26T16:47:40.007614", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-26T16:47:40.008937", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-26T16:47:40.508239", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-26T16:47:43.538389", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-26T16:47:43.538708", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-26T16:47:43.539053", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T16:57:43.503598", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T17:07:43.520162", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T17:17:43.520877", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T17:27:43.531667", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T17:37:43.530751", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T17:47:43.525968", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T17:57:43.537403", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T18:07:43.536868", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "258ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T18:17:43.531982", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "267ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T18:27:43.538993", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T18:37:43.548024", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T18:47:43.543013", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "271ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T18:57:43.538405", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "266ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T19:07:43.541448", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "261ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T19:17:43.545057", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "265ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T19:27:43.546792", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T19:37:43.547521", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "289ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T19:47:43.539451", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "255ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T19:57:43.544043", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T20:07:43.540214", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T20:17:43.540217", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "289ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T20:27:43.539967", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T20:37:43.539135", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T20:47:43.552839", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T20:57:43.550118", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T21:07:43.541049", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "267ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-26T21:17:43.539536", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 14, "voice_mins": 14}
+{"ts": "2026-01-26T21:27:43.540291", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 25, "voice_mins": 25}
+{"ts": "2026-01-26T21:28:44.957210", "level": "ERROR", "type": "ROLE_FAIL", "msg": "Unknown error giving role", "error": "'charmap' codec can't encode character '\\U0001f3a4' in position 11: character maps to <undefined>", "guild_id": 1111237228023251035}
+{"ts": "2026-01-26T21:37:43.544001", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-26T21:47:43.549623", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 1, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-26T21:57:43.542049", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 29, "voice_mins": 29}
+{"ts": "2026-01-26T22:07:43.549600", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-26T22:17:43.552574", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 35, "voice_mins": 35}
+{"ts": "2026-01-26T22:27:43.545019", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "244ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-26T22:37:43.544400", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 34, "voice_mins": 34}
+{"ts": "2026-01-26T22:47:43.540612", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 42, "voice_mins": 42}
+{"ts": "2026-01-26T22:57:43.543703", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 33, "voice_mins": 33}
+{"ts": "2026-01-26T23:07:43.553986", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 38, "voice_mins": 38}
+{"ts": "2026-01-26T23:17:43.549665", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-26T23:27:43.546117", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-26T23:37:43.546869", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 28, "voice_mins": 28}
+{"ts": "2026-01-26T23:37:45.175173", "level": "ERROR", "type": "ROLE_FAIL", "msg": "Unknown error giving role", "error": "'charmap' codec can't encode characters in position 11-12: character maps to <undefined>", "guild_id": 1111237228023251035}
+{"ts": "2026-01-26T23:47:43.547283", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "245ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-26T23:57:43.542969", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-27T00:07:43.541604", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-27T00:17:43.548626", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-27T00:27:43.542638", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 28, "voice_mins": 28}
+{"ts": "2026-01-27T00:37:43.541726", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-27T00:47:43.547217", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 1, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-27T05:42:06.850120", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-27T05:42:06.906920", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-27T05:42:06.919266", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-27T05:42:06.942953", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-27T05:42:06.944573", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-27T05:42:06.959238", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-27T05:42:06.968848", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-27T05:42:06.998112", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-27T05:42:07.016447", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-27T05:42:07.031381", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-27T05:42:07.041019", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-27T05:42:07.732668", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-27T05:42:10.796909", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-27T05:42:10.797399", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-27T05:42:10.797764", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "244ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T18:58:58.833743", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-27T18:58:58.889802", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-27T18:58:58.901959", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-27T18:58:58.914892", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-27T18:58:58.935528", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-27T18:58:58.965050", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-27T18:58:58.973682", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-27T18:58:59.002911", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-27T18:58:59.020940", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-27T18:58:59.036184", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-27T18:58:59.046253", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-27T18:58:59.659286", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-27T18:59:02.672579", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-27T18:59:02.673089", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-27T18:59:02.673544", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "261ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T19:09:02.678440", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-27T19:19:02.682552", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 29, "voice_mins": 29}
+{"ts": "2026-01-27T19:29:02.679595", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-27T19:39:02.679290", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "271ms", "chat_ev": 0, "voice_ev": 13, "voice_mins": 13}
+{"ts": "2026-01-27T19:49:02.676157", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 3, "voice_mins": 3}
+{"ts": "2026-01-27T19:59:02.673756", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T20:09:02.679142", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T20:19:02.680771", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T20:29:02.677908", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T20:39:02.680366", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T20:49:02.674207", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T20:59:02.682162", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "272ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T21:09:02.674288", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "260ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T21:19:02.677273", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T21:29:02.679578", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T21:39:02.687191", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T21:49:02.688628", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "273ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T21:59:02.679282", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "266ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T22:09:02.682524", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 3, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-27T22:19:02.687711", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 10, "voice_mins": 10}
+{"ts": "2026-01-27T22:29:02.680318", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "266ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-27T22:39:02.678165", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "262ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-27T22:49:02.673209", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 14, "voice_mins": 14}
+{"ts": "2026-01-27T22:59:02.679840", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "268ms", "chat_ev": 1, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-27T23:09:02.685923", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 10, "voice_mins": 10}
+{"ts": "2026-01-28T06:01:38.302368", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-28T06:01:38.392340", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-28T06:01:38.404574", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-28T06:01:38.417086", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-28T06:01:38.418615", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-28T06:01:38.433597", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-28T06:01:38.443190", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-28T06:01:38.450019", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-28T06:01:38.468321", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-28T06:01:38.483312", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-28T06:01:38.493134", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-28T06:01:38.975854", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-28T06:01:41.919828", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-28T06:01:41.920214", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-28T06:01:41.920600", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "242ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T16:06:33.891802", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-28T16:06:33.897702", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-28T16:06:33.899763", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-28T16:06:33.902802", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-28T16:06:33.904278", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-28T16:06:33.910653", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-28T16:06:33.912253", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-28T16:06:33.991771", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-28T16:06:33.994233", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-28T16:06:33.996461", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-28T16:06:33.997835", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-28T16:06:34.653673", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-28T16:06:37.925290", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-28T16:06:37.925640", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-28T16:06:37.926011", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T16:16:37.876218", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "255ms", "chat_ev": 0, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-28T16:26:37.784833", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "245ms", "chat_ev": 0, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-28T16:36:37.821744", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T16:46:37.834046", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "258ms", "chat_ev": 0, "voice_ev": 28, "voice_mins": 28}
+{"ts": "2026-01-28T16:56:37.855002", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 1, "voice_ev": 29, "voice_mins": 29}
+{"ts": "2026-01-28T17:06:37.870307", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T17:16:37.887194", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T17:26:37.883047", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "260ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T17:36:37.895993", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T17:46:37.898465", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "269ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T17:56:37.911564", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T18:06:37.906890", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "269ms", "chat_ev": 1, "voice_ev": 27, "voice_mins": 27}
+{"ts": "2026-01-28T18:16:37.920518", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 17, "voice_mins": 17}
+{"ts": "2026-01-28T18:26:37.916306", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 1, "voice_ev": 10, "voice_mins": 10}
+{"ts": "2026-01-28T18:36:37.919887", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "243ms", "chat_ev": 0, "voice_ev": 14, "voice_mins": 14}
+{"ts": "2026-01-28T18:46:37.923337", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "240ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-28T18:56:37.920472", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 10, "voice_mins": 10}
+{"ts": "2026-01-28T19:06:37.931274", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "249ms", "chat_ev": 0, "voice_ev": 10, "voice_mins": 10}
+{"ts": "2026-01-28T19:16:37.930464", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 1, "voice_ev": 4, "voice_mins": 4}
+{"ts": "2026-01-28T19:26:37.925914", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T19:36:37.934398", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T19:46:37.932418", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T19:56:37.929181", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "258ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T20:06:37.929600", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "262ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T20:16:37.937579", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T20:26:37.936464", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "258ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T20:36:37.924435", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T20:46:37.933633", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T20:56:37.927068", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "239ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T21:06:37.937260", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T21:16:37.927325", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T21:26:37.934410", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-28T21:36:37.940275", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "245ms", "chat_ev": 0, "voice_ev": 2, "voice_mins": 2}
+{"ts": "2026-01-28T21:46:37.933895", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-28T21:56:37.939951", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 1, "voice_ev": 26, "voice_mins": 26}
+{"ts": "2026-01-28T22:06:37.934001", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "247ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T22:16:37.935507", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 1, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-28T22:26:37.934828", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 1, "voice_ev": 36, "voice_mins": 36}
+{"ts": "2026-01-28T22:36:37.937889", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 47, "voice_mins": 47}
+{"ts": "2026-01-28T22:46:37.940856", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "265ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-28T22:56:37.938954", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 1, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-28T23:06:37.940630", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-28T23:16:37.933826", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "256ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-28T23:26:37.926040", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "259ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-28T23:36:37.936306", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "254ms", "chat_ev": 0, "voice_ev": 58, "voice_mins": 58}
+{"ts": "2026-01-29T15:58:00.917479", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-29T15:58:00.972421", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-29T15:58:00.973629", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-29T15:58:00.975922", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-29T15:58:00.976919", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-29T15:58:00.982250", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-29T15:58:00.983674", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-29T15:58:00.985345", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-29T15:58:00.987347", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-29T15:58:00.989226", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-29T15:58:00.990502", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-29T15:58:01.687779", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-29T15:58:04.835846", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-29T15:58:04.836164", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-29T15:58:04.836483", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-29T16:08:04.848917", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "248ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T16:18:04.848640", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "265ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T16:28:04.841757", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T16:38:04.839586", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "246ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T16:48:04.850638", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "262ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T16:58:04.839824", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "250ms", "chat_ev": 1, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T17:08:04.842547", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "258ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T17:18:04.837310", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "262ms", "chat_ev": 0, "voice_ev": 2, "voice_mins": 2}
+{"ts": "2026-01-29T17:28:04.842447", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "276ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-29T17:38:04.845666", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "264ms", "chat_ev": 1, "voice_ev": 10, "voice_mins": 10}
+{"ts": "2026-01-29T17:48:04.838105", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T17:58:04.845301", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "260ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T18:08:04.837546", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "251ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T18:18:04.838624", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-29T18:28:04.841738", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "542ms", "chat_ev": 0, "voice_ev": 21, "voice_mins": 21}
+{"ts": "2026-01-29T18:38:04.851522", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "244ms", "chat_ev": 0, "voice_ev": 27, "voice_mins": 27}
+{"ts": "2026-01-29T18:59:07.704920", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-29T18:59:07.705251", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-29T20:43:49.969641", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-29T20:43:49.974698", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-29T20:43:49.975947", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-29T20:43:49.978312", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-29T20:43:49.979295", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-29T20:43:49.985504", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-29T20:43:49.987358", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-29T20:43:49.989186", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-29T20:43:49.991418", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-29T20:43:49.993451", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-29T20:43:49.994763", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-29T20:43:50.534194", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-29T20:43:53.592346", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-29T20:43:53.592672", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-29T20:43:53.593012", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "260ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-29T20:53:53.602344", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "257ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-29T21:03:53.598068", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "271ms", "chat_ev": 1, "voice_ev": 48, "voice_mins": 48}
+{"ts": "2026-01-29T21:13:53.598819", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "253ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-29T21:23:53.595015", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "279ms", "chat_ev": 0, "voice_ev": 60, "voice_mins": 60}
+{"ts": "2026-01-29T21:33:53.606645", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "263ms", "chat_ev": 0, "voice_ev": 52, "voice_mins": 52}
+{"ts": "2026-01-29T21:43:53.600485", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "269ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-29T21:53:53.605533", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "266ms", "chat_ev": 0, "voice_ev": 48, "voice_mins": 48}
+{"ts": "2026-01-29T22:03:53.607286", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "252ms", "chat_ev": 2, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-29T22:13:53.596121", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "275ms", "chat_ev": 0, "voice_ev": 48, "voice_mins": 48}
+{"ts": "2026-01-29T22:23:53.604819", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "262ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-29T22:33:53.593411", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "261ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-29T22:43:53.603635", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 240, "latency": "262ms", "chat_ev": 0, "voice_ev": 39, "voice_mins": 39}
+{"ts": "2026-01-29T22:53:53.593929", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "251ms", "chat_ev": 0, "voice_ev": 42, "voice_mins": 42}
+{"ts": "2026-01-29T22:53:54.942314", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role DRIFTER to anca_ca", "guild_id": 884983115917967381}
+{"ts": "2026-01-29T23:03:53.603932", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "265ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-29T23:13:53.607611", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "265ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-29T23:15:55.109143", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role RESONANT to anca_ca", "guild_id": 884983115917967381}
+{"ts": "2026-01-29T23:23:53.598899", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "277ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-29T23:33:53.601168", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "273ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-29T23:43:53.603715", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "251ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-29T23:53:53.605842", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "262ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-30T00:03:53.601567", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "263ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-30T00:13:53.600752", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "264ms", "chat_ev": 0, "voice_ev": 50, "voice_mins": 50}
+{"ts": "2026-01-30T00:23:53.605886", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "259ms", "chat_ev": 1, "voice_ev": 46, "voice_mins": 46}
+{"ts": "2026-01-30T00:33:53.603570", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "263ms", "chat_ev": 1, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-30T05:50:09.570480", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-30T05:50:09.633933", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-30T05:50:09.646234", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-30T05:50:09.658778", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-30T05:50:09.660222", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-30T05:50:09.675650", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-30T05:50:09.684838", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-30T05:50:09.691690", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-30T05:50:09.709934", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-30T05:50:09.725145", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-30T05:50:09.734791", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-30T05:50:10.392062", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}  
+{"ts": "2026-01-30T05:50:13.365001", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-30T05:50:13.365371", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-30T05:50:13.365752", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "258ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T06:00:13.376652", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "260ms", "chat_ev": 1, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T06:10:13.380234", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "247ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T06:20:13.368262", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T06:30:13.378249", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T06:40:13.378671", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "251ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T18:33:01.137249", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-30T18:33:01.239567", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-30T18:33:01.251812", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-30T18:33:01.275476", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-30T18:33:01.277170", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-30T18:33:01.291981", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-30T18:33:01.301458", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-30T18:33:01.330469", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-30T18:33:01.348892", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-30T18:33:01.363681", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-30T18:33:01.373564", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-30T18:33:02.054566", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-30T18:33:05.022961", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-30T18:33:05.023313", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-30T18:33:05.023734", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T18:34:02.993551", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-30T18:34:02.998242", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-30T18:34:02.999583", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-30T18:34:03.001912", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-30T18:34:03.003059", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-30T18:34:03.007945", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-30T18:34:03.009448", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-30T18:34:03.011025", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-30T18:34:03.013119", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-30T18:34:03.015085", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-30T18:34:03.016484", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-30T18:34:03.535821", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-30T18:34:06.540940", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-30T18:34:06.541413", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-30T18:34:06.541845", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T18:44:06.557076", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T18:54:06.546626", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T19:04:06.546659", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T19:14:06.553034", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "266ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T19:24:06.546303", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "379ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T19:34:06.547732", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "266ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T19:44:06.554342", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "254ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-30T19:54:06.550738", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "269ms", "chat_ev": 1, "voice_ev": 18, "voice_mins": 18}
+{"ts": "2026-01-30T20:04:06.554502", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "275ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-30T20:14:06.551386", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "275ms", "chat_ev": 0, "voice_ev": 25, "voice_mins": 25}
+{"ts": "2026-01-30T20:24:06.554496", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "269ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T20:34:06.553419", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "333ms", "chat_ev": 1, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T20:44:06.552705", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "262ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T20:54:06.550055", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "307ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T21:04:06.544467", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "257ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T21:14:06.548793", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "266ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T21:24:06.552910", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "257ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T21:34:06.550930", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "271ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T21:44:06.549450", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "242ms", "chat_ev": 0, "voice_ev": 23, "voice_mins": 23}
+{"ts": "2026-01-30T21:54:06.548123", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "248ms", "chat_ev": 2, "voice_ev": 28, "voice_mins": 28}
+{"ts": "2026-01-30T22:04:06.555091", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "269ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T22:14:06.549486", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "246ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T22:24:06.546537", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "367ms", "chat_ev": 2, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T22:34:06.554378", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "253ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-30T22:44:06.548695", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "273ms", "chat_ev": 0, "voice_ev": 24, "voice_mins": 24}
+{"ts": "2026-01-30T22:54:06.552599", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "271ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-30T23:04:06.548009", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "259ms", "chat_ev": 1, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-30T23:14:06.550634", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "251ms", "chat_ev": 0, "voice_ev": 26, "voice_mins": 26}
+{"ts": "2026-01-30T23:24:06.552144", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "253ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-30T23:34:06.555897", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "256ms", "chat_ev": 3, "voice_ev": 43, "voice_mins": 43}
+{"ts": "2026-01-30T23:44:06.553886", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "245ms", "chat_ev": 0, "voice_ev": 41, "voice_mins": 41}
+{"ts": "2026-01-30T23:54:06.555159", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "259ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-31T00:04:06.556508", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "260ms", "chat_ev": 0, "voice_ev": 20, "voice_mins": 20}
+{"ts": "2026-01-31T00:14:06.555319", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "258ms", "chat_ev": 0, "voice_ev": 29, "voice_mins": 29}
+{"ts": "2026-01-31T00:24:06.555287", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "250ms", "chat_ev": 0, "voice_ev": 35, "voice_mins": 35}
+{"ts": "2026-01-31T00:34:06.551128", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "262ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-31T00:34:07.828853", "level": "INFO", "type": "ROLE_GIVE", "msg": "Gave role \u2694\ufe0f Samurai Karaoke to itszenn.", "guild_id": 1111237228023251035}
+{"ts": "2026-01-31T00:44:06.545337", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "249ms", "chat_ev": 0, "voice_ev": 30, "voice_mins": 30}
+{"ts": "2026-01-31T00:54:06.550245", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "246ms", "chat_ev": 0, "voice_ev": 24, "voice_mins": 24}
+{"ts": "2026-01-31T08:45:21.670552", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-31T08:45:21.706316", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-31T08:45:21.707659", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-31T08:45:21.710129", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-31T08:45:21.711091", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-31T08:45:21.716658", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-31T08:45:21.718066", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-31T08:45:21.719667", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-31T08:45:21.722378", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-31T08:45:21.724315", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-31T08:45:21.725685", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-31T08:45:22.375147", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-31T08:45:25.366095", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-31T08:45:25.366491", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-31T08:45:25.366858", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-31T08:55:25.377796", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "277ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-31T09:56:55.140832", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "302ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-31T09:57:22.132875", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-31T09:57:22.137895", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-31T09:57:22.139228", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-31T09:57:22.142023", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-31T09:57:22.143197", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-31T09:57:22.148920", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-31T09:57:22.150635", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-31T09:57:22.152893", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-31T09:57:22.155675", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-31T09:57:22.157950", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-31T09:57:22.159411", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-31T09:57:22.836101", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-31T09:57:27.180161", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-31T09:57:27.180535", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-31T09:57:27.180899", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "256ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-31T10:07:27.195183", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "248ms", "chat_ev": 0, "voice_ev": 29, "voice_mins": 29}
+{"ts": "2026-01-31T10:17:27.191033", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "246ms", "chat_ev": 0, "voice_ev": 31, "voice_mins": 31}
+{"ts": "2026-01-31T10:27:27.195029", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "261ms", "chat_ev": 0, "voice_ev": 40, "voice_mins": 40}
+{"ts": "2026-01-31T10:34:42.830451", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-31T10:34:42.834950", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-31T10:34:42.836237", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-31T10:34:42.838542", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-31T10:34:42.853157", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-31T10:34:42.858641", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-31T10:34:42.860160", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-31T10:34:42.861762", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-31T10:34:42.863785", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-31T10:34:42.865786", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-31T10:34:42.867024", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-31T10:34:43.406851", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-31T10:34:46.398374", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-31T10:34:46.398747", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-31T10:34:46.399088", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "259ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}
+{"ts": "2026-01-31T10:40:02.885684", "level": "INFO", "type": "SYSTEM", "msg": "Database initialized (Shared Connection)."}
+{"ts": "2026-01-31T10:40:02.890083", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: admin_config.py"}
+{"ts": "2026-01-31T10:40:02.891469", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: help.py"}
+{"ts": "2026-01-31T10:40:02.893896", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: leveling.py"}
+{"ts": "2026-01-31T10:40:02.895599", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: monitor.py"}
+{"ts": "2026-01-31T10:40:02.901281", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_backup.py"}
+{"ts": "2026-01-31T10:40:02.902685", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: owner_recovery.py"}
+{"ts": "2026-01-31T10:40:02.904474", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: profile.py"}
+{"ts": "2026-01-31T10:40:02.906673", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: server_events.py"}
+{"ts": "2026-01-31T10:40:02.908733", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: setup_wizard.py"}
+{"ts": "2026-01-31T10:40:02.910335", "level": "INFO", "type": "COG_LOAD", "msg": "Loaded: weekly_stats.py"}
+{"ts": "2026-01-31T10:40:03.430485", "level": "INFO", "type": "SYSTEM", "msg": "Slash commands synced."}
+{"ts": "2026-01-31T10:40:06.445749", "level": "INFO", "type": "BOT_READY", "msg": "Logged in as: Jiromi (1458753530381729928)"}
+{"ts": "2026-01-31T10:40:06.446145", "level": "INFO", "type": "BOT_READY", "msg": "Connected to 5 guilds."}
+{"ts": "2026-01-31T10:40:06.446488", "level": "STAT", "type": "INTERVAL_SUMMARY", "guilds": 5, "users": 241, "latency": "264ms", "chat_ev": 0, "voice_ev": 0, "voice_mins": 0}

@@ -52,13 +52,13 @@ class DatabaseHandler:
 
         # Init Schema
         await self._init_tables()
-        print("✅ Database Connected (WAL Mode + Shared Connection)")
+        print("Database Connected (WAL Mode + Shared Connection)")
 
     async def close(self):
         """Menutup koneksi."""
         if self._conn:
             await self._conn.close()
-            print("✅ Database Closed")
+            print("Database Closed")
 
     async def _init_tables(self):
         """Membuat tabel & index jika belum ada."""
