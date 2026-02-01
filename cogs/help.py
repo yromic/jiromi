@@ -351,7 +351,7 @@ class HelpSystem(commands.Cog):
         return embed
 
     @app_commands.command(name="help", description="Lihat panduan lengkap penggunaan Jiromi.")
-    @app_commands.describe(topik="Pilih topik bantuan yang ingin dibaca")
+    @app_commands.describe(topik="📘 Panduan singkat mengenal Jiromi dan fitur-fiturnya.")
     @app_commands.choices(topik=[
         # --- GENERAL ---
         app_commands.Choice(name="🏠 Main Menu", value="main"),

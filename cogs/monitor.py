@@ -72,5 +72,16 @@ class Monitor(commands.Cog):
     async def before_stats(self):
         await self.bot.wait_until_ready()
 
+    # [FIX FINAL] Global Task Error Handler
+    @stat_loop.error
+    async def stat_loop_error(self, error):
+        self.bot.logger.error(
+            "MONITOR_LOOP_CRASH", 
+            "Monitor loop berhenti total (Critical)", 
+            error_obj=error
+        )
+        # Opsional: Restart loop jika error bukan karena shutdown
+        # self.stat_loop.restart()
+
 async def setup(bot):
     await bot.add_cog(Monitor(bot))

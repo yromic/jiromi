@@ -9,6 +9,52 @@ from datetime import datetime, timezone, timedelta
 _db_instance = None
 _db_init_lock = asyncio.Lock()
 
+# --- DEFINISI MIGRASI (VERSION CONTROL) ---
+
+async def migrate_v2_weekly_chat_xp(conn):
+    """Migrasi V2: Menambah kolom weekly_chat_xp."""
+    # Cek dulu biar aman kalau dijalankan di DB lama yang sudah punya kolomnya
+    async with conn.execute("PRAGMA table_info(weekly_stats)") as cursor:
+        columns = [col[1] for col in await cursor.fetchall()]
+        if 'weekly_chat_xp' not in columns:
+            print("🔄 Applying Migration V2: Add weekly_chat_xp...")
+            await conn.execute("ALTER TABLE weekly_stats ADD COLUMN weekly_chat_xp INTEGER DEFAULT 0")
+
+async def migrate_v3_gamification(conn):
+    """Migrasi V3: Menambah kolom untuk gamifikasi (streak, badges)."""
+    async with conn.execute("PRAGMA table_info(users)") as cursor:
+        columns = [col[1] for col in await cursor.fetchall()]
+        
+        if 'voice_streak' not in columns:
+            print("🔄 Applying Migration V3: Add voice_streak...")
+            await conn.execute("ALTER TABLE users ADD COLUMN voice_streak INTEGER DEFAULT 0")
+        
+        if 'last_voice_date' not in columns:
+            print("🔄 Applying Migration V3: Add last_voice_date...")
+            await conn.execute("ALTER TABLE users ADD COLUMN last_voice_date TEXT DEFAULT NULL")
+            
+        if 'active_title' not in columns:
+            print("🔄 Applying Migration V3: Add active_title...")
+            await conn.execute("ALTER TABLE users ADD COLUMN active_title TEXT DEFAULT NULL")
+
+async def migrate_v4_global_users(conn):
+    """Migrasi V4: Menambah tabel user global untuk tracking intro message."""
+    print("🔄 Applying Migration V4: Create user_globals table...")
+    await conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_globals (
+            user_id INTEGER PRIMARY KEY,
+            has_seen_jiromi_intro INTEGER DEFAULT 0,
+            first_intro_at DATETIME DEFAULT NULL
+        )
+    """)
+
+# Update Dictionary MIGRATIONS
+MIGRATIONS = {
+    2: migrate_v2_weekly_chat_xp,
+    3: migrate_v3_gamification,
+    4: migrate_v4_global_users # <--- Tambahkan ini
+}
+
 async def init_db():
     """Wrapper untuk inisialisasi database global (Thread-safe)."""
     global _db_instance
@@ -40,19 +86,23 @@ class DatabaseHandler:
         if not os.path.exists('database'):
             os.makedirs('database')
 
-        # Connect sekali saja
         self._conn = await aiosqlite.connect(self.db_path)
-        self._conn.row_factory = aiosqlite.Row # Agar hasil query bisa diakses via nama kolom
+        self._conn.row_factory = aiosqlite.Row
 
-        # PRAGMA Optimization (Saran Senior)
-        await self._conn.execute("PRAGMA journal_mode=WAL;") # Concurrency
-        await self._conn.execute("PRAGMA busy_timeout=3000;") # Retry tolerance 3s
-        await self._conn.execute("PRAGMA synchronous=NORMAL;") # Performance
+        # PRAGMA Optimization
+        await self._conn.execute("PRAGMA journal_mode=WAL;") 
+        await self._conn.execute("PRAGMA busy_timeout=3000;")
+        await self._conn.execute("PRAGMA synchronous=NORMAL;") 
         await self._conn.commit()
 
-        # Init Schema
+        # 1. Init Tabel Dasar (V1)
         await self._init_tables()
-        print("Database Connected (WAL Mode + Shared Connection)")
+        
+        # 2. Jalankan Migrasi (V2, V3, ...)
+        # Ini akan otomatis mengecek versi dan update jika perlu
+        await self._run_migrations()
+   
+        print("Database Connected (WAL Mode + Versioned Schema)")
 
     async def close(self):
         """Menutup koneksi."""
@@ -61,90 +111,129 @@ class DatabaseHandler:
             print("Database Closed")
 
     async def _init_tables(self):
-        """Membuat tabel & index jika belum ada."""
-        # --- TABEL (Schema Lama Tetap Aman) ---
+        """Membuat tabel dasar (Schema V1) & Index."""
+        
+        # 1. Definisi Tabel Dasar (V1)
         queries = [
-            # Users
+            # ... (Pastikan semua query CREATE TABLE users, guild_config, dll ada di sini) ...
+            # Contoh sebagian:
             """CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER, guild_id INTEGER, xp INTEGER DEFAULT 0, 
                 level INTEGER DEFAULT 0, total_voice_mins INTEGER DEFAULT 0,
                 last_chat_ts REAL DEFAULT 0, PRIMARY KEY (user_id, guild_id)
             )""",
-            # Config
+            # ... Masukkan query CREATE TABLE lainnya di sini ...
             """CREATE TABLE IF NOT EXISTS guild_config (
                 guild_id INTEGER PRIMARY KEY, announce_channel_id INTEGER,
                 chat_xp_val INTEGER DEFAULT 5, voice_xp_val INTEGER DEFAULT 10, 
                 min_members_voice INTEGER DEFAULT 2, announcement_mode TEXT DEFAULT 'balanced'
             )""",
-            # Filters
-            """CREATE TABLE IF NOT EXISTS filters (
+             """CREATE TABLE IF NOT EXISTS filters (
                 guild_id INTEGER, target_id INTEGER, type TEXT, category TEXT,
                 PRIMARY KEY (guild_id, target_id, category)
             )""",
-            # Rewards
             """CREATE TABLE IF NOT EXISTS rewards (
                 guild_id INTEGER, level_required INTEGER, role_id INTEGER,
                 PRIMARY KEY (guild_id, level_required)
             )""",
-            # Left Members
             """CREATE TABLE IF NOT EXISTS left_members (
                 user_id INTEGER, guild_id INTEGER, xp INTEGER, level INTEGER, 
                 total_voice_mins INTEGER, left_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (user_id, guild_id)
             )""",
-            # Event Config
-            """CREATE TABLE IF NOT EXISTS event_configs (
+             """CREATE TABLE IF NOT EXISTS event_configs (
                 guild_id INTEGER, event_type TEXT, channel_id INTEGER,
                 is_enabled INTEGER DEFAULT 0, message_text TEXT, use_embed INTEGER DEFAULT 0,
                 embed_title TEXT, embed_description TEXT, embed_color INTEGER DEFAULT 0,
                 image_url TEXT, PRIMARY KEY (guild_id, event_type)
             )""",
-            # Bot Settings
             """CREATE TABLE IF NOT EXISTS bot_settings (key TEXT PRIMARY KEY, value TEXT)""",
-            # Weekly Stats
-            """CREATE TABLE IF NOT EXISTS weekly_stats (
+             """CREATE TABLE IF NOT EXISTS weekly_stats (
                 guild_id INTEGER, user_id INTEGER, week_key TEXT,                 
                 weekly_xp INTEGER DEFAULT 0, weekly_voice_mins INTEGER DEFAULT 0,
-                weekly_chat_xp INTEGER DEFAULT 0, updated_at REAL DEFAULT 0,
+                updated_at REAL DEFAULT 0,
                 PRIMARY KEY (guild_id, user_id, week_key)
             )""",
-            # Weekly Config
-            """CREATE TABLE IF NOT EXISTS weekly_config (
+             """CREATE TABLE IF NOT EXISTS weekly_config (
                 guild_id INTEGER PRIMARY KEY, recap_channel_id INTEGER,
                 is_enabled INTEGER DEFAULT 0, last_posted_week_key TEXT
-            )"""
+            )""",
+            """CREATE TABLE IF NOT EXISTS user_badges (
+                user_id INTEGER, guild_id INTEGER, badge_id TEXT, 
+                unlocked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, guild_id, badge_id)
+            )""",
+            """CREATE TABLE IF NOT EXISTS user_titles (
+                user_id INTEGER, guild_id INTEGER, title_id TEXT, 
+                unlocked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, guild_id, title_id)
+            )""",
+            """CREATE TABLE IF NOT EXISTS user_globals (
+                user_id INTEGER PRIMARY KEY,
+                has_seen_jiromi_intro INTEGER DEFAULT 0,
+                first_intro_at DATETIME DEFAULT NULL
+            )""",
         ]
-        
-        # --- INDEXING (Saran Senior Step E) ---
+
+        # [cite_start]2. Definisi Index (Agar performa cepat) [cite: 38-39]
         indexes = [
             "CREATE INDEX IF NOT EXISTS idx_users_xp ON users(guild_id, xp DESC)",
             "CREATE INDEX IF NOT EXISTS idx_weekly_stats_rank ON weekly_stats(guild_id, week_key, weekly_voice_mins DESC)",
             "CREATE INDEX IF NOT EXISTS idx_filters_lookup ON filters(guild_id, type)"
         ]
 
-        async with self._write_lock:
-            # 1. Buat Tabel
-            for q in queries:
-                await self._conn.execute(q)
-            
-            # 2. [FIX 4] Migrasi Cerdas: Cek dulu apakah kolom sudah ada
-            # Cek kolom weekly_chat_xp di tabel weekly_stats
-            async with self._conn.execute("PRAGMA table_info(weekly_stats)") as cursor:
-                columns = await cursor.fetchall()
-                # columns[1] biasanya adalah nama kolom
-                col_names = [col[1] for col in columns]
+        # 3. Definisi Tabel Meta Versioning [PENTING]
+        queries.append("""
+            CREATE TABLE IF NOT EXISTS schema_meta (
+                key TEXT PRIMARY KEY,
+                value INTEGER
+            )
+        """)
+
+        
+        # Buat Tabel
+        for q in queries:
+            await self._conn.execute(q)
+
+        # Buat Index
+        for idx in indexes:
+            await self._conn.execute(idx)
+
+        # Set versi awal ke 1 jika ini database baru
+        await self._conn.execute("INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('schema_version', 1)")
+        
+        # Commit perubahan struktur dasar
+        await self._conn.commit()
+
+    async def get_guild_weekly_rank(self, guild_id, week_key):
+        """
+        Menghitung ranking global server berdasarkan Total Voice Minutes minggu ini.
+        Hanya menghitung server yang memiliki aktivitas (> 0 menit).
+        Return: (rank, total_active_servers)
+        """
+        # 1. Ambil total voice per guild untuk minggu tertentu
+        # Kita GROUP BY guild_id dan urutkan dari yang terbesar
+        query = """
+            SELECT guild_id, SUM(weekly_voice_mins) as total_voice
+            FROM weekly_stats 
+            WHERE week_key = ? 
+            GROUP BY guild_id 
+            HAVING total_voice > 0
+            ORDER BY total_voice DESC
+        """
+        rows = await self.fetch_all(query, (week_key,))
+        
+        # 2. Cari posisi guild kita di dalam list
+        rank = 0
+        total_servers = len(rows)
+        
+        for i, row in enumerate(rows):
+            if row['guild_id'] == guild_id:
+                rank = i + 1  # Karena index mulai dari 0, ranking mulai dari 1
+                break
                 
-                if 'weekly_chat_xp' not in col_names:
-                    print("⚠️ Migrating DB: Adding weekly_chat_xp column...")
-                    await self._conn.execute("ALTER TABLE weekly_stats ADD COLUMN weekly_chat_xp INTEGER DEFAULT 0")
-
-            # 3. Buat Index
-            for idx in indexes:
-                await self._conn.execute(idx)
-            
-            await self._conn.commit()
-
-    # --- CORE QUERY METHODS (Revised) ---
+        # Jika tidak ketemu (misal belum ada aktivitas), rank tetap 0
+        return rank, total_servers
 
     async def execute(self, query, vars=()):
         """Execute WRITE query dengan Lock."""
@@ -160,12 +249,12 @@ class DatabaseHandler:
             raise e # Re-raise agar caller tau errornya
 
     async def fetch_one(self, query, vars=()):
-        """Execute READ query."""
+        """Execute READ query (DENGAN Lock Write sesuai saran Senior)."""
         if not self._conn: 
             await self.connect()
 
         try:
-            # [FIX] Tambahkan Lock di sini agar tidak tabrakan dengan VACUUM
+            # [FIX SENIOR 4] Kembalikan Lock agar thread-safe total
             async with self._write_lock:
                 async with self._conn.execute(query, vars) as cursor:
                     return await cursor.fetchone()
@@ -174,19 +263,18 @@ class DatabaseHandler:
             return None
 
     async def fetch_all(self, query, vars=()):
-        """Execute READ ALL query."""
+        """Execute READ ALL query (DENGAN Lock Write sesuai saran Senior)."""
         if not self._conn: 
             await self.connect()
 
         try:
-            # [FIX] Tambahkan Lock di sini juga
+            # [FIX SENIOR 4] Kembalikan Lock agar thread-safe total
             async with self._write_lock:
                 async with self._conn.execute(query, vars) as cursor:
                     return await cursor.fetchall()
         except Exception as e:
             print(f"❌ DB READ ALL ERROR: {e}")
             return []
-
     # --- USER DATA & XP LOGIC ---
 
     async def get_user_data(self, user_id, guild_id):
@@ -204,31 +292,90 @@ class DatabaseHandler:
         return dict(user)
 
     async def add_voice_time(self, user_id, guild_id, minutes, xp_per_min):
-        # Transaction implicit via write lock di execute
-        user = await self.get_user_data(user_id, guild_id)
-        new_xp = user['xp'] + (minutes * xp_per_min)
-        new_mins = user['total_voice_mins'] + minutes
+        total_xp_gain = minutes * xp_per_min
         
-        from utils.math_utils import calculate_level
-        new_level = calculate_level(new_xp)
+        async with self._write_lock:
+            # 1. Atomic Update XP & Voice Mins
+            await self._conn.execute(
+                """
+                UPDATE users 
+                SET xp = xp + ?, total_voice_mins = total_voice_mins + ? 
+                WHERE user_id = ? AND guild_id = ?
+                """,
+                (total_xp_gain, minutes, user_id, guild_id)
+            )
+            await self._conn.commit()
 
-        await self.execute(
-            "UPDATE users SET xp = ?, level = ?, total_voice_mins = ? WHERE user_id = ? AND guild_id = ?",
-            (new_xp, new_level, new_mins, user_id, guild_id)
-        )
-        return {"old_level": user['level'], "new_level": new_level}
+            # 2. Ambil data terbaru
+            cursor = await self._conn.execute(
+                "SELECT xp, level FROM users WHERE user_id = ? AND guild_id = ?",
+                (user_id, guild_id)
+            )
+            row = await cursor.fetchone()
+            
+            # Handle user baru jika belum ada record
+            if not row:
+                 # Logic insert user baru bisa ditaruh di sini atau di event listener
+                 return {"old_level": 0, "new_level": 0}
+
+            current_xp = row['xp']
+            old_level = row['level']
+
+            from utils.math_utils import calculate_level
+            new_level = calculate_level(current_xp)
+
+            if new_level > old_level:
+                await self._conn.execute(
+                    "UPDATE users SET level = ? WHERE user_id = ? AND guild_id = ?",
+                    (new_level, user_id, guild_id)
+                )
+                await self._conn.commit()
+
+            return {"old_level": old_level, "new_level": new_level}
 
     async def add_chat_xp(self, user_id, guild_id, xp_amount):
-        user = await self.get_user_data(user_id, guild_id)
-        new_xp = user['xp'] + xp_amount
-        from utils.math_utils import calculate_level
-        new_level = calculate_level(new_xp)
-        
-        await self.execute(
-            "UPDATE users SET xp = ?, level = ?, last_chat_ts = ? WHERE user_id = ? AND guild_id = ?",
-            (new_xp, new_level, time.time(), user_id, guild_id)
-        )
-        return {"old_level": user['level'], "new_level": new_level}
+        # Gunakan Lock Write karena kita melakukan transaksi (Read+Write sekaligus)
+        async with self._write_lock:
+            # 1. Atomic Update: Biarkan SQL yang nambah, jangan Python
+            # Kita update XP dan timestamp sekaligus
+            await self._conn.execute(
+                """
+                UPDATE users 
+                SET xp = xp + ?, last_chat_ts = ? 
+                WHERE user_id = ? AND guild_id = ?
+                """,
+                (xp_amount, time.time(), user_id, guild_id)
+            )
+            await self._conn.commit()
+
+            # 2. Ambil data terbaru setelah update untuk cek level up
+            cursor = await self._conn.execute(
+                "SELECT xp, level FROM users WHERE user_id = ? AND guild_id = ?",
+                (user_id, guild_id)
+            )
+            row = await cursor.fetchone()
+            
+            if not row:
+                # Edge case: User belum ada di DB (jarang terjadi karena ada check eligible)
+                # Insert manual jika perlu, atau return
+                return {"old_level": 0, "new_level": 0}
+
+            current_xp = row['xp']
+            old_level = row['level']
+
+            # 3. Hitung Level Baru
+            from utils.math_utils import calculate_level
+            new_level = calculate_level(current_xp)
+
+            # 4. Jika Level Naik, Update Level
+            if new_level > old_level:
+                await self._conn.execute(
+                    "UPDATE users SET level = ? WHERE user_id = ? AND guild_id = ?",
+                    (new_level, user_id, guild_id)
+                )
+                await self._conn.commit()
+            
+            return {"old_level": old_level, "new_level": new_level}
 
     # --- FILTERS & CONFIG LOGIC ---
 
@@ -583,9 +730,215 @@ class DatabaseHandler:
             (user_id, guild_id)
         )
     
+    # --- GAMIFICATION LOGIC (ACHIEVEMENT, BADGE, TITLE) ---
+
+    async def update_voice_streak(self, user_id, guild_id):
+        """
+        Update streak harian user.
+        Return: Streak terbaru (int).
+        """
+        # 1. Ambil data terakhir
+        user = await self.fetch_one(
+            "SELECT voice_streak, last_voice_date FROM users WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+        )
+        if not user: return 0
+
+        current_streak = user['voice_streak'] or 0
+        last_date_str = user['last_voice_date']
+        
+        # Format tanggal YYYY-MM-DD
+        today_date = datetime.now().strftime("%Y-%m-%d")
+
+        new_streak = current_streak
+
+        # 2. Logika Hitung Streak
+        if last_date_str == today_date:
+            # Sudah login hari ini, streak tidak berubah
+            return current_streak
+        
+        if last_date_str:
+            # Cek apakah last_date adalah "kemarin"
+            last_dt = datetime.strptime(last_date_str, "%Y-%m-%d")
+            today_dt = datetime.strptime(today_date, "%Y-%m-%d")
+            delta = (today_dt - last_dt).days
+
+            if delta == 1:
+                # Login berturut-turut
+                new_streak += 1
+            else:
+                # Terputus (bolong lebih dari 1 hari)
+                new_streak = 1
+        else:
+            # Baru pertama kali voice
+            new_streak = 1
+
+        # 3. Simpan ke DB
+        await self.execute(
+            "UPDATE users SET voice_streak = ?, last_voice_date = ? WHERE user_id = ? AND guild_id = ?",
+            (new_streak, today_date, user_id, guild_id)
+        )
+        return new_streak
+
+    async def unlock_badge(self, user_id, guild_id, badge_id):
+        """
+        Memberikan badge ke user.
+        Return: True jika baru dapat, False jika sudah punya.
+        """
+        # Gunakan INSERT OR IGNORE agar tidak error jika duplikat
+        cursor = await self._conn.execute(
+            "INSERT OR IGNORE INTO user_badges (user_id, guild_id, badge_id) VALUES (?, ?, ?)",
+            (user_id, guild_id, badge_id)
+        )
+        await self._conn.commit()
+        
+        # Jika rowcount > 0 artinya ada data baru masuk (baru unlock)
+        return cursor.rowcount > 0
+
+    async def unlock_title(self, user_id, guild_id, title_id):
+        """
+        Memberikan title (julukan) ke user.
+        Return: True jika baru dapat.
+        """
+        cursor = await self._conn.execute(
+            "INSERT OR IGNORE INTO user_titles (user_id, guild_id, title_id) VALUES (?, ?, ?)",
+            (user_id, guild_id, title_id)
+        )
+        await self._conn.commit()
+        return cursor.rowcount > 0
+
+    async def get_user_gamification_profile(self, user_id, guild_id):
+        """
+        Mengambil data lengkap untuk command /profile dan /rank.
+        Mengembalikan: (active_title, list_badges, list_titles)
+        """
+        # A. Ambil Active Title dari tabel users
+        user_row = await self.fetch_one(
+            "SELECT active_title FROM users WHERE user_id = ? AND guild_id = ?", 
+            (user_id, guild_id)
+        )
+        active_title = user_row['active_title'] if user_row else None
+
+        # B. Ambil List Badges
+        badge_rows = await self.fetch_all(
+            "SELECT badge_id FROM user_badges WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+        )
+        badges = [r['badge_id'] for r in badge_rows]
+
+        # C. Ambil List Titles
+        title_rows = await self.fetch_all(
+            "SELECT title_id FROM user_titles WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+        )
+        titles = [r['title_id'] for r in title_rows]
+
+        return active_title, badges, titles
+
+    async def set_active_title(self, user_id, guild_id, title_id):
+        """Mengganti title yang sedang dipakai."""
+        # Validasi: Pastikan user punya title tersebut
+        has_title = await self.fetch_one(
+            "SELECT 1 FROM user_titles WHERE user_id = ? AND guild_id = ? AND title_id = ?",
+            (user_id, guild_id, title_id)
+        )
+        
+        if not has_title and title_id is not None:
+            return False # Gagal, user gak punya title ini
+            
+        await self.execute(
+            "UPDATE users SET active_title = ? WHERE user_id = ? AND guild_id = ?",
+            (title_id, user_id, guild_id)
+        )
+        return True
+    
     async def delete_left_member(self, user_id, guild_id):
         """Menghapus data member yang sudah kembali ke server."""
         await self.execute(
             "DELETE FROM left_members WHERE user_id = ? AND guild_id = ?",
             (user_id, guild_id)
         )
+
+    async def claim_weekly_recap(self, guild_id, current_week):
+        """
+        Mencoba 'mengklaim' jatah posting minggu ini secara atomik.
+        Return: True jika berhasil klaim (belum diposting), False jika sudah.
+        """
+        # Gunakan lock write karena ini operasi UPDATE
+        async with self._write_lock:
+            # Logic SQL: Update HANYA JIKA minggu di DB beda dengan minggu sekarang
+            query = """
+                UPDATE weekly_config
+                SET last_posted_week_key = ?
+                WHERE guild_id = ? 
+                AND (last_posted_week_key IS NULL OR last_posted_week_key != ?)
+            """
+            cursor = await self._conn.execute(query, (current_week, guild_id, current_week))
+            await self._conn.commit()
+            
+            # Jika rowcount = 1, artinya update berhasil (kita yang menang)
+            # Jika rowcount = 0, artinya kondisi WHERE tidak terpenuhi (sudah diposting orang lain/loop sebelumnya)
+            return cursor.rowcount == 1
+        
+    async def _run_migrations(self):
+        """Menjalankan migrasi database secara aman & atomic."""
+        async with self._write_lock:
+            # Mulai Transaksi Eksklusif (Kunci DB total)
+            await self._conn.execute("BEGIN IMMEDIATE")
+            
+            try:
+                # Cek versi saat ini
+                cursor = await self._conn.execute("SELECT value FROM schema_meta WHERE key='schema_version'")
+                row = await cursor.fetchone()
+                current_version = row[0] if row else 0
+                
+                # Cek apakah ada versi baru yang perlu diapply
+                # MIGRATIONS adalah dictionary yang kita buat di Langkah 1
+                for version in sorted(MIGRATIONS):
+                    if version > current_version:
+                        # Jalankan fungsi migrasi
+                        await MIGRATIONS[version](self._conn)
+                        
+                        # Update versi di DB
+                        await self._conn.execute("UPDATE schema_meta SET value=? WHERE key='schema_version'", (version,))
+                        print(f"✅ Database upgraded to v{version}")
+                
+                # Commit semua perubahan JIKA DAN HANYA JIKA semua sukses
+                await self._conn.commit()
+                
+            except Exception as e:
+                print(f"❌ MIGRATION FAILED: {e}")
+                # Rollback jika ada error (DB kembali ke keadaan semula sebelum migrasi)
+                await self._conn.rollback()
+                # Raise error biar bot STOP dan admin sadar ada masalah
+                raise RuntimeError("Database migration failed. Bot shutdown for safety.")
+            
+
+    # --- GLOBAL USER STATE (JIROMI INTRO) ---
+
+    async def should_send_global_intro(self, user_id):
+        """
+        Cek apakah user sudah pernah menerima intro Jiromi (Global Check).
+        Return: True jika BELUM pernah (boleh kirim), False jika SUDAH.
+        """
+        row = await self.fetch_one(
+            "SELECT has_seen_jiromi_intro FROM user_globals WHERE user_id = ?", 
+            (user_id,)
+        )
+        if not row:
+            return True # User belum ada di tabel global -> Kirim Intro
+        
+        return row['has_seen_jiromi_intro'] == 0
+
+    async def mark_global_intro_seen(self, user_id):
+        """Tandai user sudah menerima intro (Atomic Insert/Update)."""
+        now = datetime.now().isoformat()
+        async with self._write_lock:
+            await self._conn.execute("""
+                INSERT INTO user_globals (user_id, has_seen_jiromi_intro, first_intro_at)
+                VALUES (?, 1, ?)
+                ON CONFLICT(user_id) DO UPDATE SET 
+                    has_seen_jiromi_intro = 1,
+                    first_intro_at = excluded.first_intro_at
+            """, (user_id, now))
+            await self._conn.commit()

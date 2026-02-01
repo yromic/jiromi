@@ -8,33 +8,98 @@ class Leveling(commands.Cog):
         self.bot = bot
         self.db = db
         self.mute_tracker = {}
-        self.failed_roles_cache = set()
+        self.failed_roles_cache = {} # [FIX] Ubah jadi Dict untuk simpan timestamp
+        self.CACHE_TTL = 3600 # [FIX] TTL 1 Jam (3600 detik)
         self.voice_heartbeat.start()
 
     def cog_unload(self):
         self.voice_heartbeat.cancel()
 
+    # [FIX] Gantikan method voice_heartbeat yang lama dengan dua method ini:
+
     @tasks.loop(minutes=1.0)
     async def voice_heartbeat(self):
-        for guild in self.bot.guilds:
-            config = await self.db.get_guild_config(guild.id)
-            if not config:
+        """
+        Loop utama dengan Exception Handling Global.
+        Jika terjadi error, loop akan mencatat log tapi TIDAK AKAN MATI.
+        """
+        # 1. Guard: Pastikan bot sudah siap sebelum loop jalan
+        if not self.bot.is_ready():
+            return
+
+        try:
+            for guild in self.bot.guilds:
+                # 2. Isolasi Error per Guild
+                # Kita bungkus proses tiap guild agar error di Server A 
+                # tidak menghentikan XP di Server B.
+                try:
+                    await self._process_guild_voice(guild)
+                except Exception as e:
+                    # Log error spesifik guild, tapi loop lanjut ke guild berikutnya
+                    self.bot.logger.error(
+                        "VOICE_GUILD_FAIL", 
+                        f"Gagal memproses voice untuk guild {guild.name}", 
+                        error_obj=e,
+                        guild_id=guild.id
+                    )
+                    
+        except Exception as e:
+            # 3. Catch-All Global
+            # Jika error terjadi di level teratas (misal self.bot.guilds bermasalah)
+            # Loop akan selamat dan mencoba lagi menit depan.
+            self.bot.logger.error(
+                "VOICE_LOOP_CRASH", 
+                "Critical error pada voice heartbeat loop", 
+                error_obj=e
+            )
+
+    async def _process_guild_voice(self, guild):
+        """
+        Helper method untuk memproses satu guild.
+        Memisahkan logic agar kode lebih bersih dan terisolasi.
+        """
+        # Ambil config (Bisa error DB Timeout disini, makanya perlu try-except di atas)
+        config = await self.db.get_guild_config(guild.id)
+        if not config:
+            return
+
+        # Iterasi Voice Channel
+        for vc in guild.voice_channels:
+            # Filter member aktif
+            # [Safe Access] Kita gunakan list comprehension yang aman
+            active_members = []
+            for m in vc.members:
+                if m.bot: continue
+                
+                # [FIX SENIOR] Guard attribute access untuk mencegah crash
+                # Jika member disconnect tepat saat loop jalan, m.voice bisa None
+                if not m.voice: continue 
+                if m.voice.self_deaf: continue
+                
+                active_members.append(m)
+
+            if len(active_members) < config['min_members_voice']:
                 continue
 
-            for vc in guild.voice_channels:
-                active_members = [
-                    m for m in vc.members
-                    if not m.bot and not m.voice.self_deaf
-                ]
-
-                if len(active_members) < config['min_members_voice']:
-                    continue
-
-                for member in active_members:
+            # Proses XP per Member
+            for member in active_members:
+                try:
+                    # Cek eligibility (DB Call)
                     if not await self.db.is_eligible(member, vc):
                         continue
 
                     await self.process_voice_xp(member, config)
+                    
+                except Exception as e:
+                    # [Fail-Soft per Member]
+                    # Jika 1 member error, member lain di channel yang sama TETAP dapat XP
+                    self.bot.logger.error(
+                        "VOICE_MEMBER_FAIL",
+                        f"Gagal add XP untuk {member.name}",
+                        error_obj=e,
+                        guild_id=guild.id
+                    )
+
 
     async def process_voice_xp(self, member, config):
         key = (member.guild.id, member.id)
@@ -56,6 +121,8 @@ class Leveling(commands.Cog):
             minutes, # Pakai variabel
             config['voice_xp_val']
         )
+
+        
         
         # [HOOK] Update Weekly Stats
         await self.db.update_weekly_stats(
@@ -66,12 +133,45 @@ class Leveling(commands.Cog):
             chat_xp_add=0  # [PENTING] Chat XP nol karena ini voice
         )
 
+        self.bot.loop.create_task(self._try_send_global_intro(member))
+
         if result['new_level'] > result['old_level']:
             await self.handle_level_up(member, result['new_level'])
 
+        # 1. Update Streak & Ambil Data Terbaru
+        streak_now = await self.db.update_voice_streak(member.id, member.guild.id)
+        user_data = await self.db.get_user_data(member.id, member.guild.id) 
+        total_mins = user_data['total_voice_mins']
+
+        # Helper Notif
+        async def send_achiev_msg(text):
+            if config['announce_channel_id']:
+                ch = member.guild.get_channel(config['announce_channel_id'])
+                if ch and ch.permissions_for(member.guild.me).send_messages:
+                    try: await ch.send(text) 
+                    except: pass
+
+        if total_mins >= 1:
+            # Unlock Badge
+            if await self.db.unlock_badge(member.id, member.guild.id, "badge_echo_mark"):
+                # Unlock Title: [Echo Bearer]
+                await self.db.unlock_title(member.id, member.guild.id, "title_echo_bearer")
+                await send_achiev_msg(f"📢 **New Journey!** {member.mention} baru saja memulai gema pertamanya.\n🎁 Unlocked: Badge **Echo Mark** & Title **[Echo Bearer]**")
+
+        if total_mins >= 1000:
+            if await self.db.unlock_badge(member.id, member.guild.id, "badge_sound_sigil"):
+                await send_achiev_msg(f"🛡️ **COMMITMENT!** {member.mention} telah bersuara selama 1000 menit!\n🎁 Unlocked: Badge **Sound Sigil**.")
+
+        if streak_now >= 7:
+            if await self.db.unlock_badge(member.id, member.guild.id, "badge_unbroken_seal"):
+                # Unlock Title: [Unbroken] (Sangat Prestige)
+                await self.db.unlock_title(member.id, member.guild.id, "title_unbroken")
+                await send_achiev_msg(f"🔥 **UNSTOPPABLE!** {member.mention} mempertahankan Voice Streak selama 7 hari!\n🎁 Unlocked: Badge **Unbroken Seal** & Title **[Unbroken]**.")
+
         self.bot.stats_buffer['voice_xp_events'] += 1
         self.bot.stats_buffer['voice_minutes'] += minutes
-        
+
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not message.guild:
@@ -107,6 +207,8 @@ class Leveling(commands.Cog):
             chat_xp_add=config['chat_xp_val'] # [PENTING] Isi kolom chat
         )
 
+        self.bot.loop.create_task(self._try_send_global_intro(message.author))
+
         if result['new_level'] > result['old_level']:
             await self.handle_level_up(message.author, result['new_level'])
             
@@ -118,15 +220,17 @@ class Leveling(commands.Cog):
         config = await self.db.get_guild_config(member.guild.id)
         mode = config['announcement_mode'] if config else 'balanced' 
 
-        # 1. Cek Role Reward terlebih dahulu
         reward_role = await self.check_role_rewards(member, new_level) 
+        
+        if new_level == 10:
+             if await self.db.unlock_badge(member.id, member.guild.id, "badge_resonant_path"):
+                 await self.db.unlock_title(member.id, member.guild.id, "title_resonant_knight")
 
-        # 2. Filter Logika Berdasarkan Mode
         if mode == "quiet":
             return # Tidak ada pengumuman sama sekali
 
         if mode == "balanced":
-            # Hanya umumkan jika ada role baru [cite: 260-262]
+            # Hanya umumkan jika ada role baru yang didapat dari check_role_rewards di atas
             if reward_role:
                 await self.handle_announcement(member, new_level, reward_role)
             return
@@ -134,36 +238,6 @@ class Leveling(commands.Cog):
         if mode == "loud":
             # Umumkan setiap naik level, baik ada role maupun tidak
             await self.handle_announcement(member, new_level, reward_role)
-            
-        rewards = await self.db.get_level_rewards(member.guild.id)
-        
-        for reward in rewards:
-            if reward['level_required'] == new_level:
-                role_id = reward['role_id']
-                role = member.guild.get_role(role_id)
-                
-                if role:
-                    try:
-                        await member.add_roles(role, reason=f"Level Up to {new_level}")
-                        # Log Sukses (Opsional, Info aja)
-                        self.bot.logger.info("ROLE_GIVE", f"Gave role {role.name} to {member.name}", guild_id=member.guild.id)
-                        
-                    except discord.Forbidden:
-                        # [FIX 5] Ganti print dengan Logger Error
-                        self.bot.logger.error(
-                            "ROLE_FORBIDDEN", 
-                            f"Missing perms to give role {role.name}",
-                            guild_id=member.guild.id,
-                            user_id=member.id,
-                            role_id=role.id
-                        )
-                    except Exception as e:
-                        self.bot.logger.error(
-                            "ROLE_FAIL", 
-                            "Unknown error giving role",
-                            e,
-                            guild_id=member.guild.id
-                        )
 
     async def check_role_rewards(self, member, level):
         rewards = await self.db.fetch_all(
@@ -178,11 +252,18 @@ class Leveling(commands.Cog):
                 role_id = row['role_id']
                 role = member.guild.get_role(role_id)
                 
-                # [BARU] Skip jika role tidak ada atau sudah ditandai gagal
                 if not role: 
                     continue
-                if (member.guild.id, member.id, role_id) in self.failed_roles_cache:
-                    continue
+                
+                cache_key = (member.guild.id, member.id, role_id)
+                if cache_key in self.failed_roles_cache:
+                    last_failure_time = self.failed_roles_cache[cache_key]
+                    
+                    if time.time() - last_failure_time < self.CACHE_TTL:
+                        continue
+                    else:
+                        # Jika sudah lebih dari 1 jam, hapus dari cache & coba lagi (Retry)
+                        del self.failed_roles_cache[cache_key]
 
                 if role and role not in member.roles:
                     try:
@@ -192,9 +273,14 @@ class Leveling(commands.Cog):
                         self.failed_roles_cache.discard((member.guild.id, member.id, role_id))
                         
                     except discord.Forbidden:
-                        # [BARU] Tangkap error, masukkan ke cache, dan print warning SEKALI SAJA
-                        self.failed_roles_cache.add((member.guild.id, member.id, role_id))
-                        print(f" ⚠️  [Soft-Fail] Izin ditolak memberi role {role.name} di {member.guild.name}. Retry dihentikan untuk user ini.")
+                        self.failed_roles_cache[(member.guild.id, member.id, role_id)] = time.time()
+                        
+                        self.bot.logger.error(
+                            "ROLE_GRANT_FAIL",
+                            f"Izin ditolak memberi role {role.name}. Retry dalam 1 jam.",
+                            guild_id=member.guild.id,
+                            user_id=member.id
+                        )
                     except Exception as e:
                         print(f" ❌  Error tak terduga saat memberi reward: {e}")
 
@@ -250,6 +336,58 @@ class Leveling(commands.Cog):
     async def before_voice_heartbeat(self):
         await self.bot.wait_until_ready()
 
+    
+    async def _try_send_global_intro(self, member):
+        """
+        Logika tunggal untuk mengirim pesan perkenalan global.
+        Rules: 1x seumur hidup, via DM, Fail Silent.
+        """
+        # 1. Cek Database (Cepat & Ringan)
+        if not await self.db.should_send_global_intro(member.id):
+            return
+
+        # 2. Siapkan Pesan (Sesuai Blueprint Senior)
+        embed = discord.Embed(
+            title="🌱 Aku Jiromi",
+            description=(
+                f"Hai {member.name},\n"
+                "aku Jiromi.\n"
+                "Aku hadir di berbagai komunitas untuk menemani perjalanan kecil yang sering luput dari perhatian —\n\n"
+                "obrolan singkat, waktu bersama di voice, dan kehadiran yang konsisten.\n"
+                "Tidak ada keharusan untuk bersaing.\n\n"
+                "Tidak ada tuntutan untuk aktif.\n\n"
+                "Setiap langkah punya ritmenya sendiri."
+            ),
+            color=discord.Color.from_rgb(240, 240, 240) # Warna netral/lembut (sesuai selera)
+        )
+        # Footer context (Penting agar user tau trigger-nya)
+        embed.set_footer(text=f"Pesan ini muncul karena aktivitas pertamamu di {member.guild.name}")
+
+        # 3. Kirim DM (Fail Silent)
+        try:
+            await member.send(embed=embed)
+            
+            # 4. Tandai di DB (Hanya jika DM sukses terkirim)
+            await self.db.mark_global_intro_seen(member.id)
+            
+            # Log audit kecil (Opsional, buat debug admin aja)
+            self.bot.logger.info("GLOBAL_INTRO", f"Sent global intro to {member.name} ({member.id})")
+            
+        except discord.Forbidden:
+            # User tutup DM -> Tandai SUDAH dilihat agar bot tidak mencoba terus-menerus
+            # (Sesuai prinsip: Fail Silent & No Retry Spam)
+            await self.db.mark_global_intro_seen(member.id)
+        except Exception:
+            pass # Error lain abaikan saja
+
+    # [FIX FINAL] Global Task Error Handler
+    @voice_heartbeat.error
+    async def voice_heartbeat_error(self, error):
+        self.bot.logger.error(
+            "VOICE_LOOP_CRASH", 
+            "Voice XP loop mati total (Critical)", 
+            error_obj=error
+        )
 # Ganti fungsi setup di bagian paling bawah cogs/leveling.py
 async def setup(bot):
     # bot.db sudah diinisialisasi di main.py, jadi kita bisa langsung memakainya
