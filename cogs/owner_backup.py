@@ -96,7 +96,7 @@ class OwnerBackup(commands.GroupCog, name="owner"):
     async def set_backup_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         await self.db.set_bot_setting("backup_channel_id", channel.id)
         await interaction.response.send_message(
-            f"✅ **Setup Berhasil.** Backup akan dikirim ke {channel.mention}.",
+            f"[PROCESS]  **Setup Berhasil.** Backup akan dikirim ke {channel.mention}.",
             ephemeral=True
         )
 
@@ -109,7 +109,7 @@ class OwnerBackup(commands.GroupCog, name="owner"):
         if now - self.last_backup_ts < cooldown:
             remaining = int(cooldown - (now - self.last_backup_ts))
             return await interaction.response.send_message(
-                f"⏳ **Cooldown.** Tunggu {remaining} detik lagi.", ephemeral=True
+                f"[PROCESS] **Cooldown.** Tunggu {remaining} detik lagi.", ephemeral=True
             )
 
         await interaction.response.defer(ephemeral=True)
@@ -141,9 +141,9 @@ class OwnerBackup(commands.GroupCog, name="owner"):
             await channel.send(embed=embed, file=file)
             
             os.remove(zip_path)
-            await interaction.followup.send("✅ Sukses.", ephemeral=True)
+            await interaction.followup.send("[SUCCESS] Sukses.", ephemeral=True)
         else:
-            await interaction.followup.send(f"❌ Gagal: {meta}", ephemeral=True)
+            await interaction.followup.send(f"[FAILED] Gagal: {meta}", ephemeral=True)
 
     @app_commands.command(name="restore_guide", description="Panduan cara restore database.")
     @app_commands.check(is_bot_owner)
@@ -166,7 +166,7 @@ class OwnerBackup(commands.GroupCog, name="owner"):
     @app_commands.check(is_bot_owner)
     async def backup_status(self, interaction: discord.Interaction):
         channel_id = await self.db.get_bot_setting("backup_channel_id")
-        status = "✅ Aktif" if self.auto_backup_task.is_running() else "❌ Mati"
+        status = "[SUCCESS] Aktif" if self.auto_backup_task.is_running() else "❌ Mati"
         
         # Hitung next run
         next_run = self.auto_backup_task.next_iteration
@@ -236,7 +236,7 @@ class OwnerBackup(commands.GroupCog, name="owner"):
     async def before_auto_backup(self):
         await self.bot.wait_until_ready()
         # Delay ini WAJIB ada agar backup pertama tidak tabrakan sama startup
-        print("⏳ Auto-Backup: Menunggu startup stabil (60s)...")
+        print("[PROCESS] Auto-Backup: Menunggu startup stabil (60s)...")
         await asyncio.sleep(60)
 
     # Error Handler

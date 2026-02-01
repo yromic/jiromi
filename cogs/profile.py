@@ -12,17 +12,29 @@ class Profile(commands.Cog):
 
     # Mapping ID Database -> Emoji Visual
     BADGE_ICONS = {
-        "badge_echo_mark": "📢",      
-        "badge_sound_sigil": "🛡️",    
-        "badge_unbroken_seal": "🔥",  
-        "badge_voice_order": "⚔️",    
-        "badge_resonant_path": "✨"  
+    # Badge lama
+    "badge_echo_mark": "<:speaker_jiromi:1467342396986757212>",
+    "badge_sound_sigil": "<:shield_jiromi:1467342758921506838>",
+    "badge_unbroken_seal": "<:fire_jiromi:1467342251674964090>",
+    "badge_voice_order": "<:sword_jiromi:1467342441542586410>",
+    "badge_resonant_path": "<:star_jiromi:1467342479710883924>",
+
+    # Badge baru
+    "badge_quiet_anchor": "<:anchor_jiromi:1467342312358281404>",
+    "badge_steady_flame": "<:candle_jiromi:1467342528520126536>",
+    "badge_common_path": "<:track_jiromi:1467342573374017667>",
+    "badge_still_here": "<:tree_jiromi:1467342354632413392>",
     }
+
     
     TITLE_NAMES = {
-        "title_echo_bearer": "Echo Bearer",       # Awal
-        "title_resonant_knight": "Resonant Knight", # Leveling
-        "title_unbroken": "Unbroken"              # Streak 7 Hari
+        "title_echo_bearer": "Echo Bearer",
+        "title_resonant_knight": "Resonant Knight",
+        "title_unbroken": "Unbroken",
+        # [NEW] Title Baru
+        "title_waykeeper": "Waykeeper",
+        "title_the_steady": "The Steady",
+        "title_fellow_path": "Fellow of the Path"
     }
 
     @app_commands.command(name="rank", description="🏁 Social Snapshot: Lihat posisimu di antara member lain.")
@@ -151,13 +163,17 @@ class Profile(commands.Cog):
         # BLOK 3: Milestone & Badge (Limit 5)
         if badges:
             # Render badge dengan nama aslinya biar lebih 'bercerita'
-            # Kita mapping manual ID ke Nama Cantik
             BADGE_NAMES = {
                 "badge_echo_mark": "Echo Mark (Voice I)",
                 "badge_sound_sigil": "Sound Sigil (Voice II)",
                 "badge_unbroken_seal": "Unbroken Seal (Streak)",
                 "badge_voice_order": "Voice of Order (Weekly)",
-                "badge_resonant_path": "Resonant Path (Level 10)"
+                "badge_resonant_path": "Resonant Path (Level 10)",
+                # [NEW] Nama Badge Baru
+                "badge_quiet_anchor": "Quiet Anchor (3000m)",
+                "badge_steady_flame": "Steady Flame (30 Days)",
+                "badge_common_path": "Common Path (4 Weeks)",
+                "badge_still_here": "Still Here (1 Year)"
             }
             
             badge_list = []
@@ -249,6 +265,51 @@ class Profile(commands.Cog):
         embed.set_footer(text="Bukan tentang siapa yang tercepat, tapi siapa yang tetap ada.")
         
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="level", description="🧭 Melihat progres level perjalanan.")
+    @app_commands.describe(user="Lihat level member lain")
+    async def level(self, interaction: discord.Interaction, user: discord.Member | None = None): # [FIX 4] Type Hint Modern
+        target = user or interaction.user
+        is_self = (target.id == interaction.user.id)
+
+        user_data = await self.db.get_user_data(target.id, interaction.guild.id)
+        lvl = user_data['level']
+        xp = user_data['xp']
+        
+        # Hitung target
+        next_limit = xp_for_next_level(lvl)
+        
+        # [FIX 1] Cegah nilai negatif dengan max(0, ...)
+        remaining = max(0, next_limit - xp)
+
+        # Helper format angka (30.000)
+        def fmt(n): return f"{n:,}".replace(",", ".")
+
+        # [FIX 2] Cukup cek lvl == 0 (Defensive: abaikan jika ada sisa XP nyasar)
+        if lvl == 0:
+            if is_self:
+                # [FIX 3] Konsistensi tone reflektif
+                msg = "🧭 Level 0\n\nPerjalanan baru saja dimulai.\nMasih ada jalan di depan."
+            else:
+                msg = f"🧭 Level 0 — {target.display_name}\n\nPerjalanan baru saja dimulai."
+        else:
+            if is_self:
+                msg = (
+                    f"🧭 Level {lvl}\n\n"
+                    f"Kau telah menempuh {fmt(xp)} langkah.\n"
+                    f"Masih tersisa {fmt(remaining)} langkah lagi.\n\n"
+                    "Masih ada jalan di depan."
+                )
+            else:
+                msg = (
+                    f"🧭 Level {lvl} — {target.display_name}\n\n"
+                    f"{fmt(xp)} langkah telah ditempuh.\n"
+                    f"Tersisa {fmt(remaining)} langkah lagi."
+                )
+
+        await interaction.response.send_message(content=msg, ephemeral=is_self)
+
+        
 
     # Helper untuk menghitung Ranking & Neighbors
     async def _get_rank_context(self, guild_id, user_id):

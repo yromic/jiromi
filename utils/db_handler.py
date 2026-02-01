@@ -241,37 +241,35 @@ class DatabaseHandler:
             await self.connect() # Auto-connect safeguard
         
         try:
-            async with self._write_lock:
+            async with self._write_lock: # <--- INI WAJIB ADA UNTUK WRITE
                 await self._conn.execute(query, vars)
                 await self._conn.commit()
         except Exception as e:
             print(f"❌ DB WRITE ERROR: {e} | Query: {query}")
-            raise e # Re-raise agar caller tau errornya
+            raise e
 
     async def fetch_one(self, query, vars=()):
-        """Execute READ query (DENGAN Lock Write sesuai saran Senior)."""
+        """Execute READ query (TANPA Lock, mengandalkan WAL)."""
         if not self._conn: 
             await self.connect()
 
         try:
-            # [FIX SENIOR 4] Kembalikan Lock agar thread-safe total
-            async with self._write_lock:
-                async with self._conn.execute(query, vars) as cursor:
-                    return await cursor.fetchone()
+            # Langsung execute tanpa nunggu antrean tulis
+            async with self._conn.execute(query, vars) as cursor:
+                return await cursor.fetchone()
         except Exception as e:
             print(f"❌ DB READ ERROR: {e}")
             return None
 
     async def fetch_all(self, query, vars=()):
-        """Execute READ ALL query (DENGAN Lock Write sesuai saran Senior)."""
+        """Execute READ ALL query (TANPA Lock)."""
         if not self._conn: 
             await self.connect()
 
         try:
-            # [FIX SENIOR 4] Kembalikan Lock agar thread-safe total
-            async with self._write_lock:
-                async with self._conn.execute(query, vars) as cursor:
-                    return await cursor.fetchall()
+            # Langsung execute, biarkan SQLite WAL yang mengatur concurrency
+            async with self._conn.execute(query, vars) as cursor:
+                return await cursor.fetchall()
         except Exception as e:
             print(f"❌ DB READ ALL ERROR: {e}")
             return []
@@ -785,27 +783,29 @@ class DatabaseHandler:
         Memberikan badge ke user.
         Return: True jika baru dapat, False jika sudah punya.
         """
-        # Gunakan INSERT OR IGNORE agar tidak error jika duplikat
-        cursor = await self._conn.execute(
-            "INSERT OR IGNORE INTO user_badges (user_id, guild_id, badge_id) VALUES (?, ?, ?)",
-            (user_id, guild_id, badge_id)
-        )
-        await self._conn.commit()
-        
-        # Jika rowcount > 0 artinya ada data baru masuk (baru unlock)
-        return cursor.rowcount > 0
+
+        async with self._write_lock:
+            cursor = await self._conn.execute(
+                "INSERT OR IGNORE INTO user_badges (user_id, guild_id, badge_id) VALUES (?, ?, ?)",
+                (user_id, guild_id, badge_id)
+            )
+            await self._conn.commit()
+            
+            return cursor.rowcount > 0
 
     async def unlock_title(self, user_id, guild_id, title_id):
         """
         Memberikan title (julukan) ke user.
         Return: True jika baru dapat.
         """
-        cursor = await self._conn.execute(
-            "INSERT OR IGNORE INTO user_titles (user_id, guild_id, title_id) VALUES (?, ?, ?)",
-            (user_id, guild_id, title_id)
-        )
-        await self._conn.commit()
-        return cursor.rowcount > 0
+        
+        async with self._write_lock:
+            cursor = await self._conn.execute(
+                "INSERT OR IGNORE INTO user_titles (user_id, guild_id, title_id) VALUES (?, ?, ?)",
+                (user_id, guild_id, title_id)
+            )
+            await self._conn.commit()
+            return cursor.rowcount > 0
 
     async def get_user_gamification_profile(self, user_id, guild_id):
         """

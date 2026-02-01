@@ -29,7 +29,7 @@ class JiromiLogger:
             with open(self.jsonl_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(entry) + "\n")
         except Exception as e:
-            print(f"❌ LOG FILE ERROR: {e}")
+            print(f"[ERROR] LOG FILE ERROR: {e}")
 
     # --- TIPE LOGGING (Sekarang pakai Timestamp di Console) ---
 

@@ -4,11 +4,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from datetime import datetime, timezone, timedelta
+import asyncio
+import time
 
 class WeeklyStats(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
+
+    async def cog_load(self):
         self.weekly_recap_loop.start()
 
     def cog_unload(self):
@@ -18,7 +22,22 @@ class WeeklyStats(commands.Cog):
 
     @app_commands.command(name="weekly_leaderboard", description="🏆 Ringkasan keaktifan komunitas selama minggu ini.")
     async def weekly_lb(self, interaction: discord.Interaction):
-        await interaction.response.defer() # Defer biar gak timeout loading data
+        # 1. PRIORITAS UTAMA: Lapor ke Discord (ACK)
+        # Harus paling atas. Jangan ada logika lain sebelumnya.
+        try:
+            await interaction.response.defer(thinking=True)
+            # Log bahwa kita berhasil lapor
+            self.bot.logger.info("INTERACTION", f"ACK Success: {interaction.user.id}")
+        except discord.InteractionResponded:
+            # Sudah di-ack duluan (jarang, tapi aman)
+            pass
+        except Exception as e:
+            # Jika ACK gagal, bot tidak bisa lanjut. Log dan stop.
+            self.bot.logger.error("INTERACTION_FAIL", "Defer Gagal", error_obj=e)
+            return
+
+        # 2. BARU JALANKAN LOGIKA & BENCHMARK
+        start_time = time.time()
         
         guild = interaction.guild
         current_week = self.db.get_current_week_key()
@@ -44,7 +63,11 @@ class WeeklyStats(commands.Cog):
         """, (guild.id, current_week))
 
         if not top_users:
-            return await interaction.followup.send("💤 Belum ada aktivitas minggu ini. Ayo ramaikan Voice & Chat!", ephemeral=True)
+            try:
+                await interaction.followup.send("💤 Belum ada aktivitas minggu ini. Ayo ramaikan Voice & Chat!", ephemeral=True)
+            except:
+                pass
+            return 
         
         # --- [BARU] 2.5 AMBIL RANKING GLOBAL ---
         global_rank, total_servers = await self.db.get_guild_weekly_rank(guild.id, current_week)
@@ -100,7 +123,15 @@ class WeeklyStats(commands.Cog):
         )
         embed.set_footer(text="🌱 Perjalanan baru dimulai setiap Senin. Semua statistik disegarkan kembali.")
         
-        await interaction.followup.send(embed=embed)
+        # [DEBUG END] Matikan Stopwatch & Lapor
+        duration = time.time() - start_time
+        self.bot.logger.info("BENCHMARK", f"Weekly Leaderboard selesai dalam {duration:.4f} detik")
+
+        # Kirim hasil dengan Safety Guard
+        try:
+            await interaction.followup.send(embed=embed)
+        except (discord.NotFound, discord.HTTPException) as e:
+            self.bot.logger.error("WEEKLY_CMD_FAIL", "Gagal kirim embed hasil", error_obj=e)
 
     # --- ADMIN CONFIG ---
     
@@ -282,104 +313,152 @@ class WeeklyStats(commands.Cog):
 
     # --- AUTO RECAP TASK (The Killer Feature) ---
     
-    # --- AUTO RECAP TASK (The Killer Feature) ---
     
     @tasks.loop(minutes=30) 
     async def weekly_recap_loop(self):
-        # [FIX SENIOR 1] Wrap seluruh body dengan try-except
-        try:
-            # Tunggu bot siap dulu
-            if not self.bot.is_ready():
-                return
+        # Guard: Bot belum siap
+        if not self.bot.is_ready(): return
 
+        try:
             current_week = self.db.get_current_week_key()
-            
-            # Ambil semua guild yang aktif
             configs = await self.db.fetch_all("SELECT * FROM weekly_config WHERE is_enabled = 1")
             
             for conf in configs:
-                guild_id = conf['guild_id']
-                
-                # --- ATOMIC CLAIM ---
-                if not await self.db.claim_weekly_recap(guild_id, current_week):
-                    continue 
-
-                # --- JIKA BERHASIL KLAIM, LANJUT PROSES ---
-                guild = self.bot.get_guild(guild_id)
-                if not guild: continue
-                
-                channel = guild.get_channel(conf['recap_channel_id'])
-                if not channel: 
-                    self.bot.logger.error("WEEKLY_RECAP", "Channel recap hilang", guild_id=guild_id)
-                    await self.db.execute("UPDATE weekly_config SET is_enabled = 0 WHERE guild_id = ?", (guild_id,))
-                    continue
-
-                # Hitung KEY MINGGU LALU
-                prev_date = datetime.now(timezone.utc) - timedelta(days=7)
-                prev_week_key = self.db.get_week_key_for_date(prev_date)
-                
-                # Query Data MINGGU LALU
-                prev_data = await self.db.fetch_all("""
-                    SELECT user_id, weekly_voice_mins, weekly_xp 
-                    FROM weekly_stats 
-                    WHERE guild_id = ? AND week_key = ?
-                    ORDER BY weekly_voice_mins DESC
-                    LIMIT 10
-                """, (guild_id, prev_week_key))
-
-                # Logic Badge & Embed (Sama seperti sebelumnya)
-                if prev_data:
-                    for row in prev_data:
-                        if row['weekly_voice_mins'] > 60:
-                            user_id = row['user_id']
-                            await self.db.unlock_badge(user_id, guild_id, "badge_voice_order")
-
-                g_rank, g_total = await self.db.get_guild_weekly_rank(guild_id, prev_week_key)
-
-                # --- RENDER EMBED ---
-                desc = ""
-                top_3_emojis = ["🥇", "🥈", "🥉"]
-                
-                if g_rank > 0:
-                    desc += "**🌍 Global Context**\n"
-                    desc += f"• Peringkat server: **#{g_rank}** dari {g_total} server\n"
-                    # [FIX SENIOR] Handle jika prev_data kosong agar sum() tidak error
-                    total_voice_sample = sum(r['weekly_voice_mins'] for r in prev_data) if prev_data else 0
-                    desc += f"• Total voice (Top 10): `{total_voice_sample:,} menit`"
-                    desc += "\n\n🌍 *Penasaran posisi global lainnya? Gunakan /global leaderboard*\n\n"
-                    desc += "───────────────\n"
-
-                if prev_data:
-                    for i, row in enumerate(prev_data):
-                        m = guild.get_member(row['user_id'])
-                        name = m.display_name if m else f"User-{row['user_id']}"
-                        rank_prefix = top_3_emojis[i] if i < 3 else f"**#{i+1}**"
-                        desc += f"{rank_prefix} **{name}** — 🎙️ `{row['weekly_voice_mins']}m` ✨ `{row['weekly_xp']}XP`\n"
+                # ISOLASI ERROR PER GUILD (Saran Senior Fix #1)
+                try:
+                    # Kita lempar logika berat ke fungsi baru (lihat FIX 3)
+                    await self._process_single_guild_recap(conf, current_week)
                     
-                    embed = discord.Embed(
-                        title=f"📅 REKAP MINGGUAN ({prev_week_key})",
-                        description=f"Inilah pahlawan keaktifan minggu lalu!\n\n{desc}",
-                        color=discord.Color.fuchsia()
+                except Exception as e:
+                    # Jika Guild A error, Guild B TETAP JALAN
+                    self.bot.logger.error(
+                        "WEEKLY_GUILD_FAIL", 
+                        f"Gagal rekap untuk guild {conf['guild_id']}", 
+                        error_obj=e
                     )
-                    embed.set_footer(text="Statistik telah di-reset untuk minggu baru. Gas lagi!")
                     
-                    try:
-                        await channel.send(embed=embed)
-                    except discord.Forbidden:
-                        print(f"❌ Tidak ada izin kirim pesan di {guild.name}")
-                        
         except Exception as e:
-            # [FIX SENIOR 2] Catch Exception agar loop TIDAK MATI
-            print(f"❌ ERROR inside Weekly Loop: {e}")
-            # Opsional: Log ke file via self.bot.logger
+            # Catch-all level teratas
+            self.bot.logger.error("WEEKLY_FATAL", "Error di loop utama", error_obj=e)
+
+    
+    # METHOD BARU: Logika Spesifik per Guild
+    async def _process_single_guild_recap(self, conf, current_week):
+        guild_id = conf['guild_id']
+        
+        # 1. Cek Guild & Claim (Urutan Fix Sebelumnya)
+        guild = self.bot.get_guild(guild_id)
+        if not guild: return 
+
+        if not await self.db.claim_weekly_recap(guild_id, current_week):
+            return 
+
+        channel = guild.get_channel(conf['recap_channel_id'])
+        if not channel:
+            # Auto-disable jika channel hilang
+            await self.db.execute("UPDATE weekly_config SET is_enabled = 0 WHERE guild_id = ?", (guild_id,))
+            return
+
+        # 2. Persiapan Data Minggu Lalu
+        prev_date = datetime.now(timezone.utc) - timedelta(days=7)
+        prev_week_key = self.db.get_week_key_for_date(prev_date)
+        
+        prev_data = await self.db.fetch_all("""
+            SELECT user_id, weekly_voice_mins, weekly_xp 
+            FROM weekly_stats 
+            WHERE guild_id = ? AND week_key = ?
+            ORDER BY weekly_voice_mins DESC
+            LIMIT 10
+        """, (guild_id, prev_week_key))
+
+        # Jika tidak ada data minggu lalu, stop
+        if not prev_data: return
+
+        # 3. FIX VARIABEL SCOPE & LOGIKA (Saran Senior)
+        desc = ""
+        top_3_emojis = ["🥇", "🥈", "🥉"] # Definisi DI AWAL
+        common_path_cache = {}
+
+        # 4. Loop Data Member
+        for i, row in enumerate(prev_data):
+            user_id = row['user_id']
+            m = guild.get_member(user_id)
+            
+            # Fallback nama yang aman
+            name = m.display_name if m else f"User-{user_id}"
+            
+            # Logic Prefix Rank
+            rank_prefix = top_3_emojis[i] if i < 3 else f"**#{i+1}**"
+            desc += f"{rank_prefix} **{name}** — 🎙️ `{row['weekly_voice_mins']}m` ✨ `{row['weekly_xp']}XP`\n"
+
+            # Logic Badge (Voice Order)
+            if row['weekly_voice_mins'] > 60:
+                await self.db.unlock_badge(user_id, guild_id, "badge_voice_order")
+
+            # Logic Badge (Common Path) - FIX DB NONE TYPE
+            if user_id not in common_path_cache:
+                query_common = """
+                    SELECT COUNT(DISTINCT week_key) as weeks_count
+                    FROM weekly_stats 
+                    WHERE user_id = ? AND guild_id = ? AND weekly_voice_mins >= 60
+                """
+                res_common = await self.db.fetch_one(query_common, (user_id, guild_id))
+                
+                # [FIX] Handle jika fetch_one return None
+                weeks_active = res_common['weeks_count'] if res_common else 0
+                common_path_cache[user_id] = weeks_active
+            
+            if common_path_cache[user_id] >= 4:
+                if await self.db.unlock_badge(user_id, guild_id, "badge_common_path"):
+                    await self.db.unlock_title(user_id, guild_id, "title_fellow_path")
+
+        # 5. Global Context
+        g_rank, g_total = await self.db.get_guild_weekly_rank(guild_id, prev_week_key)
+        
+        header_desc = ""
+        if g_rank > 0:
+            total_voice = sum(r['weekly_voice_mins'] for r in prev_data)
+            header_desc += "**🌍 Global Context**\n"
+            header_desc += f"• Peringkat server: **#{g_rank}** dari {g_total}\n"
+            header_desc += f"• Total voice (Top 10): `{total_voice:,} menit`\n"
+            header_desc += "───────────────\n\n"
+
+        # Gabungkan Header + List User
+        final_desc = header_desc + desc
+
+        # 6. Kirim Embed (FIX NETWORK CALL)
+        embed = discord.Embed(
+            title=f"📅 REKAP MINGGUAN ({prev_week_key})",
+            description=f"Inilah pahlawan keaktifan minggu lalu!\n\n{final_desc}",
+            color=discord.Color.fuchsia()
+        )
+        embed.set_footer(text="Statistik telah di-reset. Gas lagi!")
+
+        try:
+            await channel.send(embed=embed)
+
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound, asyncio.TimeoutError) as e:
+            self.bot.logger.error("WEEKLY_SEND_FAIL", f"Gagal kirim ke {channel.id}", error_obj=e)
 
     # [FIX SENIOR 3] Tambahkan Error Handler Khusus Loop
+    # GANTI method ini sepenuhnya
     @weekly_recap_loop.error
     async def weekly_recap_error(self, error):
-        print(f"🔥 CRITICAL: Weekly Loop CRASHED! Restarting... Error: {error}")
-        self.bot.logger.error("WEEKLY_CRASH", "Loop died", error_obj=error)
-        # Loop akan berhenti jika masuk sini, kita bisa coba restart manual jika mau,
-        # tapi minimal kita tahu dia mati.
+        if self.bot.is_shutting_down:
+            return
+        
+        self.bot.logger.error("WEEKLY_LOOP_CRASH", "Loop mati", error_obj=error)
+
+        await asyncio.sleep(10)
+
+        if self.bot.is_closed():
+            return
+
+        if not self.weekly_recap_loop.is_running():
+            try:
+                self.weekly_recap_loop.start()
+            except RuntimeError as e:
+                self.bot.logger.error("WEEKLY_RESTART_FAIL", "Gagal restart loop", error_obj=e)
 
     @weekly_recap_loop.before_loop
     async def before_recap(self):

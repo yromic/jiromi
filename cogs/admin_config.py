@@ -82,6 +82,10 @@ class AdminConfig(commands.GroupCog, name="xp"):
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
+        
+        self.failed_roles_cache = {} 
+        self.reward_roles_cache = {} 
+        
         super().__init__()
 
     role_group = app_commands.Group(name="role", description="Atur role yang diizinkan/dilarang")
@@ -399,12 +403,54 @@ class AdminConfig(commands.GroupCog, name="xp"):
             f"🗑️ Aturan XP di {channel.mention} telah dihapus (Status: **Netral**)."
         )
 
-    @app_commands.command(name="refresh_cache", description="[Admin] Hapus cache error agar bot mencoba memberi role lagi.")
+    @app_commands.command(name="refresh_cache", description="♻️ Refresh seluruh cache konfigurasi dan reward.")
     @app_commands.checks.has_permissions(administrator=True)
-    async def refresh_role_cache(self, interaction: discord.Interaction):
+    async def refresh_cache(self, interaction: discord.Interaction):
+
+        self.db._config_cache.clear()
+        self.db._filter_cache.clear()
 
         self.failed_roles_cache.clear()
-        await interaction.response.send_message("✅ Cache error telah dibersihkan. Bot akan mencoba memberikan role yang tertunda pada aktivitas member berikutnya.")
+        self.reward_roles_cache.clear()
+
+        self.bot.logger.audit("CACHE_FLUSH", f"Admin {interaction.user.name} melakukan refresh cache manual.")
+
+        await interaction.response.send_message(
+            "✅ **Sistem Disegarkan!**\n"
+            "Semua cache (Config, Filter, Role Error) telah dibersihkan.\n"
+            "Bot akan mengambil data segar dari Database pada aktivitas berikutnya.",
+            ephemeral=True
+        )
+
+    # --- BADGE MAINTENANCE ---
+    @app_commands.command(name="grant_tenure", description="🏅 Berikan badge 'Still Here' untuk member > 1 tahun.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def grant_tenure(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+        
+        # Ambil semua member (Butuh Intent Members!)
+        members = interaction.guild.members
+        granted_count = 0
+        now = discord.utils.utcnow()
+        
+        for member in members:
+            if member.bot: continue
+            
+            # Cek Join Date
+            if not member.joined_at: continue
+            
+            # Hitung selisih hari
+            delta = now - member.joined_at
+            
+            if delta.days >= 365:
+                # Coba unlock (Fail silent kalau sudah punya)
+                if await self.db.unlock_badge(member.id, interaction.guild_id, "badge_still_here"):
+                    granted_count += 1
+        
+        await interaction.followup.send(
+            f"🌳 **Tenure Check Selesai.**\n"
+            f"Badge **Still Here** diberikan kepada **{granted_count}** veteran yang telah bergabung > 1 tahun."
+        )
 
 async def setup(bot):
     """Fungsi inisialisasi global untuk discord.py agar bisa memuat Cog ini."""

@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands, tasks
+import asyncio
 import math # Import math untuk cek infinity
 
 class Monitor(commands.Cog):
@@ -11,77 +12,73 @@ class Monitor(commands.Cog):
         # [POIN 5 Senior] Pastikan loop mati saat reload extension
         self.stat_loop.cancel()
 
-    # [POIN 4 Helper] Fungsi reset buffer yang rapi
-    def _reset_stats_buffer(self):
-        self.bot.stats_buffer.update({
-            "chat_xp_events": 0,
-            "voice_xp_events": 0,
-            "voice_minutes": 0,
-            "cmd_usage": 0
-        })
-
-    # [POIN 3 Senior] Loop setiap 10 menit
     @tasks.loop(minutes=10)
     async def stat_loop(self):
-        # [POIN 2 Senior] Guard Clause: Jangan jalan kalau bot belum siap
-        if not self.bot.is_ready():
-            return
-
         try:
-            # Ambil data dari buffer bot
-            buff = self.bot.stats_buffer
-            
-            # [POIN 1 Senior] Fix Latency Infinite Crash
+            # 1. Guard Clause: Bot belum siap? Skip dulu
+            if not self.bot.is_ready():
+                return
+
+            # 2. Ambil Latency dengan Aman (Bug Kelas 2 Fix)
+            # Kita gabung logika seniormu + math check biar makin kuat
             lat = self.bot.latency
-            if lat is None or math.isinf(lat):
-                latency_display = "N/A"
-            else:
-                latency_display = f"{round(lat * 1000)}ms"
+            latency_display = (
+                f"{round(lat * 1000)}ms" 
+                if lat is not None and not math.isinf(lat) 
+                else "N/A"
+            )
 
-            # [POIN 6 Senior] Defensive Code: Hitung user/guild dengan aman
-            try:
-                guild_count = len(self.bot.guilds)
-                user_count = sum([g.member_count for g in self.bot.guilds])
-            except Exception:
-                guild_count = 0
-                user_count = 0
+            # 3. Hitung Guild & Member dengan Aman (Bug Kelas 3 Fix)
+            # Menggunakan 'or 0' untuk handle jika member_count None saat reconnect
+            guild_count = len(self.bot.guilds)
+            user_count = sum(g.member_count or 0 for g in self.bot.guilds)
 
-            # Siapkan data untuk Log Summary
-            summary = {
+            # 4. Siapkan Data Statistik
+            stats = {
                 "guilds": guild_count,
                 "users": user_count,
                 "latency": latency_display,
-                "chat_ev": buff.get('chat_xp_events', 0),
-                "voice_ev": buff.get('voice_xp_events', 0),
-                "voice_mins": buff.get('voice_minutes', 0)
+                # Ambil langsung dari buffer bot
+                "chat_ev": self.bot.stats_buffer.get("chat_xp_events", 0),
+                "voice_ev": self.bot.stats_buffer.get("voice_xp_events", 0),
+                "voice_mins": self.bot.stats_buffer.get("voice_minutes", 0),
             }
-            
-            # Print ke Console & File
-            self.bot.logger.stat(summary)
-            
-            # [POIN 4 Real Fix] Reset Buffer SETELAH log berhasil dicatat
-            self._reset_stats_buffer()
+
+            # 5. Log ke Console/File (Memory Only, No DB Access)
+            self.bot.logger.stat(stats)
+
+            # 6. Reset Buffer (Langsung di sini biar atomik)
+            self.bot.stats_buffer.update({
+                "chat_xp_events": 0,
+                "voice_xp_events": 0,
+                "voice_minutes": 0,
+                "cmd_usage": 0
+            })
 
         except Exception as e:
-            # [POIN 3 Senior] Catch-All: Biar loop TIDAK MATI kalau ada error lain
-            # Log errornya tapi jangan raise exception yang mematikan task
-            self.bot.logger.error("MONITOR_LOOP", "Terjadi error pada loop monitor", error_obj=e)
+            # Bug Kelas 1 Fix: Catch-All di dalam body loop
+            self.bot.logger.error("MONITOR_LOOP", "Unhandled error in stats loop", error_obj=e)
 
-    # Memastikan loop menunggu bot ready sebelum start pertama kali
     @stat_loop.before_loop
     async def before_stats(self):
         await self.bot.wait_until_ready()
 
-    # [FIX FINAL] Global Task Error Handler
+    # [FIX UTAMA] Bug Kelas 5: Auto-Restart saat Crash Fatal
     @stat_loop.error
     async def stat_loop_error(self, error):
+        if self.bot.is_shutting_down:
+            return 
+        
         self.bot.logger.error(
-            "MONITOR_LOOP_CRASH", 
-            "Monitor loop berhenti total (Critical)", 
+            "MONITOR_CRASH", 
+            "Monitor loop mati mendadak! Mencoba restart dalam 5 detik...", 
             error_obj=error
         )
-        # Opsional: Restart loop jika error bukan karena shutdown
-        # self.stat_loop.restart()
+        # Tunggu sebentar biar gak spam error kalau masalahnya persisten
+        await asyncio.sleep(5)
+        
+        # Hidupkan kembali loop-nya
+        self.stat_loop.restart()
 
 async def setup(bot):
     await bot.add_cog(Monitor(bot))

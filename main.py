@@ -2,10 +2,11 @@ import discord
 from discord.ext import commands
 import os
 import asyncio
-import sys # [TAMBAHAN] Untuk exit system yang bersih
+import sys 
 from dotenv import load_dotenv  
 from utils.db_handler import init_db, close_db
 from utils.logger import JiromiLogger
+import signal
 
 load_dotenv()  
 
@@ -23,6 +24,10 @@ class PresenceBot(commands.Bot):
         )
 
         self.logger = JiromiLogger()
+
+        self.is_shutting_down = False
+
+        self.shutdown_complete = asyncio.Event()
 
         self.stats_buffer = {
             "chat_xp_events": 0,
@@ -47,7 +52,7 @@ class PresenceBot(commands.Bot):
         self.logger.info("SYSTEM", "Slash commands synced.")
 
     async def close(self):
-        # close_db dipanggil manual di blok finally main() agar urutan backup aman
+
         await super().close()
 
     async def on_ready(self):
@@ -66,50 +71,66 @@ class PresenceBot(commands.Bot):
         self.logger.audit("GUILD_LEAVE", f"Left: {guild.name} ({guild.id})")
 
     async def on_resumed(self):
-        # [FIX SENIOR] Deteksi Reconnect
-        self.logger.audit("GATEWAY", "🔄 Session Resumed (Connection unstable but recovered)")
 
-# --- LOGIKA SHUTDOWN HANDLING (Sesuai Arahan ) ---
+        self.logger.audit("GATEWAY", "[RESUME] Session Resumed (Connection unstable but recovered)")
+
 
 async def perform_graceful_shutdown(bot):
-    print("\n🛑 Shutdown Signal Received (Ctrl+C). Preparing Cleanup...")
+    if bot.is_shutting_down: return
+    bot.is_shutting_down = True
     
-    # 1. Hentikan Aktivitas Background (Agar DB Idle)
-    # Kita unload cogs yang punya loop berat
+    print("\n[SHUTDOWN] Shutdown Signal Received. Preparing Cleanup...")
+    
     cogs_to_stop = ["Leveling", "WeeklyStats", "Monitor"]
-    print("🧹 Stopping background loops...")
+    print("[SHUTDOWN] Stopping background loops...")
     
     for cog_name in cogs_to_stop:
         if bot.get_cog(cog_name):
             try:
-                # Unload akan memicu method cog_unload() yang mematikan loop
+
                 await bot.unload_extension(f"cogs.{cog_name.lower() if cog_name != 'WeeklyStats' else 'weekly_stats'}")
             except Exception as e:
-                print(f"⚠️ Gagal stop {cog_name}: {e}")
+                print(f"[WARN] Gagal stop {cog_name}: {e}")
     
-    # Beri jeda 1 detik agar task benar-benar berhenti menulis
     await asyncio.sleep(1)
 
-    # 2. JALANKAN BACKUP (Target Utama)
-    print("💾 Running FINAL Database Backup...")
-    backup_cog = bot.get_cog("OwnerBackup") # Pastikan class name di cogs/owner_backup.py adalah 'OwnerBackup'
+    print("[BACKUP] Running FINAL Database Backup...")
+    backup_cog = bot.get_cog("OwnerBackup") 
     
-    # ...
+    
     if backup_cog:
         try:
-            # PASTIKAN INI CUMA 2 VARIABLE, BUKAN 3
             zip_path, meta = await backup_cog.perform_backup_logic()
-            
             if zip_path:
-                print(f"✅ SHUTDOWN BACKUP SUCCESS: {zip_path}")
-                print(f"📊 Stats: {meta['size_kb']}KB | {meta['users']} Users")
+                print(f"[SUCCESS] SHUTDOWN BACKUP SUCCESS: {zip_path}")
             else:
-                print(f"❌ SHUTDOWN BACKUP FAILED: {meta}")
-    # ...
+                print(f"[FAIL] SHUTDOWN BACKUP FAILED: {meta}")
         except Exception as e:
-             print(f"❌ Error saat backup shutdown: {e}")
-    else:
-        print("⚠️ OwnerBackup Cog tidak ditemukan, skip backup.")
+             print(f"[FAIL] Error saat backup shutdown: {e}")
+    
+    print("[SHUTDOWN] Disconnecting from Gateway...")
+    await bot.close()
+
+    print("[SHUTDOWN] Closing Database connection...")
+    await close_db()
+
+    bot.shutdown_complete.set()
+
+def register_signals(bot):
+    loop = asyncio.get_running_loop()
+
+    def signal_handler():
+
+        if bot.is_shutting_down:
+            return 
+        asyncio.create_task(perform_graceful_shutdown(bot))
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(sig, signal_handler)
+        except NotImplementedError:
+
+            pass
 
 async def main():
     token = os.getenv("DISCORD_TOKEN")  
@@ -119,25 +140,31 @@ async def main():
     bot = PresenceBot()
 
     try:
-        # Jalankan bot dalam blok async context manager
-        async with bot:
-            await bot.start(token)
+        await bot.login(token)
+        register_signals(bot)
+        
+        try:
+            await bot.connect()
+        except asyncio.CancelledError:
+            pass
             
-    except KeyboardInterrupt:
-        # INI ADALAH "GOLDEN WINDOW" SAAT KAMU TEKAN CTRL+C
-        # Python akan masuk ke sini sebelum mematikan program sepenuhnya.
-        await perform_graceful_shutdown(bot)
+    except Exception as e:
+        print(f"[FATAL ERROR] FATAL STARTUP ERROR: {e}")
         
     finally:
-        # Apapun yang terjadi (Error atau Ctrl+C), tutup DB dengan benar
-        print("👋 Closing Database connection...")
-        await close_db()
-        print("✅ System Offline.")
+
+        if bot.is_shutting_down:
+            print("[WAIT] Menunggu proses shutdown selesai...")
+            await bot.shutdown_complete.wait()
+
+        else:
+            print("[WARN] Shutdown tak terduga (Crash). Memulai cleanup darurat...")
+            await perform_graceful_shutdown(bot)
 
 if __name__ == "__main__":
     try:
-        # Gunakan asyncio.run() yang standar
+
         asyncio.run(main())
     except KeyboardInterrupt:
-        # Catch terakhir jika exception bocor keluar dari main()
+
         pass

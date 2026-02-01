@@ -2,6 +2,7 @@
 import discord
 from discord.ext import commands, tasks
 import time
+from utils.badge_data import BADGE_ICONS, BADGE_META
 
 class Leveling(commands.Cog):
     def __init__(self, bot, db):
@@ -17,6 +18,7 @@ class Leveling(commands.Cog):
 
     # [FIX] Gantikan method voice_heartbeat yang lama dengan dua method ini:
 
+    
     @tasks.loop(minutes=1.0)
     async def voice_heartbeat(self):
         """
@@ -52,6 +54,8 @@ class Leveling(commands.Cog):
                 "Critical error pada voice heartbeat loop", 
                 error_obj=e
             )
+
+    
 
     async def _process_guild_voice(self, guild):
         """
@@ -118,11 +122,9 @@ class Leveling(commands.Cog):
         result = await self.db.add_voice_time(
             member.id,
             member.guild.id,
-            minutes, # Pakai variabel
+            minutes,
             config['voice_xp_val']
         )
-
-        
         
         # [HOOK] Update Weekly Stats
         await self.db.update_weekly_stats(
@@ -130,48 +132,86 @@ class Leveling(commands.Cog):
             user_id=member.id, 
             xp_add=xp_gain, 
             voice_mins_add=minutes,
-            chat_xp_add=0  # [PENTING] Chat XP nol karena ini voice
+            chat_xp_add=0 
         )
 
         self.bot.loop.create_task(self._try_send_global_intro(member))
 
         if result['new_level'] > result['old_level']:
-            await self.handle_level_up(member, result['new_level'])
+            await self.handle_level_up(member, result['old_level'], result['new_level'])
 
         # 1. Update Streak & Ambil Data Terbaru
         streak_now = await self.db.update_voice_streak(member.id, member.guild.id)
         user_data = await self.db.get_user_data(member.id, member.guild.id) 
         total_mins = user_data['total_voice_mins']
+        old_total_mins = total_mins - minutes
 
-        # Helper Notif
-        async def send_achiev_msg(text):
-            if config['announce_channel_id']:
-                ch = member.guild.get_channel(config['announce_channel_id'])
-                if ch and ch.permissions_for(member.guild.me).send_messages:
-                    try: await ch.send(text) 
-                    except: pass
+        # [HELPER BARU] Fungsi Notifikasi "Jiromi Style"
+        # (Fungsi send_achiev_msg yang lama SUDAH DIHAPUS karena tidak dipakai)
+        async def send_badge_notification(badge_id, extra=None):
+            # Cek Config Channel
+            if not config['announce_channel_id']: return
+            channel = member.guild.get_channel(config['announce_channel_id'])
+            if not channel: return
+            if not channel.permissions_for(member.guild.me).send_messages: return
+
+            # Ambil Data dari Source of Truth
+            icon = BADGE_ICONS.get(badge_id, "🏅")
+            meta = BADGE_META.get(badge_id, {"name": "Unknown", "short_desc": "Badge baru."})
+
+            # Rakit Pesan (Bisikan, bukan Teriak)
+            lines = [
+                f"{icon} **{meta['name']}**",
+                f"{member.mention} — {meta['short_desc']}" 
+            ]
+
+            if "detail" in meta:
+                lines.append(f"*{meta['detail']}*") 
+            
+            if extra:
+                lines.append(f"\n{extra}") 
+
+            try:
+                await channel.send("\n".join(lines))
+            except Exception as e:
+                
+                self.bot.logger.error(
+                    "BADGE_NOTIFY_FAIL",
+                    f"Gagal kirim notif badge {badge_id}",
+                    error_obj=e
+                )
+
 
         if total_mins >= 1:
-            # Unlock Badge
             if await self.db.unlock_badge(member.id, member.guild.id, "badge_echo_mark"):
-                # Unlock Title: [Echo Bearer]
                 await self.db.unlock_title(member.id, member.guild.id, "title_echo_bearer")
-                await send_achiev_msg(f"📢 **New Journey!** {member.mention} baru saja memulai gema pertamanya.\n🎁 Unlocked: Badge **Echo Mark** & Title **[Echo Bearer]**")
+                await send_badge_notification("badge_echo_mark", extra="Mendapatkan Title: **[Echo Bearer]**")
 
         if total_mins >= 1000:
             if await self.db.unlock_badge(member.id, member.guild.id, "badge_sound_sigil"):
-                await send_achiev_msg(f"🛡️ **COMMITMENT!** {member.mention} telah bersuara selama 1000 menit!\n🎁 Unlocked: Badge **Sound Sigil**.")
+                await send_badge_notification("badge_sound_sigil")
 
         if streak_now >= 7:
             if await self.db.unlock_badge(member.id, member.guild.id, "badge_unbroken_seal"):
-                # Unlock Title: [Unbroken] (Sangat Prestige)
                 await self.db.unlock_title(member.id, member.guild.id, "title_unbroken")
-                await send_achiev_msg(f"🔥 **UNSTOPPABLE!** {member.mention} mempertahankan Voice Streak selama 7 hari!\n🎁 Unlocked: Badge **Unbroken Seal** & Title **[Unbroken]**.")
+                await send_badge_notification("badge_unbroken_seal", extra="Mendapatkan Title: **[Unbroken]**")
+
+        if old_total_mins < 3000 <= total_mins:
+            if await self.db.unlock_badge(member.id, member.guild.id, "badge_quiet_anchor"):
+                await self.db.unlock_title(member.id, member.guild.id, "title_waykeeper")
+                await send_badge_notification("badge_quiet_anchor", extra="Mendapatkan Title: **[Waykeeper]**")
+
+        old_streak = streak_now - 1
+        if old_streak < 30 <= streak_now: 
+            if await self.db.unlock_badge(member.id, member.guild.id, "badge_steady_flame"):
+                await self.db.unlock_title(member.id, member.guild.id, "title_the_steady")
+                await send_badge_notification("badge_steady_flame", extra="Mendapatkan Title: **[The Steady]**")
 
         self.bot.stats_buffer['voice_xp_events'] += 1
         self.bot.stats_buffer['voice_minutes'] += minutes
 
 
+    
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not message.guild:
@@ -210,20 +250,21 @@ class Leveling(commands.Cog):
         self.bot.loop.create_task(self._try_send_global_intro(message.author))
 
         if result['new_level'] > result['old_level']:
-            await self.handle_level_up(message.author, result['new_level'])
+            # [FIX] Pass old_level juga
+            await self.handle_level_up(message.author, result['old_level'], result['new_level'])
             
         self.bot.stats_buffer['chat_xp_events'] += 1
 
     # Di dalam cogs/leveling.py -> handle_level_up()
 
-    async def handle_level_up(self, member, new_level):
+    async def handle_level_up(self, member, old_level, new_level):
         config = await self.db.get_guild_config(member.guild.id)
         mode = config['announcement_mode'] if config else 'balanced' 
 
         reward_role = await self.check_role_rewards(member, new_level) 
         
-        if new_level == 10:
-             if await self.db.unlock_badge(member.id, member.guild.id, "badge_resonant_path"):
+        if old_level < 10 <= new_level:
+            if await self.db.unlock_badge(member.id, member.guild.id, "badge_resonant_path"):
                  await self.db.unlock_title(member.id, member.guild.id, "title_resonant_knight")
 
         if mode == "quiet":
@@ -388,6 +429,9 @@ class Leveling(commands.Cog):
             "Voice XP loop mati total (Critical)", 
             error_obj=error
         )
+
+
+    
 # Ganti fungsi setup di bagian paling bawah cogs/leveling.py
 async def setup(bot):
     # bot.db sudah diinisialisasi di main.py, jadi kita bisa langsung memakainya
