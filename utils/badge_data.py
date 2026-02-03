@@ -1,6 +1,5 @@
 # utils/badge_data.py
 
-# 1. ICON (Visual Anchor - Copy ID dari cogs/profile.py kamu)
 BADGE_ICONS = {
     "badge_echo_mark": "<:speaker_jiromi:1467342396986757212>",
     "badge_sound_sigil": "<:shield_jiromi:1467342758921506838>",
@@ -54,5 +53,37 @@ BADGE_META = {
         "name": "Resonant Path",
         "short_desc": "Gema yang semakin kuat.",
         "detail": "Mencapai Level 10.",
+    },
+    "badge_still_here": {
+        "name": "Still Here",
+        "short_desc": "Waktu membuktikan kesetiaan.",
+        "detail": "Telah menjadi bagian server > 1 tahun.",
+    }
+}
+
+TITLE_META = {
+    "title_echo_bearer": {
+        "name": "Echo Bearer",
+        "desc": "Pembawa gema pertama."
+    },
+    "title_resonant_knight": {
+        "name": "Resonant Knight",
+        "desc": "Ksatria yang suaranya menggema."
+    },
+    "title_unbroken": {
+        "name": "Unbroken",
+        "desc": "Tekad yang tidak terpatahkan."
+    },
+    "title_waykeeper": {
+        "name": "Waykeeper",
+        "desc": "Penjaga jalan bagi mereka yang datang."
+    },
+    "title_the_steady": {
+        "name": "The Steady",
+        "desc": "Nyala api yang stabil dan tenang."
+    },
+    "title_fellow_path": {
+        "name": "Fellow of the Path",
+        "desc": "Rekan seperjalanan yang setia."
     }
 }

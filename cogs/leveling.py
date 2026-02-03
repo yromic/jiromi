@@ -311,7 +311,7 @@ class Leveling(commands.Cog):
                         await member.add_roles(role, reason="Presence Reward")
                         latest_role = role
                         # Jika sukses, hapus dari cache kegagalan (kalau ada)
-                        self.failed_roles_cache.discard((member.guild.id, member.id, role_id))
+                        self.failed_roles_cache.pop((member.guild.id, member.id, role_id), None)
                         
                     except discord.Forbidden:
                         self.failed_roles_cache[(member.guild.id, member.id, role_id)] = time.time()
@@ -323,7 +323,13 @@ class Leveling(commands.Cog):
                             user_id=member.id
                         )
                     except Exception as e:
-                        print(f" ❌  Error tak terduga saat memberi reward: {e}")
+                        self.bot.logger.error(
+                            "ROLE_REWARD_BUG",
+                            "Error tak terduga saat memberi reward",
+                            error_obj=e,
+                            guild_id=member.guild.id,
+                            user_id=member.id
+                        )
 
         return latest_role
 

@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.math_utils import xp_for_next_level
+from utils.badge_data import BADGE_ICONS, BADGE_META, TITLE_META
 
 class Profile(commands.Cog):
     def __init__(self, bot, db):
@@ -26,37 +27,43 @@ class Profile(commands.Cog):
     "badge_still_here": "<:tree_jiromi:1467342354632413392>",
     }
 
-    
-    TITLE_NAMES = {
-        "title_echo_bearer": "Echo Bearer",
-        "title_resonant_knight": "Resonant Knight",
-        "title_unbroken": "Unbroken",
-        # [NEW] Title Baru
-        "title_waykeeper": "Waykeeper",
-        "title_the_steady": "The Steady",
-        "title_fellow_path": "Fellow of the Path"
-    }
-
     @app_commands.command(name="rank", description="🏁 Social Snapshot: Lihat posisimu di antara member lain.")
     @app_commands.describe(member="🏁 Melihat posisimu saat ini di antara anggota server.")
     async def rank(self, interaction: discord.Interaction, member: discord.Member = None):
+        # [FIX 1] Lakukan Defer DI AWAL.
+        # Ini memberitahu Discord: "Sabar ya, lagi loading".
+        # Bot punya waktu 15 menit, bukan cuma 3 detik.
+        await interaction.response.defer()
+
         member = member or interaction.user
         
         # 1. Ambil Context Ranking
+        # Proses ini berat karena membaca seluruh database user di guild.
+        # Untungnya kita sudah defer, jadi aman.
         rank_pos, total_members, above, below = await self._get_rank_context(interaction.guild.id, member.id)
         
         if not rank_pos:
-            return await interaction.response.send_message("🍂 Belum ada jejak langkah di server ini.", ephemeral=True)
+            # [FIX 2] Gunakan followup.send karena sudah di-defer
+            return await interaction.followup.send("🍂 Belum ada jejak langkah di server ini.", ephemeral=True)
 
         # 2. Ambil Data User (XP/Level)
         user_data = await self.db.get_user_data(member.id, interaction.guild.id)
         
-        # 3. Warna Netral (Biru Abu-abu / Slate) - Sesuai style "Social Snapshot"
-        embed = discord.Embed(color=discord.Color.from_rgb(96, 125, 139)) 
-        
-        # Header: Identitas Ringkas
+        # 3. Ambil Title (Safe Render Logic yang baru)
         active_title, _, _ = await self.db.get_user_gamification_profile(member.id, interaction.guild.id)
-        title_str = f" — {self.TITLE_NAMES.get(active_title, active_title)}" if active_title else ""
+        
+        # Logic Title (Menggunakan META yang baru kita fix tadi)
+        # Import TITLE_META perlu ada di file ini (dari utils.badge_data)
+        title_str = ""
+        if active_title:
+            if active_title in TITLE_META:
+                title_name = TITLE_META[active_title]['name']
+            else:
+                title_name = active_title.replace("title_", "").replace("_", " ").title()
+            title_str = f" — {title_name}"
+
+        # 4. Render Embed (Warna Slate/Abu kebiruan)
+        embed = discord.Embed(color=discord.Color.from_rgb(96, 125, 139)) 
         
         embed.set_author(name=f"Rank di {interaction.guild.name}", icon_url=member.display_avatar.url)
         embed.title = f"{member.display_name}{title_str}"
@@ -69,10 +76,11 @@ class Profile(commands.Cog):
         )
 
         # BLOK 2: Status Singkat
-        # Voice menit dikonversi ke jam jika > 60 agar lebih rapi
         voice_str = f"{user_data['total_voice_mins']}m"
         if user_data['total_voice_mins'] > 60:
-            voice_str = f"{user_data['total_voice_mins'] // 60}j {user_data['total_voice_mins'] % 60}m"
+            h = user_data['total_voice_mins'] // 60
+            m = user_data['total_voice_mins'] % 60
+            voice_str = f"{h}j {m}m"
 
         embed.add_field(
             name="✨ Status", 
@@ -80,12 +88,9 @@ class Profile(commands.Cog):
             inline=True
         )
 
-        # BLOK 3: Konteks Sosial (Tetangga) - BERSIH TANPA DUPLIKASI
-        
+        # BLOK 3: Konteks Sosial (Tetangga)
         # Tetangga Atas
         if above:
-            # Menggunakan reversed agar urutannya: Rank 5, Rank 6 -> KITA (Rank 7)
-            # Format: #Rank @User
             above_lines = [f"#{rank_pos - (i+1)} <@{r['user_id']}>" for i, r in enumerate(reversed(above))]
             above_str = "\n".join(above_lines)
         else:
@@ -93,7 +98,6 @@ class Profile(commands.Cog):
 
         # Tetangga Bawah
         if below:
-            # Format: #Rank @User
             below_lines = [f"#{rank_pos + (i+1)} <@{r['user_id']}>" for i, r in enumerate(below)]
             below_str = "\n".join(below_lines)
         else:
@@ -102,10 +106,10 @@ class Profile(commands.Cog):
         embed.add_field(name="⬆️ Di Atasmu", value=above_str, inline=True)
         embed.add_field(name="⬇️ Di Bawahmu", value=below_str, inline=True)
 
-        # Footer: Filosofi
         embed.set_footer(text="Snapshot saat ini • Tidak mencerminkan seluruh perjalanan • Cek /profile")
         
-        await interaction.response.send_message(embed=embed)
+        # [FIX 3] Kirim menggunakan followup, bukan response.send_message
+        await interaction.followup.send(embed=embed)
 
     # --- TITLE SYSTEM COMMANDS ---
     
@@ -115,13 +119,24 @@ class Profile(commands.Cog):
     @app_commands.describe(member="🌱 Catatan perjalanan pribadimu di komunitas ini.")
     async def profile(self, interaction: discord.Interaction, member: discord.Member = None):
         member = member or interaction.user
-        
-        # 1. Ambil Data Lengkap
+
+        # 1. AMBIL DATA DULU (Database Call Harus Paling Atas)
+        # Kita butuh data active_title sebelum memprosesnya
         user_data = await self.db.get_user_data(member.id, interaction.guild.id)
         active_title, badges, _ = await self.db.get_user_gamification_profile(member.id, interaction.guild.id)
-        
-        # 2. Hitung Durasi Perjalanan (Journey Age)
-        # Menggunakan member.joined_at dari Discord API
+
+        # 2. PROSES LOGIKA TITLE (Safe Render)
+        title_text = "Warga" # Default value
+
+        if active_title:
+            # Coba ambil dari META pusat
+            if active_title in TITLE_META:
+                title_text = TITLE_META[active_title]['name']
+            else:
+                # Fallback: Format ID jadi Tulisan Rapi
+                title_text = active_title.replace("title_", "").replace("_", " ").title()
+
+        # 3. Hitung Durasi Perjalanan (Journey Age)
         if member.joined_at:
             delta = discord.utils.utcnow() - member.joined_at
             days_joined = delta.days
@@ -129,26 +144,25 @@ class Profile(commands.Cog):
         else:
             journey_str = "Baru saja bergabung"
 
-        # 3. Warna Hangat/Alam (Sage Green)
+        # 4. MULAI BIKIN EMBED
         embed = discord.Embed(color=discord.Color.from_rgb(129, 199, 132))
         
         # Header: Personal
-        title_text = self.TITLE_NAMES.get(active_title, active_title) if active_title else "Warga"
         embed.set_thumbnail(url=member.display_avatar.url)
         embed.title = f"🌱 Perjalanan {member.display_name}"
-        embed.description = f"**{title_text}**" # Active Title jadi highlight
+        
+        # [PENTING] Gunakan variabel title_text yang sudah diproses di atas (Poin 2)
+        embed.description = f"**{title_text}**" 
 
         # BLOK 1: Journey (Waktu)
         embed.add_field(name="🕰️ Waktu", value=journey_str, inline=False)
 
-        # BLOK 2: Kehadiran (Deskriptif, bukan angka mentah)
-        # Logika deskriptif sederhana
+        # BLOK 2: Kehadiran
         v_mins = user_data['total_voice_mins']
         if v_mins < 60: voice_desc = "Pendengar baru"
         elif v_mins < 600: voice_desc = "Aktif bersuara"
         else: voice_desc = "Suara familiar komunitas"
         
-        # Chat XP check (asumsi rata-rata 5xp per chat)
         chat_count = user_data['xp'] // 5 
         if chat_count < 50: chat_desc = "Menyapa sesekali"
         elif chat_count < 500: chat_desc = "Aktif berdiskusi"
@@ -160,16 +174,14 @@ class Profile(commands.Cog):
             inline=False
         )
 
-        # BLOK 3: Milestone & Badge (Limit 5)
+        # BLOK 3: Milestone & Badge
         if badges:
-            # Render badge dengan nama aslinya biar lebih 'bercerita'
             BADGE_NAMES = {
                 "badge_echo_mark": "Echo Mark (Voice I)",
                 "badge_sound_sigil": "Sound Sigil (Voice II)",
                 "badge_unbroken_seal": "Unbroken Seal (Streak)",
                 "badge_voice_order": "Voice of Order (Weekly)",
                 "badge_resonant_path": "Resonant Path (Level 10)",
-                # [NEW] Nama Badge Baru
                 "badge_quiet_anchor": "Quiet Anchor (3000m)",
                 "badge_steady_flame": "Steady Flame (30 Days)",
                 "badge_common_path": "Common Path (4 Weeks)",
@@ -177,7 +189,7 @@ class Profile(commands.Cog):
             }
             
             badge_list = []
-            for b in badges[:5]: # Max 5
+            for b in badges[:5]: 
                 icon = self.BADGE_ICONS.get(b, "🏅")
                 name = BADGE_NAMES.get(b, b.replace("_", " ").title())
                 badge_list.append(f"{icon} **{name}**")
@@ -188,8 +200,7 @@ class Profile(commands.Cog):
             
         embed.add_field(name="🏅 Pencapaian", value=milestone_str, inline=False)
 
-        # BLOK 4: Progress (Visual Bar)
-        # Kita pakai logic bar lama tapi dipercantik
+        # BLOK 4: Progress Bar
         from utils.math_utils import xp_for_next_level
         lvl = user_data['level']
         xp = user_data['xp']
@@ -200,7 +211,6 @@ class Profile(commands.Cog):
         
         ratio = current / needed if needed > 0 else 1
         filled = int(ratio * 10)
-        # Bar Ghibli style: Kotak solid & shade
         bar = "▓" * filled + "░" * (10 - filled)
         
         embed.add_field(
@@ -209,7 +219,6 @@ class Profile(commands.Cog):
             inline=False
         )
 
-        # Footer: Filosofi
         embed.set_footer(text="Perjalanan ini bersifat personal • Tidak untuk dibandingkan")
 
         await interaction.response.send_message(embed=embed)
@@ -223,8 +232,14 @@ class Profile(commands.Cog):
             
         desc = "Gunakan `/title select` untuk memakainya.\n\n"
         for t_id in titles_owned:
-            name = self.TITLE_NAMES.get(t_id, t_id)
-            desc += f"🏷️ **{name}**\n"
+            # [FIX] Ambil dari TITLE_META
+            meta = TITLE_META.get(t_id)
+            if meta:
+                desc += f"🏷️ **{meta['name']}** — *{meta['desc']}*\n"
+            else:
+                # Fallback aman jika title lama
+                clean_name = t_id.replace("title_", "").replace("_", " ").title()
+                desc += f"🏷️ **{clean_name}**\n"
             
         embed = discord.Embed(title="🎒 Koleksi Title", description=desc, color=discord.Color.green())
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -241,30 +256,45 @@ class Profile(commands.Cog):
         view = TitleView(self.db, titles_owned, self.TITLE_NAMES)
         await interaction.response.send_message("pilih identitas barumu:", view=view, ephemeral=True)
 
-    @app_commands.command(name="leaderboard", description="Melihat 5 pilar utama komunitas (Top 5).")
+    @app_commands.command(name="leaderboard", description="🏆 Hall of Fame: Top 50 member paling aktif (Voice & XP).")
     async def leaderboard(self, interaction: discord.Interaction):
-        top_members = await self.db.fetch_all(
-            "SELECT user_id, xp, level FROM users WHERE guild_id = ? ORDER BY xp DESC LIMIT 5",
-            (interaction.guild.id,)
-        )
-        
-        if not top_members:
-            return await interaction.response.send_message("Belum ada sejarah yang tercatat di server ini.", ephemeral=True)
+        await interaction.response.defer() # Defer karena query mungkin agak berat
 
-        description = ""
-        for i, row in enumerate(top_members, 1):
+        # 1. Ambil Top 50 Data (XP Descending)
+        # Kita ambil total_voice_mins juga sesuai request
+        query = """
+            SELECT user_id, xp, level, total_voice_mins 
+            FROM users 
+            WHERE guild_id = ? 
+            ORDER BY xp DESC 
+            LIMIT 50
+        """
+        rows = await self.db.fetch_all(query, (interaction.guild.id,))
+
+        if not rows:
+            return await interaction.followup.send("🍂 Belum ada data aktivitas di server ini.")
+
+        # 2. Proses Data (Resolve Nama User)
+        # Kita lakukan resolve nama di sini agar pagination (View) tidak perlu fetch user lagi (lemot)
+        processed_data = []
+        for row in rows:
             member = interaction.guild.get_member(row['user_id'])
-            name = member.mention if member else f"Warga Lama ({row['user_id']})"
-            description += f"**{i}. {name}** — Level {row['level']} ({row['xp']} XP)\n"
+            # Fallback jika member sudah keluar server
+            name = member.display_name if member else f"User-{row['user_id']}"
+            
+            processed_data.append({
+                "name": name,
+                "level": row['level'],
+                "xp": row['xp'],
+                "total_voice_mins": row['total_voice_mins']
+            })
 
-        embed = discord.Embed(
-            title="✨ Pilar Komunitas (Top 5)",
-            description=description,
-            color=discord.Color.gold()
-        )
-        embed.set_footer(text="Bukan tentang siapa yang tercepat, tapi siapa yang tetap ada.")
+        # 3. Tampilkan View Pagination
+        view = LeaderboardView(processed_data, interaction.user.id)
+        embed = view.create_embed()
         
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed, view=view)
+        view.message = await interaction.original_response()
 
     @app_commands.command(name="level", description="🧭 Melihat progres level perjalanan.")
     @app_commands.describe(user="Lihat level member lain")
@@ -343,35 +373,155 @@ class Profile(commands.Cog):
         return rank, len(all_users), above_rows, below_rows
 
 class TitleSelect(discord.ui.Select):
-    def __init__(self, db, titles_owned, title_map):
+    def __init__(self, db, titles_owned): # Hapus parameter title_map
         self.db = db
         
         options = []
-        # Opsi 1: Copot Title (None)
         options.append(discord.SelectOption(label="❌ Lepas Title", value="none", description="Kembali ke nama polosan."))
         
-        # Opsi 2: Title yang dimiliki user
         for t_id in titles_owned:
-            # Ambil nama keren dari dictionary, atau pakai ID mentah kalau gak ada di dict
-            label_name = title_map.get(t_id, t_id)
-            options.append(discord.SelectOption(label=label_name, value=t_id, emoji="🏷️"))
+            # [FIX] Ambil dari TITLE_META global
+            meta = TITLE_META.get(t_id)
+            if meta:
+                label_name = meta['name']
+                desc = meta['desc']
+            else:
+                label_name = t_id.replace("title_", "").replace("_", " ").title()
+                desc = "Title Legacy"
+
+            options.append(discord.SelectOption(label=label_name, value=t_id, emoji="🏷️", description=desc[:100]))
 
         super().__init__(placeholder="Pilih Title aktifmu...", min_values=1, max_values=1, options=options)
 
-    async def callback(self, interaction: discord.Interaction):
-        # Value 'none' artinya copot title
-        new_title = self.values[0] if self.values[0] != "none" else None
-        
-        await self.db.set_active_title(interaction.user.id, interaction.guild.id, new_title)
-        
-        # Feedback
-        msg = f"✅ Title profilmu diubah menjadi: **{self.values[0]}**" if new_title else "✅ Title dilepas."
-        await interaction.response.edit_message(content=msg, view=None)
-
+# Update View-nya juga agar tidak perlu passing map lagi
 class TitleView(discord.ui.View):
-    def __init__(self, db, titles_owned, title_map):
+    def __init__(self, db, titles_owned): # Hapus parameter title_map
         super().__init__(timeout=60)
-        self.add_item(TitleSelect(db, titles_owned, title_map))
+        self.add_item(TitleSelect(db, titles_owned))
+
+class LeaderboardView(discord.ui.View):
+    def __init__(self, data, interaction_user_id):
+        super().__init__(timeout=60)
+        self.data = data
+        self.per_page = 10
+        self.current_page = 0
+        self.total_pages = (len(data) - 1) // self.per_page + 1
+        self.interaction_user_id = interaction_user_id
+        
+        # [FIX RED 1] Simpan referensi pesan buat edit saat timeout
+        self.message = None 
+        self.update_buttons()
+
+    def update_buttons(self):
+        # [FIX ORANGE 1] Logic Tombol yang Aman (Tidak bergantung urutan index)
+        # Kita iterasi children dan cek callback-nya, atau set state langsung di button
+        
+        # Tombol Prev (kita tahu ini tombol pertama yg kita define, tapi biar aman kita set logicnya)
+        # Di sini kita akses item secara spesifik lewat atribut custom class kalau mau,
+        # tapi cara paling simpel dan robust adalah loop children:
+        for child in self.children:
+            if isinstance(child, discord.ui.Button):
+                if child.label == "⬅️ Sebelumnya":
+                    child.disabled = (self.current_page == 0)
+                elif child.label == "Selanjutnya ➡️":
+                    child.disabled = (self.current_page == self.total_pages - 1)
+
+    def _truncate_text(self, text, max_len):
+        """[FIX ORANGE 2] Helper untuk potong nama dengan aman."""
+        if len(text) <= max_len:
+            return text
+        return text[:max_len-1] + "…"
+
+    def _format_number(self, num):
+        """[FIX ORANGE 3] Helper format angka besar biar tabel gak geser."""
+        s = f"{num:,}"
+        if len(s) > 8: # Jika lebih dari 99,999,999 (8 digit + koma)
+            # Format jadi 1.2M
+            return f"{num/1000000:.1f}M"
+        return s
+
+    def create_embed(self):
+        start = self.current_page * self.per_page
+        end = start + self.per_page
+        page_data = self.data[start:end]
+
+        table_str = ""
+        
+        for i, row in enumerate(page_data):
+            rank = start + i + 1
+            
+            # [FIX VISUAL] Nama & Angka diamankan
+            name = self._truncate_text(row['name'], 10) 
+            xp_str = self._format_number(row['xp'])
+            
+            lvl = row['level']
+            voice = row['total_voice_mins']
+            
+            # Format Voice compact
+            if voice < 60:
+                voice_str = f"{voice}m"
+            else:
+                h = voice // 60
+                m = voice % 60
+                voice_str = f"{h}h{m}m"
+
+            # Icon Rank
+            if rank == 1: r_icon = "🥇"
+            elif rank == 2: r_icon = "🥈"
+            elif rank == 3: r_icon = "🥉"
+            else: r_icon = f"#{rank:<2}"
+
+            # Format Tabel Monospace (Rata Kiri)
+            # Spasi diatur ketat agar lurus di HP
+            table_str += f"{r_icon} `{name:<10}` `Lv.{lvl:<3}` `🎙️{voice_str:<6}` `✨{xp_str:<6}`\n"
+
+        embed = discord.Embed(
+            title="🏆 Server Leaderboard",
+            description=f"Top Member Berdasarkan Aktivitas\n\n{table_str}",
+            color=discord.Color.gold()
+        )
+        embed.set_footer(text=f"Halaman {self.current_page + 1}/{self.total_pages} • Total {len(self.data)} Member")
+        return embed
+
+    async def on_timeout(self):
+        """[FIX RED 1] Handler saat waktu habis."""
+        # Matikan semua tombol
+        for child in self.children:
+            child.disabled = True
+        
+        # Update pesan jika masih ada
+        if self.message:
+            try:
+                # [FIX VISUAL] Kasih tau user kalau menu expired
+                embed = self.create_embed()
+                embed.set_footer(text="⌛ Menu kadaluwarsa. Ketik /leaderboard lagi.")
+                await self.message.edit(embed=embed, view=self)
+            except (discord.NotFound, discord.HTTPException):
+                pass
+
+    @discord.ui.button(label="⬅️ Sebelumnya", style=discord.ButtonStyle.secondary)
+    async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # [FIX GREEN 3] Executor Lock (Udah bener, pertahankan)
+        if interaction.user.id != self.interaction_user_id:
+            return await interaction.response.send_message("⛔ Ini bukan menumu.", ephemeral=True)
+            
+        self.current_page -= 1
+        self.update_buttons()
+        
+        # [FIX RED 2] Guard Clause Interaction
+        if not interaction.response.is_done():
+            await interaction.response.edit_message(embed=self.create_embed(), view=self)
+
+    @discord.ui.button(label="Selanjutnya ➡️", style=discord.ButtonStyle.secondary)
+    async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.interaction_user_id:
+            return await interaction.response.send_message("⛔ Ini bukan menumu.", ephemeral=True)
+
+        self.current_page += 1
+        self.update_buttons()
+        
+        if not interaction.response.is_done():
+            await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
 async def setup(bot):
     await bot.add_cog(Profile(bot, bot.db))
