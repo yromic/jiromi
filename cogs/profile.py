@@ -246,15 +246,20 @@ class Profile(commands.Cog):
 
     @title_group.command(name="select", description="Pasang Title agar muncul di sebelah namamu.")
     async def title_select(self, interaction: discord.Interaction):
+        # [FIX 1] Defer di awal (Ephemeral karena ini menu pribadi)
+        await interaction.response.defer(ephemeral=True)
+
         # 1. Ambil data title user
         _, _, titles_owned = await self.db.get_user_gamification_profile(interaction.user.id, interaction.guild.id)
         
         if not titles_owned:
-             return await interaction.response.send_message("❌ Kamu tidak punya Title untuk dipilih.", ephemeral=True)
-             
+            # Pakai followup karena sudah defer
+             return await interaction.followup.send("❌ Kamu tidak punya Title untuk dipilih.", ephemeral=True)
+         
         # 2. Tampilkan Dropdown Menu
-        view = TitleView(self.db, titles_owned, self.TITLE_NAMES)
-        await interaction.response.send_message("pilih identitas barumu:", view=view, ephemeral=True)
+        # [FIX 2] Hapus parameter 'self.TITLE_NAMES'. Cukup passing DB dan Titles.
+        view = TitleView(self.db, titles_owned)
+        await interaction.followup.send("Pilih identitas barumu:", view=view, ephemeral=True)
 
     @app_commands.command(name="leaderboard", description="🏆 Hall of Fame: Top 50 member paling aktif (Voice & XP).")
     async def leaderboard(self, interaction: discord.Interaction):
@@ -373,29 +378,53 @@ class Profile(commands.Cog):
         return rank, len(all_users), above_rows, below_rows
 
 class TitleSelect(discord.ui.Select):
-    def __init__(self, db, titles_owned): # Hapus parameter title_map
+    def __init__(self, db, titles_owned): 
+        # [FIX 3] Hapus parameter title_map, kita pakai TITLE_META global
         self.db = db
         
         options = []
+        # Opsi Default
         options.append(discord.SelectOption(label="❌ Lepas Title", value="none", description="Kembali ke nama polosan."))
         
         for t_id in titles_owned:
-            # [FIX] Ambil dari TITLE_META global
+            # [FIX 4] Ambil nama cantik dari TITLE_META (Imported from utils)
             meta = TITLE_META.get(t_id)
+            
             if meta:
                 label_name = meta['name']
                 desc = meta['desc']
             else:
+                # Fallback aman jika title ID tidak dikenali
                 label_name = t_id.replace("title_", "").replace("_", " ").title()
                 desc = "Title Legacy"
 
-            options.append(discord.SelectOption(label=label_name, value=t_id, emoji="🏷️", description=desc[:100]))
+            options.append(discord.SelectOption(
+                label=label_name, 
+                value=t_id, 
+                emoji="🏷️", 
+                description=desc[:100] # Limit deskripsi Discord max 100 char
+            ))
 
         super().__init__(placeholder="Pilih Title aktifmu...", min_values=1, max_values=1, options=options)
 
-# Update View-nya juga agar tidak perlu passing map lagi
+    async def callback(self, interaction: discord.Interaction):
+        # Value 'none' artinya copot title
+        new_title = self.values[0] if self.values[0] != "none" else None
+        
+        await self.db.set_active_title(interaction.user.id, interaction.guild.id, new_title)
+        
+        # Feedback (Ambil nama cantik lagi untuk konfirmasi)
+        if new_title:
+            meta = TITLE_META.get(new_title)
+            display_name = meta['name'] if meta else new_title
+            msg = f"✅ Title profilmu diubah menjadi: **{display_name}**"
+        else:
+            msg = "✅ Title dilepas."
+            
+        await interaction.response.edit_message(content=msg, view=None)
+
 class TitleView(discord.ui.View):
-    def __init__(self, db, titles_owned): # Hapus parameter title_map
+    def __init__(self, db, titles_owned):
         super().__init__(timeout=60)
         self.add_item(TitleSelect(db, titles_owned))
 
