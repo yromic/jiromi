@@ -287,6 +287,7 @@ class Profile(commands.Cog):
             view=view,
             ephemeral=True,
         )
+        view.message = await interaction.original_response()
 
     @app_commands.command(name="leaderboard", description="Lihat 50 member dengan XP tertinggi di server.")
     async def leaderboard(self, interaction: discord.Interaction):
@@ -455,7 +456,21 @@ class TitleSelect(discord.ui.Select):
 class TitleView(discord.ui.View):
     def __init__(self, db, titles_owned):
         super().__init__(timeout=60)
+        self.message = None
         self.add_item(TitleSelect(db, titles_owned))
+
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+
+        if self.message:
+            try:
+                await self.message.edit(
+                    content="Pilihan title sudah berakhir. Jalankan /title select untuk memilih lagi.",
+                    view=self,
+                )
+            except (discord.NotFound, discord.HTTPException):
+                pass
 
 class LeaderboardView(discord.ui.View):
     def __init__(self, data, interaction_user_id):
