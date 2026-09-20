@@ -203,7 +203,7 @@ class SetupWizardView(ui.View):
         await self.update_view(interaction)
 
     async def cb_cancel(self, interaction: discord.Interaction):
-        await interaction.response.edit_message(content="❌ Setup dibatalkan.", view=None, embed=None)
+        await interaction.response.edit_message(content="Setup dibatalkan.", view=None, embed=None)
         self.stop()
 
     async def cb_back(self, interaction: discord.Interaction):
@@ -244,7 +244,7 @@ class SetupWizardView(ui.View):
             self.step = 3
             await self.update_view(interaction)
         except IndexError:
-            await interaction.response.send_message("⚠️ Mohon pilih channel.", ephemeral=True)
+            await interaction.response.send_message("Pilih channel sebelum melanjutkan.", ephemeral=True)
 
     async def cb_step2_skip(self, interaction: discord.Interaction):
         self.draft.announce_channel_id = None

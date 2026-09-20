@@ -360,11 +360,11 @@ class Leveling(commands.Cog):
         # Ini akan jalan di mode 'Balanced' DAN 'Loud' saat user dapat role.
         if new_role:
             embed = discord.Embed(
-                title="🏆 PENCAPAIAN BARU TERBUKA!",
+                title="Pencapaian baru",
                 description=(
                     f"Selamat {member.mention}! Dedikasimu luar biasa.\n"
                     f"Kamu telah mencapai **Level {level}** dan mendapatkan gelar baru:\n\n"
-                    f"# 🎖️ {new_role.mention}" 
+                    f"# {new_role.mention}"
                 ),
                 color=discord.Color.gold() # Warna Emas agar terasa premium
             )
@@ -373,16 +373,16 @@ class Leveling(commands.Cog):
             
             try:
                 # Kirim dengan mention user di luar embed agar notif masuk
-                await channel.send(content=f"🎉 {member.mention}", embed=embed)
+                await channel.send(content=member.mention, embed=embed)
             except discord.Forbidden:
                 # Fallback jika bot tidak punya izin embed
-                await channel.send(f"🏆 Selamat {member.mention}! Kamu naik ke **Level {level}** dan mendapat role **{new_role.name}**!")
+                await channel.send(f"Selamat {member.mention}! Kamu naik ke **Level {level}** dan mendapat role **{new_role.name}**!")
 
         # KONDISI 2: LEVEL UP BIASA (Standar)
         # Ini hanya jalan di mode 'Loud' saat user naik level tapi TIDAK dapat role.
         else:
             # Pesan teks simple agar tidak spam visual
-            msg = f"🆙 **Level Up!** Selamat {member.mention}, kamu baru saja naik ke **Level {level}**."
+            msg = f"Selamat {member.mention}, kamu naik ke **Level {level}**."
             await channel.send(msg)
 
     @voice_heartbeat.before_loop
@@ -401,7 +401,7 @@ class Leveling(commands.Cog):
 
         # 2. Siapkan Pesan (Sesuai Blueprint Senior)
         embed = discord.Embed(
-            title="🌱 Aku Jiromi",
+            title="Aku Jiromi",
             description=(
                 f"Hai {member.name},\n"
                 "aku Jiromi.\n"

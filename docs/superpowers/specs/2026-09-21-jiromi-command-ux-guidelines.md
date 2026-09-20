@@ -21,6 +21,7 @@
 - Baris isi dan bullet tidak memakai ikon dekoratif.
 - Status selalu memakai label teks, misalnya `Aktif`, `Nonaktif`, `Perlu diperiksa`, atau `Gagal`; warna dan ikon tidak boleh menjadi satu-satunya penanda status.
 - Medali peringkat dan karya lencana atau title yang sudah diperoleh tetap digunakan karena membawa makna produk.
+- Pengecualian ikon yang dipertahankan: medali tiga peringkat teratas di leaderboard mingguan dan profil; ikon pada karya badge yang sudah diperoleh. Ikon lain di alur perintah admin, setup, event, backup, dan status dihapus.
 
 ## Penerapan pada permukaan UI
 

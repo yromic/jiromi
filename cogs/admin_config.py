@@ -12,7 +12,7 @@ class ResetConfirmView(ExecutorView):
         self.value = None
         self._finished = False 
 
-    @discord.ui.button(label="YA, HAPUS SEMUA XP", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="Reset XP", style=discord.ButtonStyle.danger)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self._finished: return
         self._finished = True
@@ -22,7 +22,7 @@ class ResetConfirmView(ExecutorView):
         count = await self.db.reset_guild_xp(self.guild_id)
         
         embed = discord.Embed(
-            description=f"✅ **RESET BERHASIL.**\nXP dan Level dari {count} member telah dikembalikan ke 0. Total menit voice dan riwayat mingguan tetap tersimpan.",
+            description=f"**Reset berhasil.**\nXP dan level {count} member telah dikembalikan ke 0. Total menit voice dan riwayat mingguan tetap tersimpan.",
             color=discord.Color.green()
         )
         await interaction.response.edit_message(content=None, embed=embed, view=None)
@@ -30,7 +30,7 @@ class ResetConfirmView(ExecutorView):
         self.value = True
         self.stop()
 
-    @discord.ui.button(label="BATAL", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Batal", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self._finished: return
         self._finished = True
@@ -38,7 +38,7 @@ class ResetConfirmView(ExecutorView):
         for child in self.children: child.disabled = True
             
         await interaction.response.edit_message(
-            content="❌ **Operasi Dibatalkan.** Data aman.", 
+            content="Operasi dibatalkan. Data tidak berubah.",
             embed=None, 
             view=None
         )
@@ -88,26 +88,26 @@ class FilterResetView(discord.ui.View):
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
-            await interaction.response.send_message("⛔ Ini bukan menu konfirmasimu!", ephemeral=True)
+            await interaction.response.send_message("Menu konfirmasi ini hanya dapat digunakan oleh pemiliknya.", ephemeral=True)
             return False
         return True
 
-    @discord.ui.button(label="YA, RESET FILTER", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="Reset filter", style=discord.ButtonStyle.danger)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.db.reset_guild_filters(self.guild_id)
         button.disabled = True
         for child in self.children:
             child.disabled = True
             
-        await interaction.response.edit_message(content="✅ **Semua filter telah di-reset.**", view=self, embed=None)
+        await interaction.response.edit_message(content="Semua filter telah direset.", view=self, embed=None)
         self.stop()
 
-    @discord.ui.button(label="BATAL", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Batal", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         button.disabled = True
         for child in self.children:
             child.disabled = True
-        await interaction.response.edit_message(content="❌ Dibatalkan.", view=self, embed=None)
+        await interaction.response.edit_message(content="Reset filter dibatalkan.", view=self, embed=None)
         self.stop()
         
         
@@ -132,7 +132,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
         
         await self.db.add_filter(interaction.guild_id, role.id, 'role', 'allow')
         
-        await interaction.response.send_message(f"✅ Role {role.mention} sekarang masuk dalam **Whitelist**.")
+        await interaction.response.send_message(f"Role {role.mention} sekarang masuk dalam **Whitelist**.")
 
     @role_group.command(name="disallow", description="Larang role tertentu agar tidak bisa mendapatkan XP.")
     @app_commands.checks.has_permissions(administrator=True)
@@ -142,7 +142,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
         
         await self.db.add_filter(interaction.guild_id, role.id, 'role', 'exclude')
         
-        await interaction.response.send_message(f"🚫 Role {role.mention} sekarang masuk dalam **Blacklist**.")
+        await interaction.response.send_message(f"Role {role.mention} sekarang masuk dalam **Blacklist**.")
 
     reward_group = app_commands.Group(name="reward", description="Atur hadiah role per level")
 
@@ -187,7 +187,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
 
         if not rewards:
             embed = discord.Embed(
-                description=" 📭  Belum ada Level Reward yang dikonfigurasi di server ini.",
+                description="Belum ada level reward yang dikonfigurasi di server ini.",
                 color=discord.Color.light_gray()
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -203,23 +203,21 @@ class AdminConfig(commands.GroupCog, name="xp"):
 
             if role:
 
-                status_icon = "✅" if role.position < bot_top_role.position else "⚠️"
+                status = "Aman" if role.position < bot_top_role.position else "Perlu diperiksa: posisi role terlalu tinggi"
                 role_text = role.mention
             else:
 
-                status_icon = "❌"
+                status = "Role tidak ditemukan"
                 role_text = f"*(Role Terhapus: {role_id})*"
 
-            description += f"**Level {level}** ➜ {role_text} {status_icon}\n"
+            description += f"**Level {level}** — {role_text}\nStatus: {status}\n"
 
         embed = discord.Embed(
-            title=f" 🎁  Level Rewards: {interaction.guild.name}",
+            title=f"Level reward: {interaction.guild.name}",
             description=description,
             color=discord.Color.blue()
         )
         
-        embed.set_footer(text="✅ = Aman | ⚠️ = Role ketinggian (Bot tidak bisa kasih) | ❌ = Role hilang")
-
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="setup" , description="Pengaturan cepat untuk admin yang sudah tahu channel dan nilai XP.")
@@ -254,7 +252,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
             "balanced": "Bot hanya akan mengirim pengumuman jika member mendapatkan Role Reward.",
             "loud": "Bot akan merayakan setiap kenaikan level member di channel pengumuman."
         }
-        await interaction.response.send_message(f"✅ Mode pengumuman diubah ke **{mode.name}**.\n*{descriptions[mode.value]}*")
+        await interaction.response.send_message(f"Mode pengumuman diubah ke **{mode.name}**.\n*{descriptions[mode.value]}*")
 
     @app_commands.command(name="status", description="Lihat status kesehatan dan konfigurasi sistem XP.")
     @app_commands.checks.has_permissions(administrator=True)
@@ -323,7 +321,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
         overall_color = discord.Color.green() if (chat_active or voice_ok) else discord.Color.red()
 
         embed = discord.Embed(
-            title=" 🩺  Status Kesehatan Jiromi",
+            title="Status XP Jiromi",
             color=overall_color
         )
 
@@ -338,18 +336,18 @@ class AdminConfig(commands.GroupCog, name="xp"):
         embed.add_field(name="Voice tidak diberi XP sejak ringkasan log terakhir (10 menit)", value=(f"Min member {skip_counts['below_min_members']} | bot/self-deaf {skip_counts['self_deaf_or_bot']}\n"
             f"Channel {skip_counts['channel_filter']} | role {skip_counts['role_filter']} | muted {skip_counts['muted_limit']} | member error {skip_counts['member_error']} | guild error {skip_counts['guild_error']}"), inline=False)
 
-        embed.add_field(name="🎭 Role Whitelist (Khusus)", value=role_allow_str, inline=True)
-        embed.add_field(name="🚫 Role Blacklist (Dilarang)", value=role_deny_str, inline=True)
+        embed.add_field(name="Role whitelist", value=role_allow_str, inline=True)
+        embed.add_field(name="Role blacklist", value=role_deny_str, inline=True)
         embed.add_field(name="\u200b", value="\u200b", inline=False) # Spacer
 
-        embed.add_field(name="✅ Channel Whitelist", value=chan_allow_str, inline=True)
-        embed.add_field(name="⛔ Channel Blacklist", value=chan_deny_str, inline=True)
+        embed.add_field(name="Channel whitelist", value=chan_allow_str, inline=True)
+        embed.add_field(name="Channel blacklist", value=chan_deny_str, inline=True)
         
         reward_stats = (
             f"Total Config: **{len(rewards)}**\n"
-            f"✅ Aman: {safe} | ⚠️ Bahaya: {warning} | ❌ Error: {missing}"
+            f"Aman: {safe} | Perlu diperiksa: {warning} | Role hilang: {missing}"
         )
-        embed.add_field(name="🎁 Reward Health", value=reward_stats, inline=False)
+        embed.add_field(name="Kondisi reward", value=reward_stats, inline=False)
 
         if voice_configured and not voice_ok:
             embed.set_footer(text="Langkah berikutnya: periksa runtime voice dan log bot. XP chat tetap berjalan bila rate chat lebih dari 0.")
@@ -364,7 +362,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
 
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.MissingPermissions):
-            msg = "⛔ **Akses Ditolak:** Perintah konfigurasi XP hanya untuk Administrator."
+            msg = "Akses ditolak. Perintah konfigurasi XP hanya untuk administrator."
             
             if interaction.response.is_done():
                 await interaction.followup.send(msg, ephemeral=True)
@@ -379,15 +377,15 @@ class AdminConfig(commands.GroupCog, name="xp"):
                 await interaction.response.send_message(msg, ephemeral=True)
 
     
-    @app_commands.command(name="reset", description="⚠️ BAHAYA: Reset XP semua member di server ini ke 0.")
+    @app_commands.command(name="reset", description="Reset XP semua member di server ini ke 0.")
     @app_commands.checks.has_permissions(administrator=True)
     async def reset_xp_all(self, interaction: discord.Interaction):
 
         embed = discord.Embed(
-            title="⚠️ PERINGATAN KERAS: ZONA BAHAYA",
+            title="Konfirmasi reset XP server",
             description=(
                 f"Kamu akan mereset **XP & LEVEL** di server **{interaction.guild.name}**. Total menit voice dan riwayat mingguan tetap tersimpan.\n\n"
-                "🔻 **Konsekuensi:**\n"
+                "**Yang akan terjadi:**\n"
                 "1. Semua member akan kembali ke Level 0.\n"
                 "2. Semua XP chat & voice akan dihapus.\n"
                 "3. Role reward tidak otomatis dicabut (harus manual/tunggu update).\n"
@@ -407,7 +405,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
     @app_commands.checks.has_permissions(administrator=True)
     async def reset_user_xp_cmd(self, interaction: discord.Interaction, member: discord.Member):
         if member.bot:
-            await interaction.response.send_message("❌ Bot tidak memiliki XP.", ephemeral=True)
+            await interaction.response.send_message("Bot tidak memiliki XP untuk direset.", ephemeral=True)
             return
 
         embed = discord.Embed(
@@ -431,16 +429,16 @@ class AdminConfig(commands.GroupCog, name="xp"):
         await self.db.remove_filter(interaction.guild_id, role.id)
         
         await interaction.response.send_message(
-            f"✅ Aturan untuk Role {role.mention} telah dihapus. Sekarang role ini **Netral**."
+            f"Aturan untuk role {role.mention} telah dihapus. Sekarang role ini **Netral**."
         )
         
     filter_group = app_commands.Group(name="filter", description="Manajemen Filter Global")
 
-    @filter_group.command(name="reset", description="⚠️ Hapus SEMUA aturan Whitelist/Blacklist.")
+    @filter_group.command(name="reset", description="Hapus semua aturan whitelist dan blacklist.")
     @app_commands.checks.has_permissions(administrator=True)
     async def filter_reset_cmd(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title="⚠️ Konfirmasi Reset Filter",
+            title="Konfirmasi reset filter",
             description="Ini akan menghapus semua konfigurasi **Role & Channel** (Whitelist/Blacklist).\nSemua akan kembali ke default.",
             color=discord.Color.red()
         )
@@ -451,7 +449,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
         
     channel_group = app_commands.Group(name="channel", description="Atur whitelist/blacklist channel untuk XP.")
 
-    @channel_group.command(name="allow", description="✅ Whitelist: Hanya channel ini yang bisa dapat XP.")
+    @channel_group.command(name="allow", description="Whitelist: hanya channel ini yang bisa mendapat XP.")
     @app_commands.describe(channel="Channel yang ingin diizinkan (Text/Voice)")
     @app_commands.checks.has_permissions(administrator=True)
     async def channel_allow(self, interaction, channel: discord.abc.GuildChannel):
@@ -461,11 +459,11 @@ class AdminConfig(commands.GroupCog, name="xp"):
         await self.db.add_filter(interaction.guild_id, channel.id, 'channel', 'allow')
         
         await interaction.response.send_message(
-            f"✅ **Whitelist:** XP sekarang **AKTIF** di {channel.mention}.\n"
+            f"**Whitelist:** XP sekarang aktif di {channel.mention}.\n"
             f"*(Catatan: Jika ini whitelist pertama, channel lain otomatis mati)*"
         )
 
-    @channel_group.command(name="disallow", description="⛔ Blacklist: Matikan XP di channel ini.")
+    @channel_group.command(name="disallow", description="Blacklist: matikan XP di channel ini.")
     @app_commands.describe(channel="Channel yang ingin dimatikan XP-nya")
     @app_commands.checks.has_permissions(administrator=True)
     async def channel_disallow(self, interaction: discord.Interaction, channel: discord.abc.GuildChannel):
@@ -474,9 +472,9 @@ class AdminConfig(commands.GroupCog, name="xp"):
         
         await self.db.add_filter(interaction.guild_id, channel.id, 'channel', 'exclude')
         
-        await interaction.response.send_message(f"⛔ **Blacklist:** XP telah **DIMATIKAN** di {channel.mention}.")
+        await interaction.response.send_message(f"**Blacklist:** XP telah dimatikan di {channel.mention}.")
 
-    @channel_group.command(name="remove", description="🗑️ Hapus filter: Kembalikan channel ke status Netral.")
+    @channel_group.command(name="remove", description="Hapus filter channel dan kembalikan ke status netral.")
     @app_commands.describe(channel="Channel yang akan dihapus aturannya")
     @app_commands.checks.has_permissions(administrator=True)
     async def channel_remove(self, interaction: discord.Interaction, channel: discord.abc.GuildChannel):
@@ -484,10 +482,10 @@ class AdminConfig(commands.GroupCog, name="xp"):
         await self.db.remove_filter(interaction.guild_id, channel.id)
         
         await interaction.response.send_message(
-            f"🗑️ Aturan XP di {channel.mention} telah dihapus (Status: **Netral**)."
+            f"Aturan XP di {channel.mention} telah dihapus (status: **Netral**)."
         )
 
-    @app_commands.command(name="refresh_cache", description="♻️ Refresh seluruh cache konfigurasi dan reward.")
+    @app_commands.command(name="refresh_cache", description="Muat ulang cache konfigurasi dan reward.")
     @app_commands.checks.has_permissions(administrator=True)
     async def refresh_cache(self, interaction: discord.Interaction):
 
@@ -500,14 +498,14 @@ class AdminConfig(commands.GroupCog, name="xp"):
         self.bot.logger.audit("CACHE_FLUSH", f"Admin {interaction.user.name} melakukan refresh cache manual.")
 
         await interaction.response.send_message(
-            "✅ **Sistem Disegarkan!**\n"
+            "**Cache berhasil diperbarui.**\n"
             "Semua cache (Config, Filter, Role Error) telah dibersihkan.\n"
             "Bot akan mengambil data segar dari Database pada aktivitas berikutnya.",
             ephemeral=True
         )
 
     # --- BADGE MAINTENANCE ---
-    @app_commands.command(name="grant_tenure", description="🏅 Berikan badge 'Still Here' untuk member > 1 tahun.")
+    @app_commands.command(name="grant_tenure", description="Berikan badge 'Still Here' untuk member yang bergabung lebih dari 1 tahun.")
     @app_commands.checks.has_permissions(administrator=True)
     async def grant_tenure(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True)
@@ -532,7 +530,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
                     granted_count += 1
         
         await interaction.followup.send(
-            f"🌳 **Tenure Check Selesai.**\n"
+            f"**Pemeriksaan masa keanggotaan selesai.**\n"
             f"Badge **Still Here** diberikan kepada **{granted_count}** veteran yang telah bergabung > 1 tahun."
         )
 

@@ -33,7 +33,7 @@ class ConfirmView(ExecutorView):
         self.value = True
         self.stop()
 
-    @discord.ui.button(label="BATAL", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Batal", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self._finished: return
         self._finished = True
