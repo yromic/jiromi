@@ -450,7 +450,10 @@ class TitleSelect(discord.ui.Select):
             msg = f"Title aktif diubah ke **{display_name}**."
         else:
             msg = "Title aktif dihapus."
-            
+
+        if self.view:
+            self.view.stop()
+
         await interaction.response.edit_message(content=msg, view=None)
 
 class TitleView(discord.ui.View):
