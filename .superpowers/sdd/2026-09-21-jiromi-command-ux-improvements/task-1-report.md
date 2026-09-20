@@ -12,3 +12,9 @@
 - Inventoried existing user-interface icon use across command descriptions, messages, embeds, controls, timeout messages, and progress displays. The guide identifies decorative icons for later removal while retaining rank medals, badge/title artwork, and text-labelled status information.
 - Parsed the two changed Python modules with `compile()` and reviewed the task-only staged diff with `git diff --cached --check`.
 - No tests were added or run, as instructed.
+
+## Review fix
+
+- The timeout callback now appends its notice only when the resulting content is at most Discord's 2,000-character limit. For longer existing content, it preserves the message and embed, adds a disabled `Waktu habis` control when component capacity allows, or relabels the first existing button/select when the view is full, then updates the disabled view.
+- Replaced timeout exception printing with structured `logger.error` reporting through the Discord client associated with the timeout message, when that client exposes the bot logger.
+- Static review only: parsed `utils/views.py` with `compile()` and checked the task-only staged diff. No tests were added or run.

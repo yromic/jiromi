@@ -7,6 +7,7 @@ from utils.interaction_responses import send_interaction_error
 
 
 TIMEOUT_MESSAGE = "Waktu habis. Kontrol dinonaktifkan."
+MAX_MESSAGE_CONTENT = 2000
 
 class ExecutorView(ui.View):
     """
@@ -39,17 +40,41 @@ class ExecutorView(ui.View):
         if self.message:
             try:
                 content = self.message.content
-                if content:
-                    content = f"{content}\n\n{TIMEOUT_MESSAGE}"
-                else:
-                    content = TIMEOUT_MESSAGE
-                await self.message.edit(
-                    content=content,
-                    view=self
+                timeout_content = (
+                    f"{content}\n\n{TIMEOUT_MESSAGE}"
+                    if content
+                    else TIMEOUT_MESSAGE
                 )
+
+                if len(timeout_content) <= MAX_MESSAGE_CONTENT:
+                    await self.message.edit(content=timeout_content, view=self)
+                else:
+                    if len(self.children) < 25:
+                        self.add_item(
+                            ui.Button(
+                                label="Waktu habis",
+                                style=discord.ButtonStyle.secondary,
+                                disabled=True,
+                            )
+                        )
+                    else:
+                        for child in self.children:
+                            if isinstance(child, ui.Button):
+                                child.label = "Waktu habis"
+                                break
+                            if isinstance(child, ui.Select):
+                                child.placeholder = "Waktu habis"
+                                break
+                    await self.message.edit(view=self)
             except (discord.NotFound, discord.Forbidden):
                 # Pesan sudah dihapus atau bot tidak punya izin, abaikan.
                 pass
             except Exception as e:
-                # Idealnya log ke file, tapi print cukup untuk sekarang
-                print(f"⚠️ Error pada View Timeout: {e}")
+                client = self.message._state._get_client()
+                logger = getattr(client, "logger", None)
+                if logger:
+                    logger.error(
+                        "VIEW_TIMEOUT_EDIT_FAIL",
+                        "Gagal memperbarui kontrol view yang kedaluwarsa",
+                        error_obj=e,
+                    )
