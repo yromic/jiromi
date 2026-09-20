@@ -3,6 +3,11 @@ import discord
 from discord import ui
 from typing import Optional
 
+from utils.interaction_responses import send_interaction_error
+
+
+TIMEOUT_MESSAGE = "Waktu habis. Kontrol dinonaktifkan."
+
 class ExecutorView(ui.View):
     """
     Base View dengan keamanan tingkat tinggi:
@@ -18,13 +23,10 @@ class ExecutorView(ui.View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
-            msg = "⛔ **Akses Ditolak.** Tombol ini hanya milik eksekutor command."
-            
-            # [FIX 4] Cek apakah interaksi sudah direspon sebelumnya (Edge Case)
-            if interaction.response.is_done():
-                await interaction.followup.send(msg, ephemeral=True)
-            else:
-                await interaction.response.send_message(msg, ephemeral=True)
+            await send_interaction_error(
+                interaction,
+                "Akses ditolak. Tombol ini hanya dapat digunakan oleh pembuat perintah.",
+            )
             return False
         return True
 
@@ -36,9 +38,13 @@ class ExecutorView(ui.View):
         # [FIX 3] Error Handling yang tidak 'blind'
         if self.message:
             try:
-                # [FIX 2] Jangan replace embed! Cukup update view & tambah konten teks kecil
+                content = self.message.content
+                if content:
+                    content = f"{content}\n\n{TIMEOUT_MESSAGE}"
+                else:
+                    content = TIMEOUT_MESSAGE
                 await self.message.edit(
-                    content="⌛ **Waktu Habis.** Interaksi dinonaktifkan.", 
+                    content=content,
                     view=self
                 )
             except (discord.NotFound, discord.Forbidden):
