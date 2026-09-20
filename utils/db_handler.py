@@ -54,6 +54,14 @@ async def migrate_v5_chat_events(conn):
     if "total_chat_events" not in columns:
         await conn.execute("ALTER TABLE users ADD COLUMN total_chat_events INTEGER NOT NULL DEFAULT 0")
 
+async def migrate_v8_repair_chat_events_column(conn):
+    """Repair databases whose schema version advanced without this column."""
+    await migrate_v5_chat_events(conn)
+
+async def migrate_v9_repair_weekly_recap_deliveries(conn):
+    """Repair databases whose schema version advanced without recap tracking."""
+    await migrate_v6_weekly_recap_deliveries(conn)
+
 async def migrate_v6_weekly_recap_deliveries(conn):
     await conn.execute("""CREATE TABLE IF NOT EXISTS weekly_recap_deliveries (
         guild_id INTEGER NOT NULL, week_key TEXT NOT NULL, status TEXT NOT NULL,
@@ -72,6 +80,8 @@ MIGRATIONS = {
     4: migrate_v4_global_users,
     5: migrate_v5_chat_events,
     6: migrate_v6_weekly_recap_deliveries,
+    8: migrate_v8_repair_chat_events_column,
+    9: migrate_v9_repair_weekly_recap_deliveries,
 }
 
 async def init_db(logger=None):

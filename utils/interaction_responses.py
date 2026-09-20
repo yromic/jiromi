@@ -15,12 +15,14 @@ async def send_interaction_message(
         if interaction.response.is_done()
         else interaction.response.send_message
     )
-    return await response_target(
-        content=content,
-        embed=embed,
-        ephemeral=ephemeral,
-        view=view,
-    )
+    response_kwargs = {
+        "content": content,
+        "embed": embed,
+        "ephemeral": ephemeral,
+    }
+    if view is not None:
+        response_kwargs["view"] = view
+    return await response_target(**response_kwargs)
 
 
 async def send_interaction_error(interaction, message, *, ephemeral=True):
