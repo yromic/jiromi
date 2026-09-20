@@ -161,15 +161,13 @@ class WeeklyStats(commands.Cog):
             state, color, recovery, channel_text = "Tidak aktif", discord.Color.light_grey(), "Jalankan `/weekly enable` untuk mulai mengirim rekap.", channel.mention if channel else "Belum ada channel yang tersedia"
         if last_success:
             last = f"{discord.utils.format_dt(datetime.fromtimestamp(last_success['posted_at'], timezone.utc), style='R')} (minggu {last_success['week_key']})"
-        elif delivery and delivery["status"] == "failed":
-            recovery = "Pengiriman terakhir gagal. Periksa channel lalu jalankan `/weekly enable` untuk memilih ulang channel."
-        elif delivery and delivery["status"] == "pending":
-            recovery = "Tunggu pengecekan rekap berikutnya. Jika tetap tidak terkirim, periksa channel lalu jalankan `/weekly enable`."
         last = last if last_success else "Belum ada rekap yang berhasil dikirim"
         if delivery and delivery["status"] == "failed":
             latest_attempt = "Percobaan terbaru gagal. Periksa channel dan izinnya."
+            recovery = "Pengiriman terbaru gagal. Periksa channel dan izin bot, lalu jalankan `/weekly enable` untuk memilih channel kembali."
         elif delivery and delivery["status"] == "pending":
             latest_attempt = "Rekap sedang menunggu percobaan pengiriman."
+            recovery = "Tunggu pengecekan rekap berikutnya. Jika tetap tertunda, periksa channel dan jalankan `/weekly enable`."
         elif delivery and delivery["status"] == "empty":
             latest_attempt = "Tidak ada aktivitas pada periode rekap terakhir."
         else:
