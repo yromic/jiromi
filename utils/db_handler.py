@@ -512,31 +512,48 @@ class DatabaseHandler:
         )
 
     async def set_event_config(self, guild_id, event_type, col_name, value):
-        """Update satu kolom konfigurasi event."""
-        
-        # [FIX 2] Security Whitelist: Cegah SQL Injection
-        ALLOWED_COLS = {
-            "channel_id", "is_enabled", "message_text", "use_embed",
-            "embed_title", "embed_description", "embed_color", "image_url"
-        }
-        if col_name not in ALLOWED_COLS:
-            raise ValueError(f"❌ Security Alert: Kolom '{col_name}' tidak valid/diizinkan.")
+        """Update one setting through the atomic event configuration writer."""
+        await self.update_event_config(guild_id, event_type, {col_name: value})
 
-        # 1. Pastikan row ada
-        exists = await self.fetch_one(
-            "SELECT 1 FROM event_configs WHERE guild_id = ? AND event_type = ?",
-            (guild_id, event_type)
+    async def update_event_config(self, guild_id, event_type, values):
+        """Atomically create or update one event configuration."""
+        allowed_columns = {
+            "channel_id", "is_enabled", "message_text", "use_embed",
+            "embed_title", "embed_description", "embed_color", "image_url",
+        }
+        if not values:
+            return
+        if set(values) - allowed_columns:
+            raise ValueError("Invalid event configuration column")
+        if not self._conn:
+            await self.connect()
+
+        assignments = ", ".join(f"{column} = ?" for column in values)
+        parameters = (*values.values(), guild_id, event_type)
+        async with self._write_lock:
+            await self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                await self._conn.execute(
+                    "INSERT OR IGNORE INTO event_configs (guild_id, event_type) VALUES (?, ?)",
+                    (guild_id, event_type),
+                )
+                await self._conn.execute(
+                    f"UPDATE event_configs SET {assignments} WHERE guild_id = ? AND event_type = ?",
+                    parameters,
+                )
+                await self._conn.commit()
+            except Exception as exc:
+                await self._conn.rollback()
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "update_event_config transaction", exc)
+                raise
+
+    async def clear_event_config(self, guild_id, event_type):
+        """Remove one complete event configuration after caller confirmation."""
+        await self.execute(
+            "DELETE FROM event_configs WHERE guild_id = ? AND event_type = ?",
+            (guild_id, event_type),
         )
-        if not exists:
-            await self.execute(
-                "INSERT INTO event_configs (guild_id, event_type) VALUES (?, ?)",
-                (guild_id, event_type)
-            )
-        
-        # 2. Update kolom target (Aman karena col_name sudah divalidasi)
-        query = f"UPDATE event_configs SET {col_name} = ? WHERE guild_id = ? AND event_type = ?"
-        await self.execute(query, (value, guild_id, event_type))
-    
+
     # --- RESET XP LOGIC ---
     async def reset_guild_xp(self, guild_id):
         """Mereset XP & Level semua member di guild tertentu. Mengembalikan jumlah user yang terdampak."""

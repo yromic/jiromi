@@ -1,321 +1,366 @@
-# cogs/server_events.py
+import re
+import string
+from urllib.parse import urlparse
+
 import discord
 from discord import app_commands
 from discord.ext import commands
 
+from utils.interaction_responses import send_interaction_error, send_interaction_message
+from utils.views import ExecutorView
+
+
+EVENT_TYPES = [
+    app_commands.Choice(name="Welcome (member masuk)", value="welcome"),
+    app_commands.Choice(name="Leave (member keluar)", value="leave"),
+    app_commands.Choice(name="Ban", value="ban"),
+    app_commands.Choice(name="Boost Nitro", value="boost"),
+]
+PLACEHOLDERS = {"member", "username", "server", "member_count", "count", "boost_count"}
+MAX_MESSAGE_LENGTH = 2000
+MAX_TITLE_LENGTH = 256
+MAX_DESCRIPTION_LENGTH = 4096
+MAX_IMAGE_URL_LENGTH = 2000
+
+
+class EventTestView(ExecutorView):
+    def __init__(self, author_id, channel, content, embed):
+        super().__init__(author_id)
+        self.channel = channel
+        self.content = content
+        self.embed = embed
+
+    @discord.ui.button(label="Kirim simulasi", style=discord.ButtonStyle.primary)
+    async def confirm(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        try:
+            await self.channel.send(content=self.content or None, embed=self.embed)
+        except discord.Forbidden:
+            await interaction.response.edit_message(
+                content="Bot tidak dapat mengirim simulasi. Periksa izin Kirim Pesan dan Embed Links pada channel tujuan.", view=None
+            )
+        except discord.HTTPException:
+            await interaction.response.edit_message(
+                content="Simulasi tidak terkirim. Coba lagi setelah memeriksa konfigurasi event.", view=None
+            )
+        else:
+            await interaction.response.edit_message(content=f"Simulasi terkirim ke {self.channel.mention}.", view=None)
+        self.stop()
+
+    @discord.ui.button(label="Batal", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        await interaction.response.edit_message(content="Pengiriman simulasi dibatalkan.", view=None)
+        self.stop()
+
+
+class EventResetView(ExecutorView):
+    def __init__(self, author_id, cog, guild_id, event_type, event_name):
+        super().__init__(author_id)
+        self.cog = cog
+        self.guild_id = guild_id
+        self.event_type = event_type
+        self.event_name = event_name
+
+    @discord.ui.button(label="Reset event", style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        await self.cog.db.clear_event_config(self.guild_id, self.event_type)
+        await interaction.response.edit_message(
+            content=f"Konfigurasi {self.event_name} direset. Channel dan status aktif juga dihapus.", view=None
+        )
+        self.stop()
+
+    @discord.ui.button(label="Batal", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        await interaction.response.edit_message(content="Reset event dibatalkan.", view=None)
+        self.stop()
+
+
 class ServerEvents(commands.Cog):
-    # [TAMBAHAN BARU] Default messages agar bot tidak error saat config kosong
     DEFAULT_MESSAGES = {
-        "welcome": "👋 Selamat datang {member} di **{server}**!",
-        "leave": "👋 {username} telah meninggalkan **{server}**.",
-        "ban": "🔨 {username} telah dibanned dari **{server}**.",
-        "boost": "🚀 Terima kasih {member} telah boost **{server}**!"
+        "welcome": "Selamat datang {member} di **{server}**!",
+        "leave": "{username} telah meninggalkan **{server}**.",
+        "ban": "{username} telah dikeluarkan dari **{server}**.",
+        "boost": "Terima kasih {member} telah boost **{server}**!",
     }
+    event_group = app_commands.Group(name="event", description="Atur pesan Welcome, Leave, Ban, dan Boost.")
 
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
-        #self.bot.tree.add_command(self.event_group)
 
-    
-    def _format_text(self, text, member, guild):
-        """Mengganti placeholder dengan aman."""
-        if not text: 
-            return ""
-        
-        # Mapping data
-        data = {
-            "member": member.mention,
-            "username": member.name,
-            "server": guild.name,
-            "member_count": guild.member_count,
-            "count": guild.member_count,
-            "boost_count": guild.premium_subscription_count
-        }
-
-        # [FIX] Try-except agar tidak crash jika admin typo placeholder
+    @staticmethod
+    def _validate_placeholders(value, label):
+        if value is None:
+            return None
         try:
-            return text.format(**data)
-        except KeyError:
-            return text
+            fields = string.Formatter().parse(value)
+            for _literal, field, format_spec, conversion in fields:
+                if field is not None and (field not in PLACEHOLDERS or format_spec or conversion):
+                    return f"Placeholder `{{{field}}}` pada {label} tidak tersedia. Gunakan /help topik:placeholders."
+        except ValueError:
+            return f"{label} memiliki kurung kurawal yang belum lengkap."
+        return None
 
-    async def _send_event(self, event_type, member, guild):
-        """Logic inti pengiriman pesan event."""
-        config = await self.db.get_event_config(guild.id, event_type)
-        
-        # 1. Guard Clauses (Cek Database)
-        if not config: return
-        if not config['is_enabled']: return
-        if not config['channel_id']: return
+    def _validate_text(self, value, label, maximum):
+        if value is not None and len(value) > maximum:
+            return f"{label} maksimal {maximum} karakter."
+        return self._validate_placeholders(value, label)
 
-        # 2. Guard Clause (Cek Channel)
-        channel = guild.get_channel(config['channel_id'])
-        if not channel: return
-        
-        # Cek permission dasar bot di channel tersebut
+    @staticmethod
+    def _parse_color(color_hex):
+        if color_hex is None:
+            return None, None
+        if not re.fullmatch(r"#?[0-9a-fA-F]{6}", color_hex):
+            return None, "Warna harus berupa kode hex enam digit, misalnya `#5865F2`."
+        return int(color_hex.removeprefix("#"), 16), None
+
+    @staticmethod
+    def _validate_image_url(url):
+        if len(url) > MAX_IMAGE_URL_LENGTH:
+            return f"URL gambar maksimal {MAX_IMAGE_URL_LENGTH} karakter."
+        parsed = urlparse(url)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            return "URL gambar harus memakai `https://` atau `http://` dan memiliki alamat host."
+        return None
+
+    def _format_text(self, text, member, guild):
+        if not text:
+            return ""
+        return text.format(
+            member=member.mention, username=member.name, server=guild.name,
+            member_count=guild.member_count, count=guild.member_count,
+            boost_count=guild.premium_subscription_count,
+        )
+
+    @staticmethod
+    def _message_chunks(value, maximum=1900):
+        return [value[index:index + maximum] for index in range(0, len(value), maximum)] or ["Kosong"]
+
+    def _build_event_payload(self, event_type, config, member, guild):
+        content = self._format_text(config["message_text"] or self.DEFAULT_MESSAGES[event_type], member, guild)
+        embed = None
+        if config["use_embed"]:
+            embed = discord.Embed(
+                title=self._format_text(config["embed_title"], member, guild) or None,
+                description=self._format_text(config["embed_description"], member, guild) or None,
+                color=discord.Color(config["embed_color"] or discord.Color.blue().value),
+            )
+            embed.set_thumbnail(url=member.display_avatar.url)
+            if config["image_url"]:
+                embed.set_image(url=config["image_url"])
+        return content, embed
+
+    def _get_channel_issue(self, guild, config):
+        if not config["channel_id"]:
+            return None, "Channel tujuan belum dipilih. Jalankan /event setup."
+        channel = guild.get_channel(config["channel_id"])
+        if channel is None:
+            return None, "Channel tujuan tidak ditemukan. Pilih channel baru dengan /event setup."
         me = guild.me or guild.get_member(self.bot.user.id)
         permissions = channel.permissions_for(me)
-        
-        if not permissions.send_messages: return
+        if not permissions.send_messages:
+            return None, "Bot tidak memiliki izin Kirim Pesan pada channel tujuan."
+        if config["use_embed"] and not permissions.embed_links:
+            return None, "Bot tidak memiliki izin Embed Links pada channel tujuan."
+        return channel, None
 
-        # 3. Siapkan konten pesan (Gunakan Default jika kosong)
-        raw_text = config['message_text']
-        if not raw_text:
-            raw_text = self.DEFAULT_MESSAGES.get(event_type, "")
-
-        content_msg = self._format_text(raw_text, member, guild)
-        embed_obj = None
-
-        # 4. Build Embed (Jika diaktifkan)
-        if config['use_embed']:
-            title = self._format_text(config['embed_title'], member, guild)
-            desc = self._format_text(config['embed_description'], member, guild)
-            
-            # Konversi int ke discord.Color secara eksplisit
-            color_val = config['embed_color']
-            color = discord.Color(color_val) if color_val else discord.Color.blue()
-            
-            embed_obj = discord.Embed(
-                title=title or None,
-                description=desc or None,
-                color=color
-            )
-            
-            # Auto Thumbnail: Avatar Member
-            embed_obj.set_thumbnail(url=member.display_avatar.url)
-            
-            # Static Image (jika ada URL valid)
-            if config['image_url'] and config['image_url'].startswith("http"):
-                embed_obj.set_image(url=config['image_url'])
-
-        # [FIX] Guard Clause Terakhir: Jika pesan & embed kosong, batalkan.
-        if not content_msg and not embed_obj:
-            return
-
-        # 5. Kirim Pesan (Safety Try-Except)
+    async def _send_event(self, event_type, member, guild):
+        config = await self.db.get_event_config(guild.id, event_type)
+        if not config or not config["is_enabled"]:
+            return False, "Event tidak aktif atau belum dikonfigurasi."
+        channel, issue = self._get_channel_issue(guild, config)
+        if issue:
+            return False, issue
+        content, embed = self._build_event_payload(event_type, config, member, guild)
         try:
-            await channel.send(content=content_msg or None, embed=embed_obj)
+            await channel.send(content=content or None, embed=embed)
+            return True, None
         except discord.Forbidden:
-            print(f"❌ Izin ditolak saat mengirim {event_type} di {guild.name}")
-        except Exception as e:
-            print(f"❌ Error event {event_type}: {e}")
-
-    # --- LISTENERS ---
+            return False, "Bot tidak diizinkan mengirim pesan pada channel tujuan."
+        except discord.HTTPException as exc:
+            logger = getattr(self.bot, "logger", None)
+            if logger:
+                logger.error("EVENT_SEND_FAIL", "Pengiriman event gagal", error_obj=exc, event_type=event_type)
+            return False, "Discord menolak pengiriman event."
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        await self._send_event('welcome', member, member.guild)
+        await self._send_event("welcome", member, member.guild)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        # Trigger saat user leave atau di-kick
-        await self._send_event('leave', member, member.guild)
+        await self._send_event("leave", member, member.guild)
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
-        # Mock member object karena user banned bukan lagi Member
-        class MockMember:
-            def __init__(self, u, g):
-                self.name = u.name
-                self.mention = u.mention
-                self.id = u.id
-                self.guild = g
-                self.display_avatar = u.display_avatar
-        
-        mock_mem = MockMember(user, guild)
-        await self._send_event('ban', mock_mem, guild)
+        class BannedUser:
+            name = user.name
+            mention = user.mention
+            display_avatar = user.display_avatar
+        await self._send_event("ban", BannedUser(), guild)
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
-        # Deteksi Nitro Boost
         if before.premium_since is None and after.premium_since is not None:
-            await self._send_event('boost', after, after.guild)
+            await self._send_event("boost", after, after.guild)
 
-    # --- SLASH COMMANDS (Admin Config) ---
-
-    event_group = app_commands.Group(name="event", description="Konfigurasi pesan Welcome, Leave, Ban, & Boost.")
-
-    @event_group.command(name="setup", description="Aktifkan event dan set channel tujuan.")
-    @app_commands.describe(event_type="Pilih tipe event", channel="Channel tujuan notifikasi")
-    @app_commands.choices(event_type=[
-        app_commands.Choice(name="Welcome (Member Masuk)", value="welcome"),
-        app_commands.Choice(name="Leave (Member Keluar)", value="leave"),
-        app_commands.Choice(name="Ban (Member Dibanned)", value="ban"),
-        app_commands.Choice(name="Boost (Nitro Boost)", value="boost"),
-    ])
+    @event_group.command(name="setup", description="Pilih channel tujuan dan aktifkan event.")
+    @app_commands.describe(event_type="Tipe event", channel="Channel tujuan notifikasi")
+    @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def setup_event(self, interaction: discord.Interaction, event_type: app_commands.Choice[str], channel: discord.TextChannel):
-        await self.db.set_event_config(interaction.guild_id, event_type.value, "channel_id", channel.id)
-        await self.db.set_event_config(interaction.guild_id, event_type.value, "is_enabled", 1)
-        
-        await interaction.response.send_message(
-            f"✅ **{event_type.name}** diaktifkan! Pesan akan dikirim ke {channel.mention}.\n"
-            f"Gunakan `/event message` atau `/event embed` untuk mengatur isi pesan."
-        )
+    async def setup_event(self, interaction, event_type, channel: discord.TextChannel):
+        await self.db.update_event_config(interaction.guild_id, event_type.value, {"channel_id": channel.id, "is_enabled": 1})
+        await send_interaction_message(interaction, content=f"{event_type.name} aktif dan akan dikirim ke {channel.mention}. Atur isi dengan /event message atau /event embed.")
 
-    @event_group.command(name="toggle", description="Nyalakan atau matikan event tanpa menghapus config.")
-    @app_commands.choices(status=[
-        app_commands.Choice(name="ON (Aktif)", value=1),
-        app_commands.Choice(name="OFF (Mati)", value=0)
-    ], event_type=[
-        app_commands.Choice(name="Welcome", value="welcome"),
-        app_commands.Choice(name="Leave", value="leave"),
-        app_commands.Choice(name="Ban", value="ban"),
-        app_commands.Choice(name="Boost", value="boost"),
-    ])
+    @event_group.command(name="toggle", description="Nyalakan atau matikan event tanpa menghapus konfigurasi.")
+    @app_commands.choices(event_type=EVENT_TYPES, status=[app_commands.Choice(name="Aktif", value=1), app_commands.Choice(name="Nonaktif", value=0)])
     @app_commands.checks.has_permissions(administrator=True)
-    async def toggle_event(self, interaction: discord.Interaction, event_type: app_commands.Choice[str], status: app_commands.Choice[int]):
-        await self.db.set_event_config(interaction.guild_id, event_type.value, "is_enabled", status.value)
-        state = "Aktif" if status.value == 1 else "Non-Aktif"
-        await interaction.response.send_message(f"⚙️ Event **{event_type.name}** sekarang **{state}**.")
+    async def toggle_event(self, interaction, event_type, status):
+        await self.db.update_event_config(interaction.guild_id, event_type.value, {"is_enabled": status.value})
+        state = "aktif" if status.value else "nonaktif"
+        await send_interaction_message(interaction, content=f"Event {event_type.name} sekarang {state}. Konfigurasi lain tetap tersimpan.")
 
-    @event_group.command(name="message", description="Atur pesan teks biasa (non-embed). Gunakan {member}, {server}, dll.")
-    @app_commands.choices(event_type=[
-        app_commands.Choice(name="Welcome", value="welcome"),
-        app_commands.Choice(name="Leave", value="leave"),
-        app_commands.Choice(name="Ban", value="ban"),
-        app_commands.Choice(name="Boost", value="boost"),
-    ])
+    @event_group.command(name="message", description="Atur pesan teks event dan placeholder yang didukung.")
+    @app_commands.describe(event_type="Tipe event", content="Maksimal 2.000 karakter; gunakan /help topik:placeholders")
+    @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def set_message(self, interaction: discord.Interaction, event_type: app_commands.Choice[str], content: str):
-        # Jika content kosong, kita anggap menghapus pesan teks
-        await self.db.set_event_config(interaction.guild_id, event_type.value, "message_text", content)
-        await interaction.response.send_message(f"📝 Pesan teks untuk **{event_type.name}** telah diperbarui.")
-
-    @event_group.command(name="embed", description="Atur tampilan embed.")
-    @app_commands.describe(
-        use_embed="Gunakan embed?", 
-        title="Judul Embed (Bisa pakai {username})", 
-        description="Isi Embed (Bisa pakai {member}, {count})",
-        color_hex="Kode warna Hex (contoh: #ff0000)"
-    )
-    @app_commands.choices(event_type=[
-        app_commands.Choice(name="Welcome", value="welcome"),
-        app_commands.Choice(name="Leave", value="leave"),
-        app_commands.Choice(name="Ban", value="ban"),
-        app_commands.Choice(name="Boost", value="boost"),
-    ])
-    @app_commands.checks.has_permissions(administrator=True)
-    async def set_embed(self, interaction: discord.Interaction, 
-                        event_type: app_commands.Choice[str], 
-                        use_embed: bool, 
-                        title: str = None, 
-                        description: str = None, 
-                        color_hex: str = None):
-        
-        # Update switch embed
-        await self.db.set_event_config(interaction.guild_id, event_type.value, "use_embed", 1 if use_embed else 0)
-        
-        if title:
-            await self.db.set_event_config(interaction.guild_id, event_type.value, "embed_title", title)
-        if description:
-            await self.db.set_event_config(interaction.guild_id, event_type.value, "embed_description", description)
-        if color_hex:
-            # Konversi Hex String (#ff0000) ke Integer
-            try:
-                color_clean = color_hex.strip("#")
-                color_int = int(color_clean, 16)
-                await self.db.set_event_config(interaction.guild_id, event_type.value, "embed_color", color_int)
-            except ValueError:
-                return await interaction.response.send_message("❌ Format warna salah. Gunakan hex code, misal: `#ff0000`", ephemeral=True)
-
-        await interaction.response.send_message(f"🖼️ Pengaturan Embed **{event_type.name}** diperbarui!")
-
-    @event_group.command(name="image", description="Set gambar statis/GIF untuk embed via URL.")
-    @app_commands.choices(event_type=[
-        app_commands.Choice(name="Welcome", value="welcome"),
-        app_commands.Choice(name="Leave", value="leave"),
-        app_commands.Choice(name="Ban", value="ban"),
-        app_commands.Choice(name="Boost", value="boost"),
-    ])
-    @app_commands.checks.has_permissions(administrator=True)
-    async def set_image(self, interaction: discord.Interaction, event_type: app_commands.Choice[str], url: str):
-        await self.db.set_event_config(interaction.guild_id, event_type.value, "image_url", url)
-        await interaction.response.send_message(f"📷 Gambar background untuk **{event_type.name}** telah diset.")
-
-    @event_group.command(name="test", description="Kirim simulasi pesan event ke channel tujuan.")
-    @app_commands.choices(event_type=[
-        app_commands.Choice(name="Welcome", value="welcome"),
-        app_commands.Choice(name="Leave", value="leave"),
-        app_commands.Choice(name="Ban", value="ban"),
-        app_commands.Choice(name="Boost", value="boost"),
-    ])
-    @app_commands.checks.has_permissions(administrator=True)
-    async def test_event(self, interaction: discord.Interaction, event_type: app_commands.Choice[str]):
-        # Defer response agar tidak timeout saat processing
-        await interaction.response.defer(ephemeral=True)
-        
-        # Kirim event palsu
-        await self._send_event(event_type.value, interaction.user, interaction.guild)
-        
-        await interaction.followup.send(f"✅ Simulasi **{event_type.name}** dikirim! Cek channel tujuan.")
-
-    @event_group.command(name="show", description="Lihat konfigurasi event yang sedang tersimpan saat ini.")
-    @app_commands.choices(event_type=[
-        app_commands.Choice(name="Welcome", value="welcome"),
-        app_commands.Choice(name="Leave", value="leave"),
-        app_commands.Choice(name="Ban", value="ban"),
-        app_commands.Choice(name="Boost", value="boost"),
-    ])
-    @app_commands.checks.has_permissions(administrator=True)
-    async def show_event_config(self, interaction: discord.Interaction, event_type: app_commands.Choice[str]):
-        # 1. Ambil data config dari database
-        config = await self.db.get_event_config(interaction.guild_id, event_type.value)
-
-        # 2. Jika config belum pernah dibuat sama sekali
-        if not config:
-            embed = discord.Embed(
-                description=f" ❌  Event **{event_type.name}** belum pernah di-setup.",
-                color=discord.Color.light_gray()
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+    async def set_message(self, interaction, event_type, content: str):
+        error = self._validate_text(content, "Pesan teks", MAX_MESSAGE_LENGTH)
+        if error:
+            await send_interaction_error(interaction, error)
             return
+        await self.db.update_event_config(interaction.guild_id, event_type.value, {"message_text": content})
+        await send_interaction_message(interaction, content=f"Pesan teks {event_type.name} disimpan. Gunakan /event preview untuk memeriksa hasilnya.")
 
-        # 3. Parsing data untuk tampilan (Status Icon & Text)
-        status = "✅  **AKTIF**" if config['is_enabled'] else "❌  **NON-AKTIF**"
-        
-        # Cek Channel (Handle jika channel sudah dihapus)
-        channel_id = config['channel_id']
-        channel = interaction.guild.get_channel(channel_id)
-        channel_text = channel.mention if channel else f"⚠️ *Channel Hilang ({channel_id})*"
+    @event_group.command(name="embed", description="Atur embed event dalam satu penyimpanan aman.")
+    @app_commands.describe(event_type="Tipe event", use_embed="Gunakan embed", title="Opsional, maksimal 256 karakter", description="Opsional, maksimal 4.096 karakter", color_hex="Opsional, contoh #5865F2")
+    @app_commands.choices(event_type=EVENT_TYPES)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def set_embed(self, interaction, event_type, use_embed: bool, title: str = None, description: str = None, color_hex: str = None):
+        for value, label, maximum in ((title, "Judul embed", MAX_TITLE_LENGTH), (description, "Deskripsi embed", MAX_DESCRIPTION_LENGTH)):
+            error = self._validate_text(value, label, maximum)
+            if error:
+                await send_interaction_error(interaction, error)
+                return
+        color, error = self._parse_color(color_hex)
+        if error:
+            await send_interaction_error(interaction, error)
+            return
+        values = {"use_embed": int(use_embed)}
+        if title is not None:
+            values["embed_title"] = title
+        if description is not None:
+            values["embed_description"] = description
+        if color is not None:
+            values["embed_color"] = color
+        await self.db.update_event_config(interaction.guild_id, event_type.value, values)
+        state = "aktif" if use_embed else "nonaktif"
+        await send_interaction_message(interaction, content=f"Embed {event_type.name} disimpan dan sekarang {state}. Gunakan /event preview untuk memeriksa hasilnya.")
 
-        # Cek komponen pesan
-        use_embed = "✅ Ya" if config['use_embed'] else "❌ Tidak"
-        has_msg = "✅ Ada" if config['message_text'] else "❌ Kosong"
-        has_img = "✅ Ada" if config['image_url'] else "❌ Tidak ada"
+    @event_group.command(name="image", description="Atur gambar atau GIF publik untuk embed.")
+    @app_commands.describe(event_type="Tipe event", url="URL http/https langsung, maksimal 2.000 karakter")
+    @app_commands.choices(event_type=EVENT_TYPES)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def set_image(self, interaction, event_type, url: str):
+        error = self._validate_image_url(url)
+        if error:
+            await send_interaction_error(interaction, error)
+            return
+        await self.db.update_event_config(interaction.guild_id, event_type.value, {"image_url": url})
+        await send_interaction_message(interaction, content=f"Gambar untuk {event_type.name} disimpan. Gambar hanya tampil saat embed aktif.")
 
-        # 4. Buat Embed Snapshot
-        embed = discord.Embed(
-            title=f" ⚙️  Config: {event_type.name}",
-            color=discord.Color.teal()
-        )
-        
-        embed.add_field(name="Status", value=status, inline=True)
-        embed.add_field(name="Channel Tujuan", value=channel_text, inline=True)
-        embed.add_field(name="\u200b", value="\u200b", inline=True) # Spacer agar rapi 2 kolom
+    @event_group.command(name="clear", description="Hapus bagian konten event atau reset seluruh konfigurasi.")
+    @app_commands.choices(event_type=EVENT_TYPES, section=[app_commands.Choice(name="Pesan teks", value="message"), app_commands.Choice(name="Konten embed", value="embed"), app_commands.Choice(name="Gambar", value="image"), app_commands.Choice(name="Reset seluruh event", value="reset")])
+    @app_commands.checks.has_permissions(administrator=True)
+    async def clear_event(self, interaction, event_type, section):
+        if section.value == "reset":
+            view = EventResetView(interaction.user.id, self, interaction.guild_id, event_type.value, event_type.name)
+            await send_interaction_message(interaction, content=f"Reset seluruh konfigurasi {event_type.name}? Channel dan status aktif juga akan dihapus.", view=view)
+            view.message = await interaction.original_response()
+            return
+        values = {"message": {"message_text": None}, "embed": {"use_embed": 0, "embed_title": None, "embed_description": None, "embed_color": 0}, "image": {"image_url": None}}[section.value]
+        await self.db.update_event_config(interaction.guild_id, event_type.value, values)
+        await send_interaction_message(interaction, content=f"{section.name} untuk {event_type.name} dihapus. Channel dan status aktif tetap tersimpan.")
 
-        embed.add_field(name="Pakai Embed?", value=use_embed, inline=True)
-        embed.add_field(name="Pesan Teks?", value=has_msg, inline=True)
-        embed.add_field(name="Gambar/GIF?", value=has_img, inline=True)
+    @event_group.command(name="preview", description="Lihat hasil event secara privat sebelum dikirim.")
+    @app_commands.choices(event_type=EVENT_TYPES)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def preview_event(self, interaction, event_type):
+        config = await self.db.get_event_config(interaction.guild_id, event_type.value)
+        if not config:
+            await send_interaction_error(interaction, f"Event {event_type.name} belum dikonfigurasi. Jalankan /event setup terlebih dahulu.")
+            return
+        content, embed = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        await send_interaction_message(interaction, content=content or "Preview tidak memiliki pesan teks.", embed=embed)
 
-        # (Opsional) Tampilkan preview isi pesan sedikit
-        if config['message_text']:
-            preview = (config['message_text'][:50] + '...') if len(config['message_text']) > 50 else config['message_text']
-            embed.add_field(name="Preview Pesan Teks", value=f"_{preview}_", inline=False)
+    @event_group.command(name="test", description="Kirim simulasi ke channel tujuan setelah konfirmasi.")
+    @app_commands.choices(event_type=EVENT_TYPES)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def test_event(self, interaction, event_type):
+        config = await self.db.get_event_config(interaction.guild_id, event_type.value)
+        if not config:
+            await send_interaction_error(interaction, f"Event {event_type.name} belum dikonfigurasi. Jalankan /event setup terlebih dahulu.")
+            return
+        channel, issue = self._get_channel_issue(interaction.guild, config)
+        if issue:
+            await send_interaction_error(interaction, issue)
+            return
+        content, embed = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        view = EventTestView(interaction.user.id, channel, content, embed)
+        state = "aktif" if config["is_enabled"] else "nonaktif"
+        await send_interaction_message(interaction, content=f"Simulasi {event_type.name} akan dikirim ke {channel.mention}. Event saat ini {state}. Konfirmasi pengiriman publik.", view=view)
+        view.message = await interaction.original_response()
 
-        embed.set_footer(text=f"Gunakan /event test {event_type.value} untuk melihat hasil jadinya.")
-
-        await interaction.response.send_message(embed=embed)
-
-    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
-        if isinstance(error, app_commands.MissingPermissions):
-            message = "⛔ **Akses Ditolak:** Kamu tidak memiliki izin Administrator untuk menggunakan perintah ini."
-            if interaction.response.is_done():
-                await interaction.followup.send(message, ephemeral=True)
-            else:
-                await interaction.response.send_message(message, ephemeral=True)
+    @event_group.command(name="show", description="Lihat status, isi, dan kesiapan pengiriman event.")
+    @app_commands.choices(event_type=EVENT_TYPES)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def show_event_config(self, interaction, event_type):
+        config = await self.db.get_event_config(interaction.guild_id, event_type.value)
+        if not config:
+            await send_interaction_error(interaction, f"Event {event_type.name} belum dikonfigurasi. Jalankan /event setup terlebih dahulu.")
+            return
+        channel, issue = self._get_channel_issue(interaction.guild, config)
+        embed = discord.Embed(title=f"Konfigurasi event: {event_type.name}", color=discord.Color.teal())
+        embed.add_field(name="Status", value="Aktif" if config["is_enabled"] else "Nonaktif", inline=True)
+        embed.add_field(name="Channel tujuan", value=channel.mention if channel else "Belum tersedia", inline=True)
+        embed.add_field(name="Mode", value="Embed" if config["use_embed"] else "Pesan teks", inline=True)
+        embed.add_field(name="Pesan teks", value="Diatur" if config["message_text"] else "Menggunakan pesan bawaan", inline=False)
+        if config["use_embed"]:
+            embed.add_field(name="Judul embed", value="Diatur" if config["embed_title"] else "Kosong", inline=False)
+            embed.add_field(name="Deskripsi embed", value="Diatur" if config["embed_description"] else "Kosong", inline=False)
+            embed.add_field(name="Warna", value=f"#{(config['embed_color'] or discord.Color.blue().value):06X}", inline=True)
+        if config["image_url"]:
+            embed.add_field(name="Gambar", value="Diatur; URL lengkap dan preview dikirim di bawah.", inline=False)
+        if issue:
+            embed.add_field(name="Perlu diperbaiki", value=issue, inline=False)
         else:
-            print(f"❌ Error pada command event: {error}")
+            embed.add_field(name="Kesiapan pengiriman", value="Channel dan izin bot siap. Gunakan /event preview atau /event test.", inline=False)
+        await send_interaction_message(interaction, embed=embed)
+        raw_details = [
+            ("Pesan teks", config["message_text"] or self.DEFAULT_MESSAGES[event_type.value]),
+        ]
+        if config["use_embed"]:
+            raw_details.extend([
+                ("Judul embed", config["embed_title"] or "Kosong"),
+                ("Deskripsi embed", config["embed_description"] or "Kosong"),
+            ])
+        for label, value in raw_details:
+            for index, chunk in enumerate(self._message_chunks(value), start=1):
+                suffix = f" ({index})" if len(value) > 1900 else ""
+                await interaction.followup.send(content=f"{label}{suffix}:\n{chunk}", ephemeral=True)
+        if config["image_url"]:
+            await interaction.followup.send(content=config["image_url"], ephemeral=True)
+        content, preview = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        await interaction.followup.send(content=content or "Preview tidak memiliki pesan teks.", embed=preview, ephemeral=True)
+
+    async def cog_app_command_error(self, interaction, error):
+        if isinstance(error, app_commands.MissingPermissions):
+            await send_interaction_error(interaction, "Akses ditolak. Perintah event memerlukan izin Administrator.")
+            return
+        logger = getattr(self.bot, "logger", None)
+        if logger:
+            logger.error("EVENT_COMMAND_FAIL", "Perintah event gagal", error_obj=error)
+        await send_interaction_error(interaction, "Perintah event tidak dapat diproses. Coba lagi.")
+
 
 async def setup(bot):
     await bot.add_cog(ServerEvents(bot, bot.db))
