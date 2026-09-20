@@ -202,7 +202,7 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
             return
 
         # Status Awal
-        status_msg = await interaction.followup.send(f"Memulai proses: 0/{count} member...")
+        status_msg = await interaction.followup.send(f"Memulai proses: 0/{count} member...", ephemeral=True)
         
         processed = 0
         failed_members = 0
