@@ -10,6 +10,7 @@ MAX_XP_ACTION = 100000  # Batas maksimal XP sekali perintah (Anti Typo)
 
 # Import dulu
 from utils.views import ExecutorView 
+from utils.interaction_responses import send_interaction_error
 
 # Ganti class ConfirmView sepenuhnya:
 # Di file: cogs/owner_recovery.py
@@ -74,14 +75,31 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
         for row in rewards:
             if level >= row['level_required']:
                 role = guild.get_role(row['role_id'])
-                if role and role not in member.roles:
+                if role is None:
+                    failed.append(f"ID {row['role_id']} (role tidak ditemukan)")
+                    self.bot.logger.error(
+                        "XP_GRANT_ROLE_MISSING",
+                        "Role reward tidak ditemukan setelah perubahan XP tersimpan",
+                        guild_id=guild.id,
+                        member_id=member.id,
+                        role_id=row['role_id'],
+                    )
+                elif role not in member.roles:
                     try:
                         await member.add_roles(role, reason="Recovery: XP Grant")
                         added.append(role.name)
                     except discord.Forbidden:
                         failed.append(role.name)
-                    except Exception:
-                        pass 
+                    except Exception as error:
+                        failed.append(role.name)
+                        self.bot.logger.error(
+                            "XP_GRANT_ROLE_FAIL",
+                            "Gagal memberikan role reward setelah perubahan XP tersimpan",
+                            error_obj=error,
+                            guild_id=guild.id,
+                            member_id=member.id,
+                            role_id=role.id,
+                        )
         return added, failed
 
     # --- COMMAND 1: GRANT PER USER ---
@@ -135,7 +153,11 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
             roles_added, roles_failed = await self._apply_roles_silent(interaction.guild, member, new_lvl)
 
         # Report
-        res_embed = discord.Embed(title="Perubahan XP tersimpan", color=discord.Color.green())
+        partial = bool(roles_failed)
+        res_embed = discord.Embed(
+            title="XP tersimpan, tetapi role perlu diperiksa" if partial else "Perubahan XP tersimpan",
+            color=discord.Color.orange() if partial else discord.Color.green(),
+        )
         res_embed.add_field(name="Member", value=member.mention, inline=True)
         res_embed.add_field(name="Level", value=f"{old_lvl} → **{new_lvl}**", inline=True)
         res_embed.add_field(name="Total XP", value=f"{old_xp:,} → **{total_xp:,}**", inline=True)
@@ -143,7 +165,7 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
         if roles_added:
             res_embed.add_field(name="Role (+)", value=", ".join(roles_added), inline=False)
         if roles_failed:
-            res_embed.add_field(name="Role Gagal (Izin Ditolak)", value=", ".join(roles_failed), inline=False)
+            res_embed.add_field(name="Role tidak diberikan", value=", ".join(roles_failed), inline=False)
 
         await interaction.followup.send(embed=res_embed, ephemeral=True)
 
@@ -212,14 +234,21 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
                 try:
                     await status_msg.edit(content=f"Sedang memproses: {processed}/{count} member ({(processed/count)*100:.0f}%)")
                     await asyncio.sleep(1) # Pacing (Saran Senior)
-                except:
-                    pass
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException) as error:
+                    self.bot.logger.error(
+                        "MASS_XP_PROGRESS_UPDATE_FAIL",
+                        "Tidak dapat memperbarui progres grant massal; pemrosesan tetap berjalan",
+                        error_obj=error,
+                        guild_id=interaction.guild.id,
+                        processed=processed,
+                    )
 
         # Final Report
+        partial = failed_members > 0 or total_failed_roles > 0
         final_embed = discord.Embed(
-            title="Perubahan XP massal selesai",
+            title="Perubahan XP massal selesai dengan kendala" if partial else "Perubahan XP massal selesai",
             description=f"Target Role: {role.mention}",
-            color=discord.Color.green()
+            color=discord.Color.orange() if partial else discord.Color.green()
         )
         final_embed.add_field(name="Berhasil", value=str(processed - failed_members), inline=True)
         final_embed.add_field(name="Gagal", value=str(failed_members), inline=True)
@@ -228,15 +257,19 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
         if total_failed_roles > 0:
             final_embed.add_field(name="Role yang perlu diperiksa", value=f"{total_failed_roles} member belum mendapat role karena izin atau posisi role.", inline=False)
         
-        # Edit pesan status terakhir menjadi report akhir
-        await status_msg.edit(content=None, embed=final_embed)
+        # Edit pesan status terakhir menjadi laporan akhir.
+        try:
+            await status_msg.edit(content=None, embed=final_embed)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException) as error:
+            self.bot.logger.error("MASS_XP_FINAL_REPORT_EDIT_FAIL", "Tidak dapat mengganti pesan progres dengan hasil akhir", error_obj=error, guild_id=interaction.guild.id)
+            await interaction.followup.send(embed=final_embed, ephemeral=True)
 
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CheckFailure):
-            if interaction.response.is_done():
-                await interaction.followup.send("Fitur ini khusus owner bot.", ephemeral=True)
-            else:
-                await interaction.response.send_message("Fitur ini khusus owner bot.", ephemeral=True)
+            await send_interaction_error(interaction, "Fitur ini hanya dapat digunakan oleh owner bot.")
+        else:
+            self.bot.logger.error("OWNER_XP_COMMAND_FAIL", "Perintah pemulihan XP gagal", error_obj=error, guild_id=interaction.guild_id)
+            await send_interaction_error(interaction, "Perubahan XP tidak dapat diproses. Coba lagi; periksa log jika masalah berulang.")
 
 async def setup(bot):
     await bot.add_cog(OwnerRecovery(bot, bot.db))

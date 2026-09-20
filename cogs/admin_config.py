@@ -3,6 +3,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.views import ExecutorView 
+from utils.interaction_responses import send_interaction_error
 
 class ResetConfirmView(ExecutorView):
     def __init__(self, db, guild_id, author_id):
@@ -269,7 +270,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
             )
         except Exception as e:
             self.bot.logger.error("XP_STATUS_DB_FAIL", "Tidak dapat membaca kesehatan konfigurasi XP", error_obj=e, guild_id=guild.id)
-            embed = discord.Embed(title="Status XP tidak sehat", description="Pembacaan database gagal. Periksa log `DB_READ_FAIL`.", color=discord.Color.red())
+            embed = discord.Embed(title="Status XP tidak tersedia", description="Data konfigurasi tidak dapat dibaca. Coba lagi; jika masalah berulang, hubungi pemilik bot.", color=discord.Color.red())
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
@@ -363,18 +364,10 @@ class AdminConfig(commands.GroupCog, name="xp"):
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.MissingPermissions):
             msg = "Akses ditolak. Perintah konfigurasi XP hanya untuk administrator."
-            
-            if interaction.response.is_done():
-                await interaction.followup.send(msg, ephemeral=True)
-            else:
-                await interaction.response.send_message(msg, ephemeral=True)
         else:
             self.bot.logger.error("XP_CONFIG_COMMAND_FAIL", "Perintah konfigurasi XP gagal", error_obj=error, guild_id=interaction.guild_id)
             msg = "Pengaturan belum dapat diproses. Coba lagi, lalu periksa log bot bila masalah berulang."
-            if interaction.response.is_done():
-                await interaction.followup.send(msg, ephemeral=True)
-            else:
-                await interaction.response.send_message(msg, ephemeral=True)
+        await send_interaction_error(interaction, msg)
 
     
     @app_commands.command(name="reset", description="Reset XP semua member di server ini ke 0.")

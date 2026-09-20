@@ -3,6 +3,7 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 from dataclasses import dataclass
+from utils.interaction_responses import send_interaction_error
 
 # --- 1. DATA CLASS (DRAFT CONFIG) ---
 @dataclass
@@ -56,8 +57,10 @@ class SetupWizardView(ui.View):
             try:
                 embed = discord.Embed(description="Waktu setup habis. Jalankan `/setup` untuk memulai lagi.", color=discord.Color.red())
                 await self.message.edit(embed=embed, view=self)
-            except:
+            except (discord.NotFound, discord.Forbidden):
                 pass
+            except Exception as error:
+                self.bot.logger.error("SETUP_TIMEOUT_EDIT_FAIL", "Tidak dapat memperbarui pesan wizard yang kedaluwarsa", error_obj=error, guild_id=self.draft.guild_id)
 
     def setup_ui_for_current_step(self):
         self.clear_items() 
@@ -344,6 +347,13 @@ class SetupWizard(commands.Cog):
         await interaction.response.send_message(embed=view.get_embed(), view=view, ephemeral=True)
         # [FIX 4] Simpan referensi pesan untuk timeout handling
         view.message = await interaction.original_response()
+
+    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.MissingPermissions):
+            await send_interaction_error(interaction, "Akses ditolak. Setup server hanya untuk administrator.")
+            return
+        self.bot.logger.error("SETUP_COMMAND_FAIL", "Perintah setup gagal", error_obj=error, guild_id=interaction.guild_id)
+        await send_interaction_error(interaction, "Setup tidak dapat dibuka. Coba lagi; hubungi pemilik bot jika masalah berulang.")
 
 async def setup(bot):
     await bot.add_cog(SetupWizard(bot, bot.db))

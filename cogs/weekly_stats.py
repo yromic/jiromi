@@ -69,12 +69,17 @@ class WeeklyStats(commands.Cog):
             await send_interaction_error(interaction, "Perintah ini hanya dapat digunakan di dalam server.")
             return
         week = self.db.get_current_week_key()
-        totals = await self.db.fetch_one("""SELECT COALESCE(SUM(weekly_voice_mins),0) AS voice, COALESCE(SUM(weekly_chat_xp),0) AS chat, COALESCE(SUM(weekly_xp),0) AS xp FROM weekly_stats WHERE guild_id = ? AND week_key = ?""", (guild.id, week))
-        rows = await self.db.fetch_all("""SELECT user_id, weekly_voice_mins, weekly_xp, weekly_chat_xp FROM weekly_stats WHERE guild_id = ? AND week_key = ? ORDER BY weekly_voice_mins DESC, weekly_xp DESC, user_id ASC LIMIT 10""", (guild.id, week))
+        try:
+            totals = await self.db.fetch_one("""SELECT COALESCE(SUM(weekly_voice_mins),0) AS voice, COALESCE(SUM(weekly_chat_xp),0) AS chat, COALESCE(SUM(weekly_xp),0) AS xp FROM weekly_stats WHERE guild_id = ? AND week_key = ?""", (guild.id, week))
+            rows = await self.db.fetch_all("""SELECT user_id, weekly_voice_mins, weekly_xp, weekly_chat_xp FROM weekly_stats WHERE guild_id = ? AND week_key = ? ORDER BY weekly_voice_mins DESC, weekly_xp DESC, user_id ASC LIMIT 10""", (guild.id, week))
+            rank, servers = await self.db.get_guild_weekly_rank(guild.id, week)
+        except Exception as error:
+            self.bot.logger.error("WEEKLY_LEADERBOARD_READ_FAIL", "Tidak dapat membaca leaderboard mingguan", error_obj=error, guild_id=guild.id)
+            await send_interaction_error(interaction, "Leaderboard mingguan tidak dapat dimuat. Coba lagi sebentar lagi.")
+            return
         if not rows:
             await send_interaction_message(interaction, content="Belum ada aktivitas minggu ini. Coba lagi setelah member aktif di voice atau chat.")
             return
-        rank, servers = await self.db.get_guild_weekly_rank(guild.id, week)
         medals = ["🥇", "🥈", "🥉"]
         lines = [f"Voice: `{totals['voice']:,} menit` | Chat: `{totals['chat']:,} XP` | Total: `{totals['xp']:,} XP`", "", "**10 kontributor teratas**"]
         for position, row in enumerate(rows, 1):
@@ -99,7 +104,12 @@ class WeeklyStats(commands.Cog):
     async def global_lb(self, interaction: discord.Interaction):
         await interaction.response.defer()
         week = self.db.get_current_week_key()
-        rows = await self.db.fetch_all("""SELECT guild_id, SUM(weekly_voice_mins) AS total_voice FROM weekly_stats WHERE week_key = ? GROUP BY guild_id HAVING total_voice > 0 ORDER BY total_voice DESC LIMIT 10""", (week,))
+        try:
+            rows = await self.db.fetch_all("""SELECT guild_id, SUM(weekly_voice_mins) AS total_voice FROM weekly_stats WHERE week_key = ? GROUP BY guild_id HAVING total_voice > 0 ORDER BY total_voice DESC LIMIT 10""", (week,))
+        except Exception as error:
+            self.bot.logger.error("GLOBAL_LEADERBOARD_READ_FAIL", "Tidak dapat membaca leaderboard global", error_obj=error)
+            await send_interaction_error(interaction, "Leaderboard global tidak dapat dimuat. Coba lagi sebentar lagi.")
+            return
         if not rows:
             await interaction.followup.send("Belum ada data global minggu ini.", ephemeral=True)
             return
@@ -240,6 +250,13 @@ class WeeklyStats(commands.Cog):
     @weekly_recap_loop.before_loop
     async def before_recap(self):
         await self.bot.wait_until_ready()
+
+    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.MissingPermissions):
+            await send_interaction_error(interaction, "Akses ditolak. Pengaturan rekap mingguan hanya untuk administrator.")
+            return
+        self.bot.logger.error("WEEKLY_COMMAND_FAIL", "Perintah rekap mingguan gagal", error_obj=error, guild_id=interaction.guild_id)
+        await send_interaction_error(interaction, "Perintah rekap mingguan tidak dapat diproses. Coba lagi sebentar lagi.")
 
 
 async def setup(bot):

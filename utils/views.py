@@ -31,6 +31,31 @@ class ExecutorView(ui.View):
             return False
         return True
 
+    async def on_error(self, interaction, error, item):
+        client = getattr(interaction, "client", None)
+        logger = getattr(client, "logger", None)
+        if logger:
+            logger.error(
+                "VIEW_CALLBACK_FAIL",
+                "Aksi pada menu tidak dapat diselesaikan",
+                error_obj=error,
+                component_id=getattr(item, "custom_id", None),
+                guild_id=getattr(interaction, "guild_id", None),
+            )
+        try:
+            await send_interaction_error(
+                interaction,
+                "Aksi ini tidak dapat diproses. Coba lagi; jika masalah berulang, jalankan ulang perintahnya.",
+            )
+        except (discord.NotFound, discord.HTTPException) as feedback_error:
+            if logger:
+                logger.error(
+                    "VIEW_ERROR_FEEDBACK_FAIL",
+                    "Tidak dapat mengirim pemulihan untuk interaksi menu yang gagal",
+                    error_obj=feedback_error,
+                    guild_id=getattr(interaction, "guild_id", None),
+                )
+
     async def on_timeout(self):
         # Disable semua tombol
         for child in self.children:

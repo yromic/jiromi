@@ -216,6 +216,9 @@ class OwnerBackup(commands.GroupCog, name="owner"):
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CheckFailure):
             await send_interaction_error(interaction, "Perintah ini hanya dapat digunakan oleh owner bot.")
+            return
+        self.bot.logger.error("OWNER_BACKUP_COMMAND_FAIL", "Perintah backup gagal", error_obj=error)
+        await send_interaction_error(interaction, "Perintah backup tidak dapat diproses. Coba lagi; periksa log jika masalah berulang.")
 
     @auto_backup_task.error
     async def auto_backup_error(self, error):

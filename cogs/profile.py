@@ -5,6 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 from utils.math_utils import xp_for_next_level
 from utils.badge_data import BADGE_ICONS, BADGE_META, TITLE_META
+from utils.interaction_responses import send_interaction_error
 
 class Profile(commands.Cog):
     def __init__(self, bot, db):
@@ -407,6 +408,12 @@ class Profile(commands.Cog):
         below_rows = all_users[rank : rank + 3] # Ambil 3 orang di bawah
 
         return rank, len(all_users), above_rows, below_rows
+
+    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        logger = getattr(self.bot, "logger", None)
+        if logger:
+            logger.error("PROFILE_COMMAND_FAIL", "Profil atau leaderboard tidak dapat dimuat", error_obj=error, guild_id=interaction.guild_id)
+        await send_interaction_error(interaction, "Data profil tidak dapat dimuat sekarang. Coba lagi sebentar lagi.")
 
 class TitleSelect(discord.ui.Select):
     def __init__(self, db, titles_owned): 
