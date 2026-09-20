@@ -3,7 +3,6 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 from dataclasses import dataclass
-import traceback
 
 # --- 1. DATA CLASS (DRAFT CONFIG) ---
 @dataclass
@@ -44,7 +43,7 @@ class SetupWizardView(ui.View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.draft.author_id:
-            await interaction.response.send_message("⛔ Ini sesi setup milik orang lain.", ephemeral=True)
+            await interaction.response.send_message("Sesi setup ini milik admin lain.", ephemeral=True)
             return False
         return True
 
@@ -55,7 +54,7 @@ class SetupWizardView(ui.View):
         
         if self.message:
             try:
-                embed = discord.Embed(description="⌛ **Waktu Setup Habis.** Silakan jalankan `/setup` lagi.", color=discord.Color.red())
+                embed = discord.Embed(description="Waktu setup habis. Jalankan `/setup` untuk memulai lagi.", color=discord.Color.red())
                 await self.message.edit(embed=embed, view=self)
             except:
                 pass
@@ -77,9 +76,9 @@ class SetupWizardView(ui.View):
         elif self.step == 1:
             # [FIX 2] Simpan ke self.mode_select agar bisa diakses di callback
             self.mode_select = ui.Select(placeholder="Pilih Gaya Server...", options=[
-                discord.SelectOption(label="Basic (Quiet)", value="basic", description="XP Normal, Tanpa Notifikasi."),
-                discord.SelectOption(label="Standard (Recommended)", value="standard", description="XP Normal, Notif saat dapat Role."),
-                discord.SelectOption(label="Full (Loud)", value="full", description="XP Tinggi, Notif tiap Level Up."),
+                discord.SelectOption(label="Basic", value="basic", description="Chat 5, voice 5 XP; tanpa notifikasi."),
+                discord.SelectOption(label="Standard", value="standard", description="Chat 5, voice 10 XP; saat dapat role."),
+                discord.SelectOption(label="Full", value="full", description="Chat 10, voice 15 XP; setiap naik level."),
             ])
             self.mode_select.callback = self.cb_step1_select
             self.add_item(self.mode_select)
@@ -105,7 +104,7 @@ class SetupWizardView(ui.View):
             self.add_item(skip_btn)
             
             # [UPGRADE UX] Tombol Back
-            back_btn = ui.Button(label="⬅️ Kembali", style=discord.ButtonStyle.secondary, row=1)
+            back_btn = ui.Button(label="Kembali", style=discord.ButtonStyle.secondary, row=1)
             back_btn.callback = self.cb_back
             self.add_item(back_btn)
 
@@ -121,7 +120,7 @@ class SetupWizardView(ui.View):
             self.add_item(self.announce_mode_select)
             
             # [UPGRADE UX] Tombol Back
-            back_btn = ui.Button(label="⬅️ Kembali", style=discord.ButtonStyle.secondary, row=1)
+            back_btn = ui.Button(label="Kembali", style=discord.ButtonStyle.secondary, row=1)
             back_btn.callback = self.cb_back
             self.add_item(back_btn)
 
@@ -140,13 +139,13 @@ class SetupWizardView(ui.View):
             self.add_item(btn3)
 
             # [UPGRADE UX] Tombol Back
-            back_btn = ui.Button(label="⬅️ Kembali", style=discord.ButtonStyle.secondary, row=1)
+            back_btn = ui.Button(label="Kembali", style=discord.ButtonStyle.secondary, row=1)
             back_btn.callback = self.cb_back
             self.add_item(back_btn)
 
         # --- STEP 5: SUMMARY & APPLY ---
         elif self.step == 5:
-            apply_btn = ui.Button(label="✅ APPLY SETTINGS", style=discord.ButtonStyle.green)
+            apply_btn = ui.Button(label="Simpan pengaturan", style=discord.ButtonStyle.green)
             apply_btn.callback = self.cb_apply
             self.add_item(apply_btn)
 
@@ -155,7 +154,7 @@ class SetupWizardView(ui.View):
             self.add_item(retry_btn)
             
             # [UPGRADE UX] Tombol Back
-            back_btn = ui.Button(label="⬅️ Kembali", style=discord.ButtonStyle.secondary)
+            back_btn = ui.Button(label="Kembali", style=discord.ButtonStyle.secondary)
             back_btn.callback = self.cb_back
             self.add_item(back_btn)
 
@@ -169,30 +168,33 @@ class SetupWizardView(ui.View):
     def get_embed(self) -> discord.Embed:
         if self.step == 0:
             return discord.Embed(
-                title="🧙‍♂️ Jiromi Setup Wizard",
-                description="Saya akan memandu kamu mengatur konfigurasi dasar bot.\n\n✅ XP Rate (Chat/Voice)\n✅ Channel Pengumuman\n✅ Mode Notifikasi",
+                title="Setup Jiromi",
+                description=(
+                    "Wizard ini cocok untuk admin yang baru mengatur server.\n\n"
+                    "Anda akan memilih preset XP chat dan voice, channel pengumuman, mode notifikasi, "
+                    "dan jumlah minimum peserta voice agar XP berjalan."
+                ),
                 color=discord.Color.blue()
             )
         elif self.step == 1:
-            return discord.Embed(title="1️⃣ Pilih Preset", description="Pilih gaya konfigurasi yang cocok untuk servermu:", color=discord.Color.blue())
+            return discord.Embed(title="1. Pilih preset", description="Nilai XP dan perilaku notifikasi setiap preset sudah dijelaskan pada pilihan di bawah.", color=discord.Color.blue())
         elif self.step == 2:
-            return discord.Embed(title="2️⃣ Channel Pengumuman", description="Di mana bot boleh mengirim pesan Level Up?", color=discord.Color.blue())
+            return discord.Embed(title="2. Channel pengumuman", description="Pilih channel untuk pesan level up, atau lanjut tanpa pengumuman.", color=discord.Color.blue())
         elif self.step == 3:
-            return discord.Embed(title="3️⃣ Mode Notifikasi", description="Seberapa sering kamu ingin bot mengirim notifikasi?", color=discord.Color.blue())
+            return discord.Embed(title="3. Mode notifikasi", description="Tentukan kapan bot mengirim pesan level up ke channel yang dipilih.", color=discord.Color.blue())
         elif self.step == 4:
-            return discord.Embed(title="4️⃣ Aturan Voice", description="Minimal berapa orang di Voice Channel agar XP berjalan?", color=discord.Color.blue())
+            return discord.Embed(title="4. Aturan voice", description="Tentukan jumlah minimum peserta manusia di voice channel sebelum XP voice diberikan.", color=discord.Color.blue())
         elif self.step == 5:
             ch_text = f"<#{self.draft.announce_channel_id}>" if self.draft.announce_channel_id else "*(Tidak Ada)*"
             desc = (
-                f"**Review Konfigurasi:**\n\n"
-                f"📢 **Channel:** {ch_text}\n"
-                f"🔔 **Mode:** `{self.draft.announcement_mode.upper()}`\n"
-                f"👥 **Min Voice:** `{self.draft.min_members_voice} orang`\n"
-                f"💬 **Chat XP:** `{self.draft.chat_xp_val}`\n"
-                f"🎙️ **Voice XP:** `{self.draft.voice_xp_val}`\n\n"
-                "Klik **Apply** untuk menyimpan ke Database."
+                f"**Channel pengumuman:** {ch_text}\n"
+                f"**Mode notifikasi:** `{self.draft.announcement_mode.upper()}`\n"
+                f"**XP chat:** `{self.draft.chat_xp_val}` per pesan\n"
+                f"**XP voice:** `{self.draft.voice_xp_val}` per menit\n"
+                f"**Minimum peserta voice:** `{self.draft.min_members_voice} orang`\n\n"
+                "Pilih Simpan pengaturan untuk menerapkan semua nilai ini."
             )
-            return discord.Embed(title="📝 Konfirmasi Akhir", description=desc, color=discord.Color.gold())
+            return discord.Embed(title="5. Tinjau pengaturan", description=desc, color=discord.Color.gold())
 
     # --- CALLBACKS ---
 
@@ -299,8 +301,8 @@ class SetupWizardView(ui.View):
             )
             
             final_embed = discord.Embed(
-                title="🎉 Setup Selesai!",
-                description="Konfigurasi berhasil disimpan.\n**Next Steps:** `/xp status`, `/xp reward add`.",
+                title="Setup selesai",
+                description="Konfigurasi berhasil disimpan. Langkah berikutnya: `/xp status` lalu `/xp reward add` bila ingin menambah hadiah role.",
                 color=discord.Color.green()
             )
             
@@ -321,9 +323,15 @@ class SetupWizardView(ui.View):
         )   
             
         except Exception as e:
-            # [UPGRADE UX] Error Handling
-            print(f"Wizard Error: {e}")
-            await interaction.followup.send("⚠️ **Terjadi Kesalahan Database.** Mohon coba lagi atau hubungi admin bot.", ephemeral=True)
+            self.bot.logger.error("SETUP_APPLY_FAIL", "Setup wizard gagal menyimpan konfigurasi", error_obj=e, guild_id=self.draft.guild_id)
+            self.setup_ui_for_current_step()
+            failure_embed = self.get_embed()
+            failure_embed.description = (
+                "Pengaturan belum tersimpan sepenuhnya karena ada masalah saat menulis ke database. "
+                "Draft Anda tetap ada. Pilih Simpan pengaturan untuk mencoba lagi, Kembali untuk mengubah nilai, atau Batal untuk keluar.\n\n"
+                + (failure_embed.description or "")
+            )
+            await interaction.followup.edit_message(message_id=interaction.message.id, embed=failure_embed, view=self)
 
 # --- 3. COG CLASS ---
 class SetupWizard(commands.Cog):
@@ -332,7 +340,7 @@ class SetupWizard(commands.Cog):
         self.bot = bot
         # Kita tidak simpan self.db disini karena akses via self.bot.db lebih aman jika db dipass di main
 
-    @app_commands.command(name="setup", description="Wizard Konfigurasi Interaktif.")
+    @app_commands.command(name="setup", description="Wizard untuk admin baru: atur XP, pengumuman, dan batas voice langkah demi langkah.")
     @app_commands.checks.has_permissions(administrator=True)
     async def run_setup(self, interaction: discord.Interaction):
         draft = SetupDraft(
