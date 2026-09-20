@@ -6,6 +6,7 @@ from discord.ext import commands
 from utils.math_utils import xp_for_next_level
 from utils.badge_data import BADGE_ICONS, BADGE_META, TITLE_META
 from utils.interaction_responses import send_interaction_error
+from utils.views import ExecutorView
 
 class Profile(commands.Cog):
     def __init__(self, bot, db):
@@ -282,7 +283,7 @@ class Profile(commands.Cog):
         else:
             active_name = "Tidak ada"
 
-        view = TitleView(self.db, titles_owned)
+        view = TitleView(self.db, titles_owned, interaction.user.id)
         await interaction.followup.send(
             f"Title aktif saat ini: **{active_name}**\nPilih title yang ingin digunakan.",
             view=view,
@@ -463,10 +464,9 @@ class TitleSelect(discord.ui.Select):
 
         await interaction.response.edit_message(content=msg, view=None)
 
-class TitleView(discord.ui.View):
-    def __init__(self, db, titles_owned):
-        super().__init__(timeout=60)
-        self.message = None
+class TitleView(ExecutorView):
+    def __init__(self, db, titles_owned, author_id):
+        super().__init__(author_id=author_id, timeout=60)
         self.add_item(TitleSelect(db, titles_owned))
 
     async def on_timeout(self):

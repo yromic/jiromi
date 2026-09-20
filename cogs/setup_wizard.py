@@ -4,6 +4,7 @@ from discord import app_commands, ui
 from discord.ext import commands
 from dataclasses import dataclass
 from utils.interaction_responses import send_interaction_error
+from utils.views import ExecutorView
 
 # --- 1. DATA CLASS (DRAFT CONFIG) ---
 @dataclass
@@ -26,9 +27,9 @@ class SetupDraft:
         self.announcement_mode = "balanced"
 
 # --- 2. VIEW CLASS (LOGIKA UI) ---
-class SetupWizardView(ui.View):
+class SetupWizardView(ExecutorView):
     def __init__(self, bot, draft: SetupDraft, step: int = 0):
-        super().__init__(timeout=180) 
+        super().__init__(author_id=draft.author_id, timeout=180)
         self.bot = bot
         self.draft = draft
         self.step = step
@@ -43,10 +44,7 @@ class SetupWizardView(ui.View):
         self.setup_ui_for_current_step()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id != self.draft.author_id:
-            await interaction.response.send_message("Sesi setup ini milik admin lain.", ephemeral=True)
-            return False
-        return True
+        return await super().interaction_check(interaction)
 
     async def on_timeout(self):
         """[FIX 4] Edit pesan saat timeout."""

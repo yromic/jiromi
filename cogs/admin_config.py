@@ -80,18 +80,11 @@ class ResetUserConfirmView(ExecutorView):
         self.stop()
 
 
-class FilterResetView(discord.ui.View):
+class FilterResetView(ExecutorView):
     def __init__(self, db, guild_id, author_id): 
-        super().__init__(timeout=30)
+        super().__init__(author_id=author_id, timeout=30)
         self.db = db
         self.guild_id = guild_id
-        self.author_id = author_id 
-        
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id != self.author_id:
-            await interaction.response.send_message("Menu konfirmasi ini hanya dapat digunakan oleh pemiliknya.", ephemeral=True)
-            return False
-        return True
 
     @discord.ui.button(label="Reset filter", style=discord.ButtonStyle.danger)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -439,6 +432,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
         view = FilterResetView(self.db, interaction.guild_id, interaction.user.id)
         
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        view.message = await interaction.original_response()
         
     channel_group = app_commands.Group(name="channel", description="Atur whitelist/blacklist channel untuk XP.")
 
