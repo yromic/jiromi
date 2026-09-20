@@ -27,8 +27,8 @@ class Profile(commands.Cog):
     "badge_still_here": "<:tree_jiromi:1467342354632413392>",
     }
 
-    @app_commands.command(name="rank", description="🏁 Social Snapshot: Lihat posisimu di antara member lain.")
-    @app_commands.describe(member="🏁 Melihat posisimu saat ini di antara anggota server.")
+    @app_commands.command(name="rank", description="Lihat peringkat server dan member di sekitarnya.")
+    @app_commands.describe(member="Pilih member untuk melihat peringkatnya di server.")
     async def rank(self, interaction: discord.Interaction, member: discord.Member = None):
         # [FIX 1] Lakukan Defer DI AWAL.
         # Ini memberitahu Discord: "Sabar ya, lagi loading".
@@ -44,7 +44,10 @@ class Profile(commands.Cog):
         
         if not rank_pos:
             # [FIX 2] Gunakan followup.send karena sudah di-defer
-            return await interaction.followup.send("🍂 Belum ada jejak langkah di server ini.", ephemeral=True)
+            return await interaction.followup.send(
+                "Belum ada peringkat untuk member ini. Mulai kumpulkan aktivitas lalu coba lagi.",
+                ephemeral=True,
+            )
 
         # 2. Ambil Data User (XP/Level)
         user_data = await self.db.get_user_data(member.id, interaction.guild.id)
@@ -70,9 +73,9 @@ class Profile(commands.Cog):
 
         # BLOK 1: Posisi
         embed.add_field(
-            name="📊 Posisi", 
-            value=f"#**{rank_pos}** dari {total_members} member", 
-            inline=True
+            name="Peringkat",
+            value=f"#**{rank_pos}** dari {total_members} member",
+            inline=True,
         )
 
         # BLOK 2: Status Singkat
@@ -83,9 +86,9 @@ class Profile(commands.Cog):
             voice_str = f"{h}j {m}m"
 
         embed.add_field(
-            name="✨ Status", 
-            value=f"Level {user_data['level']}\n🎙️ {voice_str} voice", 
-            inline=True
+            name="Aktivitas",
+            value=f"Level {user_data['level']}\nVoice {voice_str}",
+            inline=True,
         )
 
         # BLOK 3: Konteks Sosial (Tetangga)
@@ -103,10 +106,10 @@ class Profile(commands.Cog):
         else:
             below_str = "*Dasar Server*"
         
-        embed.add_field(name="⬆️ Di Atasmu", value=above_str, inline=True)
-        embed.add_field(name="⬇️ Di Bawahmu", value=below_str, inline=True)
+        embed.add_field(name="Member di atas", value=above_str, inline=True)
+        embed.add_field(name="Member di bawah", value=below_str, inline=True)
 
-        embed.set_footer(text="Snapshot saat ini • Tidak mencerminkan seluruh perjalanan • Cek /profile")
+        embed.set_footer(text="Peringkat saat ini. Gunakan /profile untuk melihat perjalanan member.")
         
         # [FIX 3] Kirim menggunakan followup, bukan response.send_message
         await interaction.followup.send(embed=embed)
@@ -115,8 +118,8 @@ class Profile(commands.Cog):
     
     title_group = app_commands.Group(name="title", description="Kelola julukan profilmu.")
 
-    @app_commands.command(name="profile", description="🌱 Personal Diary: Melihat catatan perjalanan dan pencapaianmu.")
-    @app_commands.describe(member="🌱 Catatan perjalanan pribadimu di komunitas ini.")
+    @app_commands.command(name="profile", description="Lihat perjalanan, aktivitas, dan pencapaian member.")
+    @app_commands.describe(member="Pilih member untuk melihat perjalanan dan pencapaiannya.")
     async def profile(self, interaction: discord.Interaction, member: discord.Member = None):
         member = member or interaction.user
 
@@ -144,18 +147,29 @@ class Profile(commands.Cog):
         else:
             journey_str = "Baru saja bergabung"
 
+        lvl = user_data['level']
+        xp = user_data['xp']
+        floor = xp_for_next_level(lvl - 1) if lvl > 0 else 0
+        ceiling = xp_for_next_level(lvl)
+        current = xp - floor
+        needed = ceiling - floor
+        remaining = max(0, ceiling - xp)
+        ratio = current / needed if needed > 0 else 1
+        filled = max(0, min(10, int(ratio * 10)))
+        bar = "▓" * filled + "░" * (10 - filled)
+        fmt = lambda value: f"{value:,}".replace(",", ".")
+
         # 4. MULAI BIKIN EMBED
         embed = discord.Embed(color=discord.Color.from_rgb(129, 199, 132))
         
-        # Header: Personal
         embed.set_thumbnail(url=member.display_avatar.url)
-        embed.title = f"🌱 Perjalanan {member.display_name}"
-        
-        # [PENTING] Gunakan variabel title_text yang sudah diproses di atas (Poin 2)
-        embed.description = f"**{title_text}**" 
+        embed.title = f"Profil {member.display_name}"
 
-        # BLOK 1: Journey (Waktu)
-        embed.add_field(name="🕰️ Waktu", value=journey_str, inline=False)
+        embed.add_field(
+            name="Member",
+            value=f"{member.mention}\n{journey_str}",
+            inline=False,
+        )
 
         # BLOK 2: Kehadiran
         v_mins = user_data['total_voice_mins']
@@ -169,9 +183,18 @@ class Profile(commands.Cog):
         else: chat_desc = "Aktif merangkai percakapan"
 
         embed.add_field(
-            name="Kehadiran", 
-            value=f"🎙️ Voice: {voice_desc} ({v_mins}m)\n💬 Chat: {chat_desc} ({chat_count:,} pesan)",
+            name=f"Level {lvl}",
+            value=f"`{bar}`\n{fmt(remaining)} XP lagi menuju level berikutnya.",
             inline=False
+        )
+
+        embed.add_field(
+            name="Aktivitas",
+            value=(
+                f"Voice: {voice_desc} ({v_mins} menit)\n"
+                f"Chat: {chat_desc} ({chat_count:,} event XP chat diterima)"
+            ),
+            inline=False,
         )
 
         # BLOK 3: Milestone & Badge
@@ -190,58 +213,49 @@ class Profile(commands.Cog):
             
             badge_list = []
             for b in badges[:5]: 
-                icon = self.BADGE_ICONS.get(b, "🏅")
+                icon = self.BADGE_ICONS.get(b, "Lencana")
                 name = BADGE_NAMES.get(b, b.replace("_", " ").title())
                 badge_list.append(f"{icon} **{name}**")
             
             milestone_str = "\n".join(badge_list)
         else:
-            milestone_str = "*(Belum ada lencana yang tersemat)*"
+            milestone_str = "Belum ada lencana. Tetap aktif untuk mendapatkannya."
             
-        embed.add_field(name="🏅 Pencapaian", value=milestone_str, inline=False)
+        embed.add_field(name="Lencana", value=milestone_str, inline=False)
+        embed.add_field(name="Title aktif", value=title_text, inline=False)
 
-        # BLOK 4: Progress Bar
-        from utils.math_utils import xp_for_next_level
-        lvl = user_data['level']
-        xp = user_data['xp']
-        floor = xp_for_next_level(lvl - 1) if lvl > 0 else 0
-        ceil = xp_for_next_level(lvl)
-        current = xp - floor
-        needed = ceil - floor
-        
-        ratio = current / needed if needed > 0 else 1
-        filled = int(ratio * 10)
-        bar = "▓" * filled + "░" * (10 - filled)
-        
-        embed.add_field(
-            name=f"✨ Level {lvl}", 
-            value=f"`{bar}`\nMelangkah menuju babak berikutnya...", 
-            inline=False
-        )
-
-        embed.set_footer(text="Perjalanan ini bersifat personal • Tidak untuk dibandingkan")
+        embed.set_footer(text="Gunakan /rank untuk melihat posisi member di server.")
 
         await interaction.response.send_message(embed=embed)
 
-    @title_group.command(name="list", description="Lihat koleksi Title yang sudah kamu buka.")
+    @title_group.command(name="list", description="Lihat koleksi title yang sudah dibuka.")
     async def title_list(self, interaction: discord.Interaction):
-        _, _, titles_owned = await self.db.get_user_gamification_profile(interaction.user.id, interaction.guild.id)
+        active_title, _, titles_owned = await self.db.get_user_gamification_profile(interaction.user.id, interaction.guild.id)
         
         if not titles_owned:
-            return await interaction.response.send_message("📭 Kamu belum memiliki Title apapun. Teruslah aktif!", ephemeral=True)
+            return await interaction.response.send_message(
+                "Kamu belum memiliki title. Tetap aktif untuk membuka title baru.",
+                ephemeral=True,
+            )
             
-        desc = "Gunakan `/title select` untuk memakainya.\n\n"
+        if active_title:
+            active_meta = TITLE_META.get(active_title)
+            active_name = active_meta['name'] if active_meta else active_title.replace("title_", "").replace("_", " ").title()
+        else:
+            active_name = "Tidak ada"
+
+        desc = f"Title aktif: **{active_name}**\nGunakan `/title select` untuk mengubahnya.\n\n"
         for t_id in titles_owned:
             # [FIX] Ambil dari TITLE_META
             meta = TITLE_META.get(t_id)
             if meta:
-                desc += f"🏷️ **{meta['name']}** — *{meta['desc']}*\n"
+                desc += f"**{meta['name']}** — *{meta['desc']}*\n"
             else:
                 # Fallback aman jika title lama
                 clean_name = t_id.replace("title_", "").replace("_", " ").title()
-                desc += f"🏷️ **{clean_name}**\n"
+                desc += f"**{clean_name}**\n"
             
-        embed = discord.Embed(title="🎒 Koleksi Title", description=desc, color=discord.Color.green())
+        embed = discord.Embed(title="Koleksi Title", description=desc, color=discord.Color.green())
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @title_group.command(name="select", description="Pasang Title agar muncul di sebelah namamu.")
@@ -250,18 +264,31 @@ class Profile(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         # 1. Ambil data title user
-        _, _, titles_owned = await self.db.get_user_gamification_profile(interaction.user.id, interaction.guild.id)
+        active_title, _, titles_owned = await self.db.get_user_gamification_profile(interaction.user.id, interaction.guild.id)
         
         if not titles_owned:
             # Pakai followup karena sudah defer
-             return await interaction.followup.send("❌ Kamu tidak punya Title untuk dipilih.", ephemeral=True)
+             return await interaction.followup.send(
+                 "Kamu belum memiliki title untuk dipilih. Tetap aktif untuk membuka title baru.",
+                 ephemeral=True,
+             )
          
         # 2. Tampilkan Dropdown Menu
         # [FIX 2] Hapus parameter 'self.TITLE_NAMES'. Cukup passing DB dan Titles.
-        view = TitleView(self.db, titles_owned)
-        await interaction.followup.send("Pilih identitas barumu:", view=view, ephemeral=True)
+        if active_title:
+            active_meta = TITLE_META.get(active_title)
+            active_name = active_meta['name'] if active_meta else active_title.replace("title_", "").replace("_", " ").title()
+        else:
+            active_name = "Tidak ada"
 
-    @app_commands.command(name="leaderboard", description="🏆 Hall of Fame: Top 50 member paling aktif (Voice & XP).")
+        view = TitleView(self.db, titles_owned)
+        await interaction.followup.send(
+            f"Title aktif saat ini: **{active_name}**\nPilih title yang ingin digunakan.",
+            view=view,
+            ephemeral=True,
+        )
+
+    @app_commands.command(name="leaderboard", description="Lihat 50 member dengan XP tertinggi di server.")
     async def leaderboard(self, interaction: discord.Interaction):
         await interaction.response.defer() # Defer karena query mungkin agak berat
 
@@ -277,7 +304,9 @@ class Profile(commands.Cog):
         rows = await self.db.fetch_all(query, (interaction.guild.id,))
 
         if not rows:
-            return await interaction.followup.send("🍂 Belum ada data aktivitas di server ini.")
+            return await interaction.followup.send(
+                "Belum ada data aktivitas. Mulai aktif di server lalu buka leaderboard lagi."
+            )
 
         # 2. Proses Data (Resolve Nama User)
         # Kita lakukan resolve nama di sini agar pagination (View) tidak perlu fetch user lagi (lemot)
@@ -301,10 +330,10 @@ class Profile(commands.Cog):
         await interaction.followup.send(embed=embed, view=view)
         view.message = await interaction.original_response()
 
-    @app_commands.command(name="level", description="🧭 Melihat progres level perjalanan.")
-    @app_commands.describe(user="Lihat level member lain")
-    async def level(self, interaction: discord.Interaction, user: discord.Member | None = None): # [FIX 4] Type Hint Modern
-        target = user or interaction.user
+    @app_commands.command(name="level", description="Lihat level saat ini dan XP yang masih dibutuhkan.")
+    @app_commands.describe(member="Pilih member untuk melihat level dan sisa XP-nya.")
+    async def level(self, interaction: discord.Interaction, member: discord.Member | None = None):
+        target = member or interaction.user
         is_self = (target.id == interaction.user.id)
 
         user_data = await self.db.get_user_data(target.id, interaction.guild.id)
@@ -324,22 +353,23 @@ class Profile(commands.Cog):
         if lvl == 0:
             if is_self:
                 # [FIX 3] Konsistensi tone reflektif
-                msg = "🧭 Level 0\n\nPerjalanan baru saja dimulai.\nMasih ada jalan di depan."
+                msg = "Level 0\n\nPerjalananmu baru dimulai. Kumpulkan XP untuk mencapai level berikutnya."
             else:
-                msg = f"🧭 Level 0 — {target.display_name}\n\nPerjalanan baru saja dimulai."
+                msg = f"Level 0 — {target.display_name}\n\nPerjalanan member ini baru dimulai. Gunakan /profile untuk melihat aktivitasnya."
         else:
             if is_self:
                 msg = (
-                    f"🧭 Level {lvl}\n\n"
-                    f"Kau telah menempuh {fmt(xp)} langkah.\n"
-                    f"Masih tersisa {fmt(remaining)} langkah lagi.\n\n"
-                    "Masih ada jalan di depan."
+                    f"Level {lvl}\n\n"
+                    f"XP saat ini: {fmt(xp)}\n"
+                    f"Sisa menuju level berikutnya: {fmt(remaining)} XP.\n"
+                    "Tetap aktif untuk mengumpulkan XP."
                 )
             else:
                 msg = (
-                    f"🧭 Level {lvl} — {target.display_name}\n\n"
-                    f"{fmt(xp)} langkah telah ditempuh.\n"
-                    f"Tersisa {fmt(remaining)} langkah lagi."
+                    f"Level {lvl} — {target.display_name}\n\n"
+                    f"XP saat ini: {fmt(xp)}\n"
+                    f"Sisa menuju level berikutnya: {fmt(remaining)} XP.\n"
+                    "Gunakan /profile untuk melihat aktivitas member ini."
                 )
 
         await interaction.response.send_message(content=msg, ephemeral=is_self)
@@ -384,7 +414,7 @@ class TitleSelect(discord.ui.Select):
         
         options = []
         # Opsi Default
-        options.append(discord.SelectOption(label="❌ Lepas Title", value="none", description="Kembali ke nama polosan."))
+        options.append(discord.SelectOption(label="Lepas title", value="none", description="Gunakan nama tanpa title."))
         
         for t_id in titles_owned:
             # [FIX 4] Ambil nama cantik dari TITLE_META (Imported from utils)
@@ -401,11 +431,10 @@ class TitleSelect(discord.ui.Select):
             options.append(discord.SelectOption(
                 label=label_name, 
                 value=t_id, 
-                emoji="🏷️", 
                 description=desc[:100] # Limit deskripsi Discord max 100 char
             ))
 
-        super().__init__(placeholder="Pilih Title aktifmu...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Pilih title aktif", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         # Value 'none' artinya copot title
@@ -417,9 +446,9 @@ class TitleSelect(discord.ui.Select):
         if new_title:
             meta = TITLE_META.get(new_title)
             display_name = meta['name'] if meta else new_title
-            msg = f"✅ Title profilmu diubah menjadi: **{display_name}**"
+            msg = f"Title aktif diubah ke **{display_name}**."
         else:
-            msg = "✅ Title dilepas."
+            msg = "Title aktif dihapus."
             
         await interaction.response.edit_message(content=msg, view=None)
 
@@ -450,9 +479,9 @@ class LeaderboardView(discord.ui.View):
         # tapi cara paling simpel dan robust adalah loop children:
         for child in self.children:
             if isinstance(child, discord.ui.Button):
-                if child.label == "⬅️ Sebelumnya":
+                if child.label == "Sebelumnya":
                     child.disabled = (self.current_page == 0)
-                elif child.label == "Selanjutnya ➡️":
+                elif child.label == "Selanjutnya":
                     child.disabled = (self.current_page == self.total_pages - 1)
 
     def _truncate_text(self, text, max_len):
@@ -479,8 +508,7 @@ class LeaderboardView(discord.ui.View):
         for i, row in enumerate(page_data):
             rank = start + i + 1
             
-            # [FIX VISUAL] Nama & Angka diamankan
-            name = self._truncate_text(row['name'], 10) 
+            name = self._truncate_text(row['name'], 16)
             xp_str = self._format_number(row['xp'])
             
             lvl = row['level']
@@ -500,16 +528,19 @@ class LeaderboardView(discord.ui.View):
             elif rank == 3: r_icon = "🥉"
             else: r_icon = f"#{rank:<2}"
 
-            # Format Tabel Monospace (Rata Kiri)
-            # Spasi diatur ketat agar lurus di HP
-            table_str += f"{r_icon} `{name:<10}` `Lv.{lvl:<3}` `🎙️{voice_str:<6}` `✨{xp_str:<6}`\n"
+            table_str += f"{r_icon} **{name}** — Lv {lvl} · {xp_str} XP · {voice_str} voice\n"
 
         embed = discord.Embed(
-            title="🏆 Server Leaderboard",
-            description=f"Top Member Berdasarkan Aktivitas\n\n{table_str}",
+            title="Peringkat Server",
+            description=table_str,
             color=discord.Color.gold()
         )
-        embed.set_footer(text=f"Halaman {self.current_page + 1}/{self.total_pages} • Total {len(self.data)} Member")
+        embed.set_footer(
+            text=(
+                f"Halaman {self.current_page + 1} dari {self.total_pages}. "
+                f"Menampilkan {len(page_data)} dari {len(self.data)} member."
+            )
+        )
         return embed
 
     async def on_timeout(self):
@@ -521,18 +552,20 @@ class LeaderboardView(discord.ui.View):
         # Update pesan jika masih ada
         if self.message:
             try:
-                # [FIX VISUAL] Kasih tau user kalau menu expired
                 embed = self.create_embed()
-                embed.set_footer(text="⌛ Menu kadaluwarsa. Ketik /leaderboard lagi.")
+                embed.set_footer(text="Tampilan ini sudah berakhir. Jalankan /leaderboard untuk melihat data terbaru.")
                 await self.message.edit(embed=embed, view=self)
             except (discord.NotFound, discord.HTTPException):
                 pass
 
-    @discord.ui.button(label="⬅️ Sebelumnya", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Sebelumnya", style=discord.ButtonStyle.secondary)
     async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         # [FIX GREEN 3] Executor Lock (Udah bener, pertahankan)
         if interaction.user.id != self.interaction_user_id:
-            return await interaction.response.send_message("⛔ Ini bukan menumu.", ephemeral=True)
+            return await interaction.response.send_message(
+                "Tampilan ini dibuat untuk member lain. Jalankan /leaderboard untuk membuka tampilanmu.",
+                ephemeral=True,
+            )
             
         self.current_page -= 1
         self.update_buttons()
@@ -541,10 +574,13 @@ class LeaderboardView(discord.ui.View):
         if not interaction.response.is_done():
             await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
-    @discord.ui.button(label="Selanjutnya ➡️", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Selanjutnya", style=discord.ButtonStyle.secondary)
     async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.interaction_user_id:
-            return await interaction.response.send_message("⛔ Ini bukan menumu.", ephemeral=True)
+            return await interaction.response.send_message(
+                "Tampilan ini dibuat untuk member lain. Jalankan /leaderboard untuk membuka tampilanmu.",
+                ephemeral=True,
+            )
 
         self.current_page += 1
         self.update_buttons()
