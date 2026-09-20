@@ -37,25 +37,40 @@ class EventTestView(ExecutorView):
         self.channel = channel
         self.content = content
         self.embed = embed
+        self._finished = False
 
     @discord.ui.button(label="Kirim simulasi", style=discord.ButtonStyle.primary)
     async def confirm(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        if self._finished:
+            await send_interaction_error(interaction, "Simulasi sedang diproses atau sudah selesai.")
+            return
+        self._finished = True
+        for child in self.children:
+            child.disabled = True
+        await interaction.response.edit_message(content="Simulasi sedang dikirim...", view=self)
         try:
             await self.channel.send(content=self.content or None, embed=self.embed)
         except discord.Forbidden:
-            await interaction.response.edit_message(
+            await interaction.edit_original_response(
                 content="Bot tidak dapat mengirim simulasi. Periksa izin Kirim Pesan dan Embed Links pada channel tujuan.", view=None
             )
-        except discord.HTTPException:
-            await interaction.response.edit_message(
+        except discord.HTTPException as error:
+            logger = getattr(interaction.client, "logger", None)
+            if logger:
+                logger.error("EVENT_TEST_SEND_FAIL", "Pengiriman simulasi event gagal", error_obj=error, guild_id=interaction.guild_id)
+            await interaction.edit_original_response(
                 content="Simulasi tidak terkirim. Coba lagi setelah memeriksa konfigurasi event.", view=None
             )
         else:
-            await interaction.response.edit_message(content=f"Simulasi terkirim ke {self.channel.mention}.", view=None)
+            await interaction.edit_original_response(content=f"Simulasi terkirim ke {self.channel.mention}.", view=None)
         self.stop()
 
     @discord.ui.button(label="Batal", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        if self._finished:
+            await send_interaction_error(interaction, "Simulasi sedang diproses atau sudah selesai.")
+            return
+        self._finished = True
         await interaction.response.edit_message(content="Pengiriman simulasi dibatalkan.", view=None)
         self.stop()
 
@@ -156,7 +171,10 @@ class ServerEvents(commands.Cog):
         return [value[index:index + maximum] for index in range(0, len(value), maximum)] or ["Kosong"]
 
     def _build_event_payload(self, event_type, config, member, guild):
-        content = self._format_text(config["message_text"] or self.DEFAULT_MESSAGES[event_type], member, guild)
+        message_template = config["message_text"]
+        if message_template is None:
+            message_template = self.DEFAULT_MESSAGES[event_type]
+        content = self._format_text(message_template, member, guild)
         if len(content) > MAX_MESSAGE_LENGTH:
             raise ValueError("Pesan teks event melebihi 2.000 karakter setelah placeholder diganti.")
         embed = None
@@ -175,6 +193,8 @@ class ServerEvents(commands.Cog):
             embed.set_thumbnail(url=member.display_avatar.url)
             if config["image_url"]:
                 embed.set_image(url=config["image_url"])
+        if not content and embed is None:
+            raise ValueError("Event tidak memiliki isi. Atur pesan teks atau aktifkan embed sebelum mengirim.")
         return content, embed
 
     def _get_channel_issue(self, guild, config):
@@ -311,7 +331,7 @@ class ServerEvents(commands.Cog):
             await send_interaction_message(interaction, content=f"Reset seluruh konfigurasi {event_type.name}? Channel dan status aktif juga akan dihapus.", view=view)
             view.message = await interaction.original_response()
             return
-        values = {"message": {"message_text": None}, "embed": {"use_embed": 0, "embed_title": None, "embed_description": None, "embed_color": 0}, "image": {"image_url": None}}[section.value]
+        values = {"message": {"message_text": ""}, "embed": {"use_embed": 0, "embed_title": None, "embed_description": None, "embed_color": 0}, "image": {"image_url": None}}[section.value]
         await self.db.update_event_config(interaction.guild_id, event_type.value, values)
         await send_interaction_message(interaction, content=f"{section.name} untuk {event_type.name} dihapus. Channel dan status aktif tetap tersimpan.")
 
@@ -365,7 +385,13 @@ class ServerEvents(commands.Cog):
         embed.add_field(name="Status", value="Aktif" if config["is_enabled"] else "Nonaktif", inline=True)
         embed.add_field(name="Channel tujuan", value=channel.mention if channel else "Belum tersedia", inline=True)
         embed.add_field(name="Mode", value="Embed" if config["use_embed"] else "Pesan teks", inline=True)
-        embed.add_field(name="Pesan teks", value="Diatur" if config["message_text"] else "Menggunakan pesan bawaan", inline=False)
+        if config["message_text"] is None:
+            message_state = "Menggunakan pesan bawaan"
+        elif config["message_text"] == "":
+            message_state = "Dikosongkan"
+        else:
+            message_state = "Diatur"
+        embed.add_field(name="Pesan teks", value=message_state, inline=False)
         if config["use_embed"]:
             embed.add_field(name="Judul embed", value="Diatur" if config["embed_title"] else "Kosong", inline=False)
             embed.add_field(name="Deskripsi embed", value="Diatur" if config["embed_description"] else "Kosong", inline=False)
@@ -378,7 +404,7 @@ class ServerEvents(commands.Cog):
             embed.add_field(name="Kesiapan pengiriman", value="Channel dan izin bot siap. Gunakan /event preview atau /event test.", inline=False)
         await send_interaction_message(interaction, embed=embed)
         raw_details = [
-            ("Pesan teks", config["message_text"] or self.DEFAULT_MESSAGES[event_type.value]),
+            ("Pesan teks", self.DEFAULT_MESSAGES[event_type.value] if config["message_text"] is None else config["message_text"] or "Kosong (dikosongkan)"),
         ]
         if config["use_embed"]:
             raw_details.extend([
