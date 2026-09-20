@@ -17,6 +17,14 @@ EVENT_TYPES = [
     app_commands.Choice(name="Boost Nitro", value="boost"),
 ]
 PLACEHOLDERS = {"member", "username", "server", "member_count", "count", "boost_count"}
+PLACEHOLDER_MAX_LENGTHS = {
+    "member": 22,
+    "username": 32,
+    "server": 100,
+    "member_count": 20,
+    "count": 20,
+    "boost_count": 20,
+}
 MAX_MESSAGE_LENGTH = 2000
 MAX_TITLE_LENGTH = 256
 MAX_DESCRIPTION_LENGTH = 4096
@@ -103,7 +111,19 @@ class ServerEvents(commands.Cog):
     def _validate_text(self, value, label, maximum):
         if value is not None and len(value) > maximum:
             return f"{label} maksimal {maximum} karakter."
-        return self._validate_placeholders(value, label)
+        error = self._validate_placeholders(value, label)
+        if error or value is None:
+            return error
+        upper_bound = len(value)
+        for _literal, field, _format_spec, _conversion in string.Formatter().parse(value):
+            if field is not None:
+                upper_bound += PLACEHOLDER_MAX_LENGTHS[field] - len(field) - 2
+        if upper_bound > maximum:
+            return (
+                f"{label} dapat melebihi {maximum} karakter setelah placeholder diganti. "
+                "Pendekkan teks di sekitarnya atau hapus placeholder."
+            )
+        return None
 
     @staticmethod
     def _parse_color(color_hex):
@@ -137,11 +157,19 @@ class ServerEvents(commands.Cog):
 
     def _build_event_payload(self, event_type, config, member, guild):
         content = self._format_text(config["message_text"] or self.DEFAULT_MESSAGES[event_type], member, guild)
+        if len(content) > MAX_MESSAGE_LENGTH:
+            raise ValueError("Pesan teks event melebihi 2.000 karakter setelah placeholder diganti.")
         embed = None
         if config["use_embed"]:
+            title = self._format_text(config["embed_title"], member, guild)
+            description = self._format_text(config["embed_description"], member, guild)
+            if len(title) > MAX_TITLE_LENGTH:
+                raise ValueError("Judul embed event melebihi 256 karakter setelah placeholder diganti.")
+            if len(description) > MAX_DESCRIPTION_LENGTH:
+                raise ValueError("Deskripsi embed event melebihi 4.096 karakter setelah placeholder diganti.")
             embed = discord.Embed(
-                title=self._format_text(config["embed_title"], member, guild) or None,
-                description=self._format_text(config["embed_description"], member, guild) or None,
+                title=title or None,
+                description=description or None,
                 color=discord.Color(config["embed_color"] or discord.Color.blue().value),
             )
             embed.set_thumbnail(url=member.display_avatar.url)
@@ -170,7 +198,13 @@ class ServerEvents(commands.Cog):
         channel, issue = self._get_channel_issue(guild, config)
         if issue:
             return False, issue
-        content, embed = self._build_event_payload(event_type, config, member, guild)
+        try:
+            content, embed = self._build_event_payload(event_type, config, member, guild)
+        except ValueError as exc:
+            logger = getattr(self.bot, "logger", None)
+            if logger:
+                logger.error("EVENT_PAYLOAD_INVALID", "Konfigurasi event melebihi batas Discord", error_obj=exc, event_type=event_type)
+            return False, str(exc)
         try:
             await channel.send(content=content or None, embed=embed)
             return True, None
@@ -207,14 +241,14 @@ class ServerEvents(commands.Cog):
     @app_commands.describe(event_type="Tipe event", channel="Channel tujuan notifikasi")
     @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def setup_event(self, interaction, event_type, channel: discord.TextChannel):
+    async def setup_event(self, interaction, event_type: app_commands.Choice[str], channel: discord.TextChannel):
         await self.db.update_event_config(interaction.guild_id, event_type.value, {"channel_id": channel.id, "is_enabled": 1})
         await send_interaction_message(interaction, content=f"{event_type.name} aktif dan akan dikirim ke {channel.mention}. Atur isi dengan /event message atau /event embed.")
 
     @event_group.command(name="toggle", description="Nyalakan atau matikan event tanpa menghapus konfigurasi.")
     @app_commands.choices(event_type=EVENT_TYPES, status=[app_commands.Choice(name="Aktif", value=1), app_commands.Choice(name="Nonaktif", value=0)])
     @app_commands.checks.has_permissions(administrator=True)
-    async def toggle_event(self, interaction, event_type, status):
+    async def toggle_event(self, interaction, event_type: app_commands.Choice[str], status: app_commands.Choice[int]):
         await self.db.update_event_config(interaction.guild_id, event_type.value, {"is_enabled": status.value})
         state = "aktif" if status.value else "nonaktif"
         await send_interaction_message(interaction, content=f"Event {event_type.name} sekarang {state}. Konfigurasi lain tetap tersimpan.")
@@ -223,7 +257,7 @@ class ServerEvents(commands.Cog):
     @app_commands.describe(event_type="Tipe event", content="Maksimal 2.000 karakter; gunakan /help topik:placeholders")
     @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def set_message(self, interaction, event_type, content: str):
+    async def set_message(self, interaction, event_type: app_commands.Choice[str], content: str):
         error = self._validate_text(content, "Pesan teks", MAX_MESSAGE_LENGTH)
         if error:
             await send_interaction_error(interaction, error)
@@ -235,7 +269,7 @@ class ServerEvents(commands.Cog):
     @app_commands.describe(event_type="Tipe event", use_embed="Gunakan embed", title="Opsional, maksimal 256 karakter", description="Opsional, maksimal 4.096 karakter", color_hex="Opsional, contoh #5865F2")
     @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def set_embed(self, interaction, event_type, use_embed: bool, title: str = None, description: str = None, color_hex: str = None):
+    async def set_embed(self, interaction, event_type: app_commands.Choice[str], use_embed: bool, title: str = None, description: str = None, color_hex: str = None):
         for value, label, maximum in ((title, "Judul embed", MAX_TITLE_LENGTH), (description, "Deskripsi embed", MAX_DESCRIPTION_LENGTH)):
             error = self._validate_text(value, label, maximum)
             if error:
@@ -260,7 +294,7 @@ class ServerEvents(commands.Cog):
     @app_commands.describe(event_type="Tipe event", url="URL http/https langsung, maksimal 2.000 karakter")
     @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def set_image(self, interaction, event_type, url: str):
+    async def set_image(self, interaction, event_type: app_commands.Choice[str], url: str):
         error = self._validate_image_url(url)
         if error:
             await send_interaction_error(interaction, error)
@@ -271,7 +305,7 @@ class ServerEvents(commands.Cog):
     @event_group.command(name="clear", description="Hapus bagian konten event atau reset seluruh konfigurasi.")
     @app_commands.choices(event_type=EVENT_TYPES, section=[app_commands.Choice(name="Pesan teks", value="message"), app_commands.Choice(name="Konten embed", value="embed"), app_commands.Choice(name="Gambar", value="image"), app_commands.Choice(name="Reset seluruh event", value="reset")])
     @app_commands.checks.has_permissions(administrator=True)
-    async def clear_event(self, interaction, event_type, section):
+    async def clear_event(self, interaction, event_type: app_commands.Choice[str], section: app_commands.Choice[str]):
         if section.value == "reset":
             view = EventResetView(interaction.user.id, self, interaction.guild_id, event_type.value, event_type.name)
             await send_interaction_message(interaction, content=f"Reset seluruh konfigurasi {event_type.name}? Channel dan status aktif juga akan dihapus.", view=view)
@@ -284,18 +318,22 @@ class ServerEvents(commands.Cog):
     @event_group.command(name="preview", description="Lihat hasil event secara privat sebelum dikirim.")
     @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def preview_event(self, interaction, event_type):
+    async def preview_event(self, interaction, event_type: app_commands.Choice[str]):
         config = await self.db.get_event_config(interaction.guild_id, event_type.value)
         if not config:
             await send_interaction_error(interaction, f"Event {event_type.name} belum dikonfigurasi. Jalankan /event setup terlebih dahulu.")
             return
-        content, embed = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        try:
+            content, embed = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        except ValueError as exc:
+            await send_interaction_error(interaction, f"Konfigurasi event perlu diperbaiki: {exc}")
+            return
         await send_interaction_message(interaction, content=content or "Preview tidak memiliki pesan teks.", embed=embed)
 
     @event_group.command(name="test", description="Kirim simulasi ke channel tujuan setelah konfirmasi.")
     @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def test_event(self, interaction, event_type):
+    async def test_event(self, interaction, event_type: app_commands.Choice[str]):
         config = await self.db.get_event_config(interaction.guild_id, event_type.value)
         if not config:
             await send_interaction_error(interaction, f"Event {event_type.name} belum dikonfigurasi. Jalankan /event setup terlebih dahulu.")
@@ -304,7 +342,11 @@ class ServerEvents(commands.Cog):
         if issue:
             await send_interaction_error(interaction, issue)
             return
-        content, embed = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        try:
+            content, embed = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        except ValueError as exc:
+            await send_interaction_error(interaction, f"Konfigurasi event perlu diperbaiki: {exc}")
+            return
         view = EventTestView(interaction.user.id, channel, content, embed)
         state = "aktif" if config["is_enabled"] else "nonaktif"
         await send_interaction_message(interaction, content=f"Simulasi {event_type.name} akan dikirim ke {channel.mention}. Event saat ini {state}. Konfirmasi pengiriman publik.", view=view)
@@ -313,7 +355,7 @@ class ServerEvents(commands.Cog):
     @event_group.command(name="show", description="Lihat status, isi, dan kesiapan pengiriman event.")
     @app_commands.choices(event_type=EVENT_TYPES)
     @app_commands.checks.has_permissions(administrator=True)
-    async def show_event_config(self, interaction, event_type):
+    async def show_event_config(self, interaction, event_type: app_commands.Choice[str]):
         config = await self.db.get_event_config(interaction.guild_id, event_type.value)
         if not config:
             await send_interaction_error(interaction, f"Event {event_type.name} belum dikonfigurasi. Jalankan /event setup terlebih dahulu.")
@@ -349,7 +391,11 @@ class ServerEvents(commands.Cog):
                 await interaction.followup.send(content=f"{label}{suffix}:\n{chunk}", ephemeral=True)
         if config["image_url"]:
             await interaction.followup.send(content=config["image_url"], ephemeral=True)
-        content, preview = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        try:
+            content, preview = self._build_event_payload(event_type.value, config, interaction.user, interaction.guild)
+        except ValueError as exc:
+            await interaction.followup.send(content=f"Preview tidak dapat dibuat: {exc}", ephemeral=True)
+            return
         await interaction.followup.send(content=content or "Preview tidak memiliki pesan teks.", embed=preview, ephemeral=True)
 
     async def cog_app_command_error(self, interaction, error):
