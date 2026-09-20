@@ -2,54 +2,30 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from utils.interaction_responses import send_interaction_error, send_interaction_message
+
+
 class OwnerTools(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(
-        name="guilds",
-        description="(Owner) List semua guild tempat bot bergabung"
-    )
+    @app_commands.command(name="guilds", description="(Owner) Lihat daftar server yang diikuti bot.")
     async def list_guilds(self, interaction: discord.Interaction):
-        # --- OWNER CHECK ---
         if not await self.bot.is_owner(interaction.user):
-            await interaction.response.send_message(
-                "❌ Command ini hanya untuk owner bot.",
-                ephemeral=True
-            )
+            await send_interaction_error(interaction, "Perintah ini hanya dapat digunakan oleh owner bot.")
             return
-
         guilds = self.bot.guilds
         if not guilds:
-            await interaction.response.send_message(
-                "Bot tidak bergabung di guild manapun.",
-                ephemeral=True
-            )
+            await send_interaction_message(interaction, content="Bot belum bergabung di server mana pun.")
             return
-
         lines = []
-        for i, g in enumerate(guilds, start=1):
-            is_owner = "yes" if g.owner_id == self.bot.user.id else "no"
-            lines.append(
-                f"**{i}. {g.name}**\n"
-                f"• Guild ID: `{g.id}`\n"
-                f"• Members: `{g.member_count}`\n"
-                f"• Bot Owner: `{is_owner}`"
-            )
+        for index, guild in enumerate(guilds, start=1):
+            owner_status = "ya" if guild.owner_id == self.bot.user.id else "tidak"
+            lines.append(f"**{index}. {guild.name}**\nID server: `{guild.id}`\nMember: `{guild.member_count}`\nOwner bot: `{owner_status}`")
+        embed = discord.Embed(title="Server yang diikuti Jiromi", description="\n\n".join(lines), color=discord.Color.blurple())
+        embed.set_footer(text=f"Total server: {len(guilds)}")
+        await send_interaction_message(interaction, embed=embed)
 
-        description = "\n\n".join(lines)
-
-        embed = discord.Embed(
-            title="📡 Jiromi – Guild Presence",
-            description=description,
-            color=discord.Color.blurple()
-        )
-        embed.set_footer(text=f"Total guilds: {len(guilds)}")
-
-        await interaction.response.send_message(
-            embed=embed,
-            ephemeral=True
-        )
 
 async def setup(bot):
     await bot.add_cog(OwnerTools(bot))

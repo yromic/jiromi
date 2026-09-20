@@ -1,16 +1,46 @@
-#weekly_stats.py
+import asyncio
+import time
+from datetime import datetime, timedelta, timezone
 
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
-from datetime import datetime, timezone, timedelta
-import asyncio
-import time
+
+from utils.interaction_responses import send_interaction_error, send_interaction_message
+from utils.views import ExecutorView
+
+
+class WeeklyConfigConfirmView(ExecutorView):
+    def __init__(self, cog, author_id, channel, enable):
+        super().__init__(author_id=author_id, timeout=60)
+        self.cog, self.channel, self.enable = cog, channel, enable
+
+    @discord.ui.button(label="Konfirmasi", style=discord.ButtonStyle.primary)
+    async def confirm(self, interaction, button):
+        self.stop()
+        if self.enable:
+            await self.cog.db.set_weekly_config(
+                interaction.guild_id,
+                recap_channel_id=self.channel.id,
+                is_enabled=1,
+                # A newly enabled recap starts with the next completed week.
+                last_posted_week_key=self.cog.db.get_current_week_key(),
+            )
+            text = f"Rekap mingguan diaktifkan. Rekap akan dikirim ke {self.channel.mention} setelah minggu UTC berikutnya dimulai."
+        else:
+            await self.cog.db.set_weekly_config(interaction.guild_id, is_enabled=0)
+            text = "Rekap mingguan dinonaktifkan. Channel yang sudah dipilih tetap tersimpan."
+        await interaction.response.edit_message(content=text, view=None)
+
+    @discord.ui.button(label="Batal", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction, button):
+        self.stop()
+        await interaction.response.edit_message(content="Perubahan rekap mingguan dibatalkan.", view=None)
+
 
 class WeeklyStats(commands.Cog):
     def __init__(self, bot, db):
-        self.bot = bot
-        self.db = db
+        self.bot, self.db = bot, db
 
     async def cog_load(self):
         self.weekly_recap_loop.start()
@@ -18,457 +48,187 @@ class WeeklyStats(commands.Cog):
     def cog_unload(self):
         self.weekly_recap_loop.cancel()
 
-    # --- COMMANDS ---
+    @staticmethod
+    def _next_recap_time(now=None):
+        now = now or datetime.now(timezone.utc)
+        days = (7 - now.weekday()) % 7
+        result = (now + timedelta(days=days)).replace(hour=0, minute=0, second=0, microsecond=0)
+        return result + timedelta(days=7) if result <= now else result
 
-    @app_commands.command(name="weekly_leaderboard", description="🏆 Ringkasan keaktifan komunitas selama minggu ini.")
+    @app_commands.command(name="weekly_leaderboard", description="Aktivitas member dan server selama minggu UTC ini.")
     async def weekly_lb(self, interaction: discord.Interaction):
-        # 1. PRIORITAS UTAMA: Lapor ke Discord (ACK)
-        # Harus paling atas. Jangan ada logika lain sebelumnya.
         try:
             await interaction.response.defer(thinking=True)
-            # Log bahwa kita berhasil lapor
-            self.bot.logger.info("INTERACTION", f"ACK Success: {interaction.user.id}")
         except discord.InteractionResponded:
-            # Sudah di-ack duluan (jarang, tapi aman)
             pass
-        except Exception as e:
-            # Jika ACK gagal, bot tidak bisa lanjut. Log dan stop.
-            self.bot.logger.error("INTERACTION_FAIL", "Defer Gagal", error_obj=e)
+        except Exception as error:
+            self.bot.logger.error("INTERACTION_FAIL", "Gagal menyiapkan leaderboard mingguan", error_obj=error)
             return
-
-        # 2. BARU JALANKAN LOGIKA & BENCHMARK
-        start_time = time.time()
-        
-        guild = interaction.guild
-        current_week = self.db.get_current_week_key()
-        
-        # --- 1. AMBIL SUMMARY SERVER (Total minggu ini) ---
-        totals = await self.db.fetch_one("""
-            SELECT 
-                COALESCE(SUM(weekly_voice_mins),0) as total_voice,
-                COALESCE(SUM(weekly_chat_xp),0) as total_chat_xp,
-                COALESCE(SUM(weekly_xp),0) as total_xp
-            FROM weekly_stats 
-            WHERE guild_id = ? AND week_key = ?
-        """, (guild.id, current_week))
-        
-        # --- 2. AMBIL TOP 10 USER ---
-        # Sorting: Voice Mins -> Total XP -> User ID
-        top_users = await self.db.fetch_all("""
-            SELECT user_id, weekly_voice_mins, weekly_xp, weekly_chat_xp
-            FROM weekly_stats 
-            WHERE guild_id = ? AND week_key = ? 
-            ORDER BY weekly_voice_mins DESC, weekly_xp DESC, user_id ASC
-            LIMIT 10
-        """, (guild.id, current_week))
-
-        if not top_users:
-            try:
-                await interaction.followup.send("💤 Belum ada aktivitas minggu ini. Ayo ramaikan Voice & Chat!", ephemeral=True)
-            except:
-                pass
-            return 
-        
-        # --- [BARU] 2.5 AMBIL RANKING GLOBAL ---
-        global_rank, total_servers = await self.db.get_guild_weekly_rank(guild.id, current_week)
-
-        # --- 3. RENDER EMBED ---
-        # Header Summary
-        t_voice = totals['total_voice']
-        t_chat = totals['total_chat_xp']
-        t_xp = totals['total_xp']
-        
-        desc = f"**Statistik Server Minggu Ini:**\n🎙️ `{t_voice:,}m`   💬 `{t_chat:,} XP`   ✨ `{t_xp:,} XP`\n\n"
-        desc += "**🏆 Top 10 Contributors:**\n"
-        
+        started_at, guild = time.time(), interaction.guild
+        if guild is None:
+            await send_interaction_error(interaction, "Perintah ini hanya dapat digunakan di dalam server.")
+            return
+        week = self.db.get_current_week_key()
+        totals = await self.db.fetch_one("""SELECT COALESCE(SUM(weekly_voice_mins),0) AS voice, COALESCE(SUM(weekly_chat_xp),0) AS chat, COALESCE(SUM(weekly_xp),0) AS xp FROM weekly_stats WHERE guild_id = ? AND week_key = ?""", (guild.id, week))
+        rows = await self.db.fetch_all("""SELECT user_id, weekly_voice_mins, weekly_xp, weekly_chat_xp FROM weekly_stats WHERE guild_id = ? AND week_key = ? ORDER BY weekly_voice_mins DESC, weekly_xp DESC, user_id ASC LIMIT 10""", (guild.id, week))
+        if not rows:
+            await send_interaction_message(interaction, content="Belum ada aktivitas minggu ini. Coba lagi setelah member aktif di voice atau chat.")
+            return
+        rank, servers = await self.db.get_guild_weekly_rank(guild.id, week)
         medals = ["🥇", "🥈", "🥉"]
-        
-        for i, row in enumerate(top_users):
-            user_id = row['user_id']
-            mins = row['weekly_voice_mins']
-            chat_xp = row['weekly_chat_xp']
-            total_xp = row['weekly_xp']
-            
-            # Fetch user (handle user left)
-            member = guild.get_member(user_id)
-            name = f"**{member.display_name}**" if member else f"*User-{user_id}*"
-            
-            # Tentukan Icon Rank
-            rank_icon = medals[i] if i < 3 else f"`#{i+1}`"
-            
-            # Baris 1: Rank & Nama
-            desc += f"{rank_icon} {name}\n"
-            # Baris 2: Detail Stats (Indented)
-            desc += f"└─ 🎙️ `{mins}m`  💬 `{chat_xp} XP`  ✨ `{total_xp} XP`\n"
-
-
-        # ... (kode loop top users tetap sama) ...
-        
-        # --- [BARU] Bagian 4: Global Context ---
-        # Hanya tampilkan jika server masuk ranking (rank > 0)
-        if global_rank > 0:
-            desc += "\n───────────────\n" # Separator halus
-            desc += "**🌍 Global Context (Anonim)**\n"
-            desc += f"• Peringkat server kamu: **#{global_rank}** dari {total_servers} server aktif\n"
-            desc += f"• Total voice minggu ini: `{t_voice:,} menit`\n"
-            
-            # --- [BARU] Bagian 5: CTA Halus ---
-            desc += "\n🔍 *Lihat ranking global lengkap dengan /global leaderboard*"
-
-
-        embed = discord.Embed(
-            title=f"📅 Weekly Leaderboard ({current_week})",
-            description=desc,
-            color=discord.Color.gold()
-        )
-        embed.set_footer(text="🌱 Perjalanan baru dimulai setiap Senin. Semua statistik disegarkan kembali.")
-        
-        # [DEBUG END] Matikan Stopwatch & Lapor
-        duration = time.time() - start_time
-        self.bot.logger.info("BENCHMARK", f"Weekly Leaderboard selesai dalam {duration:.4f} detik")
-
-        # Kirim hasil dengan Safety Guard
+        lines = [f"Voice: `{totals['voice']:,} menit` | Chat: `{totals['chat']:,} XP` | Total: `{totals['xp']:,} XP`", "", "**10 kontributor teratas**"]
+        for position, row in enumerate(rows, 1):
+            member = guild.get_member(row["user_id"])
+            name = member.display_name if member else f"User-{row['user_id']}"
+            prefix = medals[position - 1] if position <= 3 else f"#{position}"
+            lines.append(f"{prefix} **{name}** — {row['weekly_voice_mins']} menit voice, {row['weekly_chat_xp']} XP chat, {row['weekly_xp']} XP total")
+        if rank > 0:
+            lines += ["", f"Server ini berada di peringkat #{rank} dari {servers} server aktif.", "Gunakan `/global leaderboard` untuk melihat peringkat anonim lintas server."]
+        embed = discord.Embed(title=f"Leaderboard mingguan · {week}", description="\n".join(lines), color=discord.Color.gold())
+        embed.set_footer(text="Statistik mingguan dimulai kembali setiap Senin (UTC).")
+        self.bot.logger.info("BENCHMARK", f"Weekly Leaderboard selesai dalam {time.time() - started_at:.4f} detik")
         try:
             await interaction.followup.send(embed=embed)
-        except (discord.NotFound, discord.HTTPException) as e:
-            self.bot.logger.error("WEEKLY_CMD_FAIL", "Gagal kirim embed hasil", error_obj=e)
+        except (discord.NotFound, discord.HTTPException) as error:
+            self.bot.logger.error("WEEKLY_CMD_FAIL", "Gagal mengirim leaderboard mingguan", error_obj=error)
 
-    # --- ADMIN CONFIG ---
-    
-    weekly_group = app_commands.Group(name="weekly", description="Konfigurasi Recap Mingguan")
+    weekly_group = app_commands.Group(name="weekly", description="Atur pengiriman rekap aktivitas mingguan.")
+    global_group = app_commands.Group(name="global", description="Lihat statistik anonim lintas server.")
 
-    # --- GLOBAL LEADERBOARD (BARU) ---
-    
-    global_group = app_commands.Group(name="global", description="Statistik Global Lintas Server")
-
-    @global_group.command(name="leaderboard", description="🌏 Top 10 Server Paling Aktif (Anonim).")
+    @global_group.command(name="leaderboard", description="10 server anonim dengan voice terbanyak minggu ini.")
     async def global_lb(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        
-        current_week = self.db.get_current_week_key()
-        
-        # 1. Ambil data agregat per guild
-        query = """
-            SELECT guild_id, SUM(weekly_voice_mins) as total_voice
-            FROM weekly_stats 
-            WHERE week_key = ? 
-            GROUP BY guild_id 
-            HAVING total_voice > 0
-            ORDER BY total_voice DESC
-            LIMIT 10
-        """
-        rows = await self.db.fetch_all(query, (current_week,))
-        
+        week = self.db.get_current_week_key()
+        rows = await self.db.fetch_all("""SELECT guild_id, SUM(weekly_voice_mins) AS total_voice FROM weekly_stats WHERE week_key = ? GROUP BY guild_id HAVING total_voice > 0 ORDER BY total_voice DESC LIMIT 10""", (week,))
         if not rows:
-            return await interaction.followup.send("💤 Belum ada data global minggu ini.", ephemeral=True)
-            
-        # 2. Render Embed Anonim
-        desc = ""
-        medals = ["🥇", "🥈", "🥉"]
-        
-        for i, row in enumerate(rows):
-            # Cek apakah ini server tempat command dijalankan
-            is_current_guild = (row['guild_id'] == interaction.guild_id)
-            
-            # Formatting Nama: "Server Kamu" atau "Server #XYZ"
-            if is_current_guild:
-                name = f"**__Server Ini ({interaction.guild.name})__** 📍"
-            else:
-                # Samarkan nama server lain (Privacy First)
-                name = f"Server #{row['guild_id'] % 1000:03d}" 
-            
-            rank_icon = medals[i] if i < 3 else f"`#{i+1}`"
-            desc += f"{rank_icon} {name} — 🎙️ `{row['total_voice']:,} min`\n"
+            await interaction.followup.send("Belum ada data global minggu ini.", ephemeral=True)
+            return
+        medals, lines = ["🥇", "🥈", "🥉"], []
+        for position, row in enumerate(rows, 1):
+            name = f"**Server ini ({interaction.guild.name})**" if row["guild_id"] == interaction.guild_id else f"Server #{row['guild_id'] % 1000:03d}"
+            prefix = medals[position - 1] if position <= 3 else f"#{position}"
+            lines.append(f"{prefix} {name} — `{row['total_voice']:,} menit voice`")
+        embed = discord.Embed(title=f"Leaderboard global · {week}", description="10 server dengan voice terbanyak minggu ini:\n\n" + "\n".join(lines), color=discord.Color.blue())
+        embed.set_footer(text="Nama server selain server ini disamarkan.")
+        await interaction.followup.send(embed=embed)
 
-        embed = discord.Embed(
-            title=f"🌏 Global Leaderboard ({current_week})",
-            description=f"10 server dengan percakapan paling hidup minggu ini:\n\n{desc}",
-            color=discord.Color.blue()
-        )
-        embed.set_footer(text="Nama server lain disamarkan demi privasi.")
-        
-        await interaction.followup.send(embed=embed)    
-
-    @weekly_group.command(name="enable", description="Aktifkan Auto-Recap setiap minggu baru.")
+    @weekly_group.command(name="enable", description="Pilih channel dan aktifkan rekap mingguan.")
+    @app_commands.describe(channel="Channel tujuan rekap mingguan")
     @app_commands.checks.has_permissions(administrator=True)
     async def weekly_enable(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        current_week = self.db.get_current_week_key()
-        
-        await self.db.execute("""
-            INSERT INTO weekly_config (guild_id, recap_channel_id, is_enabled, last_posted_week_key) 
-            VALUES (?, ?, 1, ?)
-            ON CONFLICT(guild_id) DO UPDATE SET 
-                recap_channel_id = excluded.recap_channel_id,
-                is_enabled = 1,
-                last_posted_week_key = excluded.last_posted_week_key
-        """, (interaction.guild.id, channel.id, current_week))
-        
-        await interaction.response.send_message(f"✅ Auto-Recap Mingguan aktif! Hasil akan dikirim ke {channel.mention}.")
+        view = WeeklyConfigConfirmView(self, interaction.user.id, channel, enable=True)
+        await interaction.response.send_message(f"Aktifkan rekap mingguan ke {channel.mention}? Rekap dikirim setelah minggu UTC baru dimulai.", ephemeral=True, view=view)
+        view.message = await interaction.original_response()
 
-    @weekly_group.command(name="disable", description="Matikan Auto-Recap.")
+    @weekly_group.command(name="disable", description="Matikan pengiriman rekap; channel tetap tersimpan.")
     @app_commands.checks.has_permissions(administrator=True)
     async def weekly_disable(self, interaction: discord.Interaction):
-        await self.db.execute("UPDATE weekly_config SET is_enabled = 0 WHERE guild_id = ?", (interaction.guild.id,))
-        await interaction.response.send_message("❌ Auto-Recap dimatikan.")
-        
-    @weekly_group.command(name="status", description="🔍 Cek kesehatan dan konfigurasi sistem rekap mingguan.")
+        config = await self.db.get_weekly_config(interaction.guild_id)
+        if not config or not config["is_enabled"]:
+            await send_interaction_message(interaction, content="Rekap mingguan sudah tidak aktif.")
+            return
+        view = WeeklyConfigConfirmView(self, interaction.user.id, None, enable=False)
+        await interaction.response.send_message("Matikan rekap mingguan? Channel yang sudah dipilih akan tetap tersimpan.", ephemeral=True, view=view)
+        view.message = await interaction.original_response()
+
+    @weekly_group.command(name="status", description="Lihat konfigurasi, jadwal, dan kesehatan rekap mingguan.")
     @app_commands.checks.has_permissions(administrator=True)
     async def weekly_status(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        
-        guild = interaction.guild
-        current_week = self.db.get_current_week_key()
-        
-        # --- 1. AMBIL DATA CONFIG ---
-        config = await self.db.fetch_one(
-            "SELECT * FROM weekly_config WHERE guild_id = ?", 
-            (guild.id,)
-        )
-        
-        # --- 2. AMBIL DATA AKTIVITAS MINGGU INI ---
-        # Hitung total partisipan
-        stats_count_row = await self.db.fetch_one(
-            "SELECT COUNT(*) as cnt FROM weekly_stats WHERE guild_id = ? AND week_key = ?",
-            (guild.id, current_week)
-        )
-        participant_count = stats_count_row['cnt'] if stats_count_row else 0
-        
-        # Cari Top 1 sementara
-        top_user_row = await self.db.fetch_one("""
-            SELECT user_id, weekly_voice_mins, weekly_xp 
-            FROM weekly_stats 
-            WHERE guild_id = ? AND week_key = ? 
-            ORDER BY weekly_voice_mins DESC LIMIT 1
-        """, (guild.id, current_week))
-
-        # --- 3. ANALISIS KESEHATAN (DIAGNOSA) ---
-        status_emoji = "🔴"
-        status_text = "Belum Setup"
-        channel_info = "*(Belum diatur)*"
-        last_posted = "*(Belum pernah)*"
-        
-        # Logic Pewarnaan & Diagnosa
-        if config:
-            # Cek Channel
-            ch_id = config['recap_channel_id']
-            recap_channel = guild.get_channel(ch_id)
-            
-            if config['is_enabled']:
-                if recap_channel:
-                    status_emoji = "🟢"
-                    status_text = "AKTIF (Normal)"
-                    channel_info = recap_channel.mention
-                else:
-                    status_emoji = "⚠️"
-                    status_text = "ERROR (Channel Hilang)"
-                    channel_info = f"❌ Invalid ID: {ch_id}"
-            else:
-                status_emoji = "🔴"
-                status_text = "NON-AKTIF (Disabled)"
-                channel_info = f"<#{ch_id}> (Tapi fitur mati)"
-            
-            if config['last_posted_week_key']:
-                last_posted = config['last_posted_week_key']
-
-        # --- 4. RENDER EMBED ---
-        embed = discord.Embed(
-            title=f"{status_emoji} Panel Status Mingguan",
-            color=discord.Color.green() if status_text == "AKTIF (Normal)" else discord.Color.red()
-        )
-        
-        # Blok A: Konfigurasi Sistem
-        embed.add_field(name="⚙️ Konfigurasi", value=(
-            f"**Status:** {status_text}\n"
-            f"**Channel:** {channel_info}\n"
-            f"**Loop:** Cek tiap 30 menit"
-        ), inline=False)
-        
-        # Blok B: Informasi Waktu (Debug Key)
-        embed.add_field(name="📅 Waktu & Checkpoint", value=(
-            f"**Minggu Ini (Key):** `{current_week}`\n"
-            f"**Terakhir Recap:** `{last_posted}`\n"
-            f"⏰ Rekap dikirim otomatis saat minggu baru dimulai."
-        ), inline=False)
-        
-        # Blok C: Preview Aktivitas (Live Data)
-        if top_user_row:
-            top_member = guild.get_member(top_user_row['user_id'])
-            top_name = top_member.display_name if top_member else "Unknown User"
-            top_stats = f"{top_name} ({top_user_row['weekly_voice_mins']}m / {top_user_row['weekly_xp']}XP)"
+        guild, week = interaction.guild, self.db.get_current_week_key()
+        config = await self.db.get_weekly_config(guild.id)
+        activity = await self.db.fetch_one("""SELECT COUNT(*) AS participants, COALESCE(SUM(weekly_voice_mins),0) AS minutes FROM weekly_stats WHERE guild_id = ? AND week_key = ?""", (guild.id, week))
+        top_user = await self.db.fetch_one("""SELECT user_id, weekly_voice_mins, weekly_xp FROM weekly_stats WHERE guild_id = ? AND week_key = ? ORDER BY weekly_voice_mins DESC, weekly_xp DESC LIMIT 1""", (guild.id, week))
+        delivery = await self.db.fetch_one("""SELECT status, posted_at, last_error FROM weekly_recap_deliveries WHERE guild_id = ? ORDER BY COALESCE(posted_at, claimed_at) DESC LIMIT 1""", (guild.id,))
+        enabled = bool(config and config["is_enabled"])
+        channel = guild.get_channel(config["recap_channel_id"]) if config else None
+        if enabled and channel:
+            state, color, recovery, channel_text = "Aktif", discord.Color.green(), "Tidak ada tindakan yang diperlukan.", channel.mention
+        elif enabled:
+            state, color, recovery, channel_text = "Perlu perhatian", discord.Color.orange(), "Channel tidak tersedia. Jalankan `/weekly enable` dan pilih channel yang masih dapat diakses bot.", "Channel tersimpan sudah tidak tersedia"
         else:
-            top_stats = "*(Belum ada data)*"
+            state, color, recovery, channel_text = "Tidak aktif", discord.Color.light_grey(), "Jalankan `/weekly enable` untuk mulai mengirim rekap.", channel.mention if channel else "Belum ada channel yang tersedia"
+        if delivery and delivery["status"] == "posted" and delivery["posted_at"]:
+            last = discord.utils.format_dt(datetime.fromtimestamp(delivery["posted_at"], timezone.utc), style="R")
+        elif delivery and delivery["status"] == "failed":
+            last, recovery = "Pengiriman terakhir gagal", "Pengiriman terakhir gagal. Periksa channel lalu jalankan `/weekly enable` untuk memilih ulang channel."
+        elif delivery and delivery["status"] == "pending":
+            last, recovery = "Rekap sedang menunggu percobaan pengiriman", "Tunggu pengecekan rekap berikutnya. Jika tetap tidak terkirim, periksa channel lalu jalankan `/weekly enable`."
+        else:
+            last = "Belum ada rekap yang berhasil dikirim"
+        if top_user:
+            member = guild.get_member(top_user["user_id"])
+            name = member.display_name if member else f"User-{top_user['user_id']}"
+            preview = f"{activity['participants']} member, {activity['minutes']:,} menit voice. Teratas: {name}."
+        else:
+            preview = "Belum ada aktivitas minggu ini."
+        next_check = self.weekly_recap_loop.next_iteration
+        next_check_text = discord.utils.format_dt(next_check, style="R") if next_check else "menunggu loop dimulai"
+        embed = discord.Embed(title="Status rekap mingguan", color=color)
+        embed.add_field(name="Status", value=f"{state}\nChannel: {channel_text}", inline=False)
+        embed.add_field(name="Jadwal", value=f"Rekap berikutnya: {discord.utils.format_dt(self._next_recap_time(), style='R')}\nPengecekan berikutnya: {next_check_text}", inline=False)
+        embed.add_field(name="Pengiriman terakhir", value=last, inline=False)
+        embed.add_field(name="Aktivitas minggu ini", value=preview, inline=False)
+        embed.add_field(name="Jika perlu bantuan", value=recovery, inline=False)
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
-        embed.add_field(name="📊 Preview Minggu Ini", value=(
-            f"**Total Partisipan:** {participant_count} member\n"
-            f"**Top 1 Saat Ini:** {top_stats}"
-        ), inline=False)
-        
-        # Footer Tips
-        if status_text.startswith("ERROR"):
-            embed.set_footer(text="💡 Tips: Jalankan /weekly enable #channel lagi untuk perbaiki.")
-        elif status_text.startswith("Belum"):
-            embed.set_footer(text="💡 Tips: Jalankan /weekly enable #channel untuk mulai.")
-
-        await interaction.followup.send(embed=embed)
-
-    # --- AUTO RECAP TASK (The Killer Feature) ---
-    
-    
-    @tasks.loop(minutes=30) 
+    @tasks.loop(minutes=30)
     async def weekly_recap_loop(self):
-        # Guard: Bot belum siap
         if not self.bot.is_ready(): return
-
         try:
-            current_week = self.db.get_current_week_key()
-            configs = await self.db.fetch_all("SELECT * FROM weekly_config WHERE is_enabled = 1")
-            
-            for conf in configs:
-                # ISOLASI ERROR PER GUILD (Saran Senior Fix #1)
-                try:
-                    # Kita lempar logika berat ke fungsi baru (lihat FIX 3)
-                    await self._process_single_guild_recap(conf, current_week)
-                    
-                except Exception as e:
-                    # Jika Guild A error, Guild B TETAP JALAN
-                    self.bot.logger.error(
-                        "WEEKLY_GUILD_FAIL", 
-                        f"Gagal rekap untuk guild {conf['guild_id']}", 
-                        error_obj=e
-                    )
-                    
-        except Exception as e:
-            # Catch-all level teratas
-            self.bot.logger.error("WEEKLY_FATAL", "Error di loop utama", error_obj=e)
+            for config in await self.db.fetch_all("SELECT * FROM weekly_config WHERE is_enabled = 1"):
+                try: await self._process_single_guild_recap(config, self.db.get_current_week_key())
+                except Exception as error: self.bot.logger.error("WEEKLY_GUILD_FAIL", f"Gagal rekap untuk guild {config['guild_id']}", error_obj=error)
+        except Exception as error:
+            self.bot.logger.error("WEEKLY_FATAL", "Error di loop utama", error_obj=error)
 
-    
-    # METHOD BARU: Logika Spesifik per Guild
-    async def _process_single_guild_recap(self, conf, current_week):
-        guild_id = conf['guild_id']
-        
-        # 1. Cek Guild & Claim (Urutan Fix Sebelumnya)
-        guild = self.bot.get_guild(guild_id)
-        if not guild: return 
-
-        if not await self.db.claim_weekly_recap(guild_id, current_week):
-            return 
-
-        channel = guild.get_channel(conf['recap_channel_id'])
+    async def _process_single_guild_recap(self, config, current_week):
+        guild_id, guild = config["guild_id"], self.bot.get_guild(config["guild_id"])
+        if not guild or not await self.db.claim_weekly_recap(guild_id, current_week): return
+        channel = guild.get_channel(config["recap_channel_id"])
         if not channel:
-            # Auto-disable jika channel hilang
             await self.db.execute("UPDATE weekly_config SET is_enabled = 0 WHERE guild_id = ?", (guild_id,))
             await self.db.finish_weekly_recap(guild_id, current_week, "failed", "recap channel unavailable")
             return
-
-        # 2. Persiapan Data Minggu Lalu
-        prev_date = datetime.now(timezone.utc) - timedelta(days=7)
-        prev_week_key = self.db.get_week_key_for_date(prev_date)
-        
-        prev_data = await self.db.fetch_all("""
-            SELECT user_id, weekly_voice_mins, weekly_xp 
-            FROM weekly_stats 
-            WHERE guild_id = ? AND week_key = ?
-            ORDER BY weekly_voice_mins DESC
-            LIMIT 10
-        """, (guild_id, prev_week_key))
-
-        # Jika tidak ada data minggu lalu, stop
-        if not prev_data:
+        previous_week = self.db.get_week_key_for_date(datetime.now(timezone.utc) - timedelta(days=7))
+        rows = await self.db.fetch_all("""SELECT user_id, weekly_voice_mins, weekly_xp FROM weekly_stats WHERE guild_id = ? AND week_key = ? ORDER BY weekly_voice_mins DESC LIMIT 10""", (guild_id, previous_week))
+        if not rows:
             await self.db.finish_weekly_recap(guild_id, current_week, "empty")
             return
-
-        # 3. FIX VARIABEL SCOPE & LOGIKA (Saran Senior)
-        desc = ""
-        top_3_emojis = ["🥇", "🥈", "🥉"] # Definisi DI AWAL
-        common_path_cache = {}
-
-        # 4. Loop Data Member
-        for i, row in enumerate(prev_data):
-            user_id = row['user_id']
-            m = guild.get_member(user_id)
-            
-            # Fallback nama yang aman
-            name = m.display_name if m else f"User-{user_id}"
-            
-            # Logic Prefix Rank
-            rank_prefix = top_3_emojis[i] if i < 3 else f"**#{i+1}**"
-            desc += f"{rank_prefix} **{name}** — 🎙️ `{row['weekly_voice_mins']}m` ✨ `{row['weekly_xp']}XP`\n"
-
-            # Logic Badge (Voice Order)
-            if row['weekly_voice_mins'] > 60:
-                await self.db.unlock_badge(user_id, guild_id, "badge_voice_order")
-
-            # Logic Badge (Common Path) - FIX DB NONE TYPE
-            if user_id not in common_path_cache:
-                query_common = """
-                    SELECT COUNT(DISTINCT week_key) as weeks_count
-                    FROM weekly_stats 
-                    WHERE user_id = ? AND guild_id = ? AND weekly_voice_mins >= 60
-                """
-                res_common = await self.db.fetch_one(query_common, (user_id, guild_id))
-                
-                # [FIX] Handle jika fetch_one return None
-                weeks_active = res_common['weeks_count'] if res_common else 0
-                common_path_cache[user_id] = weeks_active
-            
-            if common_path_cache[user_id] >= 4:
-                if await self.db.unlock_badge(user_id, guild_id, "badge_common_path"):
-                    await self.db.unlock_title(user_id, guild_id, "title_fellow_path")
-
-        # 5. Global Context
-        g_rank, g_total = await self.db.get_guild_weekly_rank(guild_id, prev_week_key)
-        
-        header_desc = ""
-        if g_rank > 0:
-            total_voice = sum(r['weekly_voice_mins'] for r in prev_data)
-            header_desc += "**🌍 Global Context**\n"
-            header_desc += f"• Peringkat server: **#{g_rank}** dari {g_total}\n"
-            header_desc += f"• Total voice (Top 10): `{total_voice:,} menit`\n"
-            header_desc += "───────────────\n\n"
-
-        # Gabungkan Header + List User
-        final_desc = header_desc + desc
-
-        # 6. Kirim Embed (FIX NETWORK CALL)
-        embed = discord.Embed(
-            title=f"📅 REKAP MINGGUAN ({prev_week_key})",
-            description=f"Inilah pahlawan keaktifan minggu lalu!\n\n{final_desc}",
-            color=discord.Color.fuchsia()
-        )
-        embed.set_footer(text="Statistik telah di-reset. Gas lagi!")
-
+        medals, lines, cache = ["🥇", "🥈", "🥉"], [], {}
+        for position, row in enumerate(rows, 1):
+            member = guild.get_member(row["user_id"]); name = member.display_name if member else f"User-{row['user_id']}"
+            prefix = medals[position - 1] if position <= 3 else f"#{position}"
+            lines.append(f"{prefix} **{name}** — {row['weekly_voice_mins']} menit voice, {row['weekly_xp']} XP")
+            if row["weekly_voice_mins"] > 60: await self.db.unlock_badge(row["user_id"], guild_id, "badge_voice_order")
+            if row["user_id"] not in cache:
+                result = await self.db.fetch_one("""SELECT COUNT(DISTINCT week_key) AS weeks_count FROM weekly_stats WHERE user_id = ? AND guild_id = ? AND weekly_voice_mins >= 60""", (row["user_id"], guild_id))
+                cache[row["user_id"]] = result["weeks_count"] if result else 0
+            if cache[row["user_id"]] >= 4 and await self.db.unlock_badge(row["user_id"], guild_id, "badge_common_path"):
+                await self.db.unlock_title(row["user_id"], guild_id, "title_fellow_path")
+        rank, total = await self.db.get_guild_weekly_rank(guild_id, previous_week)
+        if rank > 0: lines += ["", f"Peringkat server: #{rank} dari {total} server aktif."]
+        embed = discord.Embed(title=f"Rekap mingguan · {previous_week}", description="Aktivitas terbaik minggu lalu:\n\n" + "\n".join(lines), color=discord.Color.fuchsia())
+        embed.set_footer(text="Aktivitas untuk minggu baru sudah mulai dihitung.")
         try:
-            await channel.send(embed=embed)
-            # At-least-once: a process loss after Discord accepts the send but before
-            # this state update can cause a retry after the pending lease expires.
-            await self.db.finish_weekly_recap(guild_id, current_week, "posted")
-        except Exception as e:
-            self.bot.logger.error("WEEKLY_SEND_FAIL", f"Gagal kirim ke {channel.id}", error_obj=e)
-            await self.db.finish_weekly_recap(guild_id, current_week, "failed", str(e))
+            await channel.send(embed=embed); await self.db.finish_weekly_recap(guild_id, current_week, "posted")
+        except Exception as error:
+            self.bot.logger.error("WEEKLY_SEND_FAIL", f"Gagal mengirim rekap ke {channel.id}", error_obj=error)
+            await self.db.finish_weekly_recap(guild_id, current_week, "failed", str(error))
 
-    # [FIX SENIOR 3] Tambahkan Error Handler Khusus Loop
-    # GANTI method ini sepenuhnya
     @weekly_recap_loop.error
     async def weekly_recap_error(self, error):
-        if self.bot.is_shutting_down:
-            return
-        
-        self.bot.logger.error("WEEKLY_LOOP_CRASH", "Loop mati", error_obj=error)
-
+        if self.bot.is_shutting_down: return
+        self.bot.logger.error("WEEKLY_LOOP_CRASH", "Loop rekap mingguan berhenti", error_obj=error)
         await asyncio.sleep(10)
-
-        if self.bot.is_closed():
-            return
-
-        if not self.weekly_recap_loop.is_running():
-            try:
-                self.weekly_recap_loop.start()
-            except RuntimeError as e:
-                self.bot.logger.error("WEEKLY_RESTART_FAIL", "Gagal restart loop", error_obj=e)
+        if not self.bot.is_closed() and not self.weekly_recap_loop.is_running():
+            try: self.weekly_recap_loop.start()
+            except RuntimeError as restart_error: self.bot.logger.error("WEEKLY_RESTART_FAIL", "Gagal menjalankan kembali loop rekap", error_obj=restart_error)
 
     @weekly_recap_loop.before_loop
     async def before_recap(self):
         await self.bot.wait_until_ready()
+
 
 async def setup(bot):
     await bot.add_cog(WeeklyStats(bot, bot.db))
