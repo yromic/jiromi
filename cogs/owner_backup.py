@@ -84,11 +84,16 @@ class OwnerBackup(commands.GroupCog, name="owner"):
             
         except Exception as e:
             print(f"❌ CRITICAL BACKUP ERROR: {e}")
-            if os.path.exists(temp_db_name): os.remove(temp_db_name)
             if os.path.exists(zip_name): os.remove(zip_name)
             
             # Return 2 value (None, ErrorMsg)
             return None, str(e)
+        finally:
+            if os.path.exists(temp_db_name):
+                try:
+                    os.remove(temp_db_name)
+                except OSError as cleanup_error:
+                    self.bot.logger.error("BACKUP_CLEANUP_FAIL", "Gagal menghapus database sementara", error_obj=cleanup_error)
 
     @app_commands.command(name="backup_set", description="Set channel tujuan untuk pengiriman backup.")
     @app_commands.describe(channel="Channel private khusus backup")
@@ -137,10 +142,11 @@ class OwnerBackup(commands.GroupCog, name="owner"):
             embed.add_field(name="Size", value=f"{meta['size_kb']} KB", inline=True)
             embed.add_field(name="Data Scope", value=f"{meta['guilds']} Servers | {meta['users']} Users", inline=True)
             
-            file = discord.File(zip_path)
-            await channel.send(embed=embed, file=file)
-            
-            os.remove(zip_path)
+            try:
+                file = discord.File(zip_path)
+                await channel.send(embed=embed, file=file)
+            finally:
+                if os.path.exists(zip_path): os.remove(zip_path)
             await interaction.followup.send("[SUCCESS] Sukses.", ephemeral=True)
         else:
             await interaction.followup.send(f"[FAILED] Gagal: {meta}", ephemeral=True)
@@ -210,11 +216,11 @@ class OwnerBackup(commands.GroupCog, name="owner"):
                 embed.add_field(name="Size", value=f"{meta['size_kb']} KB", inline=True)
                 embed.add_field(name="Stats", value=f"{meta['guilds']} Guilds | {meta['users']} Users", inline=True)
 
-                file = discord.File(zip_path)
-                await channel.send(embed=embed, file=file)
-                
-                # Cleanup Zip (Temp DB sudah bersih dari dalam fungsi logic)
-                if os.path.exists(zip_path): os.remove(zip_path)
+                try:
+                    file = discord.File(zip_path)
+                    await channel.send(embed=embed, file=file)
+                finally:
+                    if os.path.exists(zip_path): os.remove(zip_path)
             
             else:
                 # Error Handling (Meta berisi string error)

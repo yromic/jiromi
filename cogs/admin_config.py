@@ -22,7 +22,7 @@ class ResetConfirmView(ExecutorView):
         count = await self.db.reset_guild_xp(self.guild_id)
         
         embed = discord.Embed(
-            description=f"✅ **RESET BERHASIL.**\nXP dan Level dari {count} member telah dikembalikan ke 0.",
+            description=f"✅ **RESET BERHASIL.**\nXP dan Level dari {count} member telah dikembalikan ke 0. Total menit voice dan riwayat mingguan tetap tersimpan.",
             color=discord.Color.green()
         )
         await interaction.response.edit_message(content=None, embed=embed, view=None)
@@ -188,7 +188,8 @@ class AdminConfig(commands.GroupCog, name="xp"):
     @app_commands.checks.has_permissions(administrator=True)
     async def setup_config(self, interaction: discord.Interaction, 
                            channel_announcement: discord.TextChannel,
-                           voice_xp: int = 10, chat_xp: int = 5):
+                           voice_xp: app_commands.Range[int, 0, 2147483647] = 10,
+                           chat_xp: app_commands.Range[int, 0, 2147483647] = 5):
         await self.db.update_config(interaction.guild_id, channel_announcement.id, voice_xp, chat_xp)
         await interaction.response.send_message("⚙️ Konfigurasi server telah diperbarui!")
 
@@ -215,12 +216,18 @@ class AdminConfig(commands.GroupCog, name="xp"):
         guild = interaction.guild
         bot_member = guild.me
 
-        config = await self.db.get_guild_config(guild.id)
-        filters = await self.db.get_filters(guild.id)
-        rewards = await self.db.fetch_all(
-            "SELECT level_required, role_id FROM rewards WHERE guild_id = ?",
-            (guild.id,)
-        )
+        try:
+            config = await self.db.get_guild_config(guild.id)
+            filters = await self.db.get_filters(guild.id)
+            rewards = await self.db.fetch_all(
+                "SELECT level_required, role_id FROM rewards WHERE guild_id = ?",
+                (guild.id,)
+            )
+        except Exception as e:
+            self.bot.logger.error("XP_STATUS_DB_FAIL", "Tidak dapat membaca kesehatan konfigurasi XP", error_obj=e, guild_id=guild.id)
+            embed = discord.Embed(title="Status XP tidak sehat", description="Pembacaan database gagal. Periksa log `DB_READ_FAIL`.", color=discord.Color.red())
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
 
         safe = warning = missing = 0
         for row in rewards:
@@ -247,11 +254,22 @@ class AdminConfig(commands.GroupCog, name="xp"):
         chat_xp = config['chat_xp_val']
         voice_xp = config['voice_xp_val']
         xp_active = (chat_xp > 0 or voice_xp > 0)
+        leveling = self.bot.get_cog("Leveling")
+        loop_running = bool(leveling and leveling.voice_heartbeat.is_running())
+        heartbeat = self.bot.voice_health.get("last_heartbeat_at")
+        heartbeat_text = heartbeat or "Belum ada heartbeat"
+        heartbeat_age = None
+        if heartbeat:
+            from datetime import datetime, timezone
+            heartbeat_dt = datetime.fromisoformat(heartbeat)
+            heartbeat_age = (datetime.now(timezone.utc) - heartbeat_dt).total_seconds()
+            heartbeat_text = f"{int(heartbeat_age)} detik lalu"
+        voice_ok = loop_running and heartbeat_age is not None and heartbeat_age <= 180 and self.bot.voice_health.get("guild_error", 0) == 0
         mode = config['announcement_mode'].capitalize()
 
         embed = discord.Embed(
             title=" 🩺  Status Kesehatan Jiromi",
-            color=discord.Color.green() if xp_active else discord.Color.red()
+            color=discord.Color.green() if xp_active and voice_ok else discord.Color.red()
         )
 
         embed.add_field(name="XP System", value="✅ Aktif" if xp_active else "❌ Mati", inline=True)
@@ -261,6 +279,10 @@ class AdminConfig(commands.GroupCog, name="xp"):
         embed.add_field(name="💬 Chat Rate", value=f"`{chat_xp} XP` / pesan", inline=True)
         embed.add_field(name="🎙️ Voice Rate", value=f"`{voice_xp} XP` / menit", inline=True)
         embed.add_field(name="👥 Min Voice", value=f"`{config['min_members_voice']} orang`", inline=True)
+        embed.add_field(name="Runtime", value=f"Database: sehat\nLeveling cog: {'ada' if leveling else 'hilang'}\nVoice loop: {'aktif' if loop_running else 'mati'}\nHeartbeat: `{heartbeat_text}`\nCommitted: {self.bot.voice_health.get('committed_voice_events', 0)}", inline=False)
+        skip_counts = self.bot.voice_health
+        embed.add_field(name="Voice Skip Counters (interval)", value=(f"Min member {skip_counts['below_min_members']} | bot/self-deaf {skip_counts['self_deaf_or_bot']}\n"
+            f"Channel {skip_counts['channel_filter']} | role {skip_counts['role_filter']} | muted {skip_counts['muted_limit']} | member error {skip_counts['member_error']} | guild error {skip_counts['guild_error']}"), inline=False)
 
         embed.add_field(name="🎭 Role Whitelist (Khusus)", value=role_allow_str, inline=True)
         embed.add_field(name="🚫 Role Blacklist (Dilarang)", value=role_deny_str, inline=True)
@@ -275,8 +297,8 @@ class AdminConfig(commands.GroupCog, name="xp"):
         )
         embed.add_field(name="🎁 Reward Health", value=reward_stats, inline=False)
 
-        if not xp_active:
-            embed.set_footer(text="⚠️ XP non-aktif. Gunakan /setup atau /xp setup.")
+        if not xp_active or not voice_ok:
+            embed.set_footer(text="⚠️ XP tidak aktif atau runtime voice belum sehat. Periksa status dan konfigurasi XP.")
         elif warning > 0 or missing > 0:
             embed.set_footer(text="⚠️ Isu pada Reward. Cek /xp reward list.")
         else:
@@ -303,7 +325,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
         embed = discord.Embed(
             title="⚠️ PERINGATAN KERAS: ZONA BAHAYA",
             description=(
-                f"Kamu akan mereset **SEMUA DATA XP & LEVEL** di server **{interaction.guild.name}**.\n\n"
+                f"Kamu akan mereset **XP & LEVEL** di server **{interaction.guild.name}**. Total menit voice dan riwayat mingguan tetap tersimpan.\n\n"
                 "🔻 **Konsekuensi:**\n"
                 "1. Semua member akan kembali ke Level 0.\n"
                 "2. Semua XP chat & voice akan dihapus.\n"
@@ -331,7 +353,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
 
         if affected_rows > 0:
             await interaction.response.send_message(
-                f"✅ **Berhasil!** XP dan Level milik {member.mention} telah di-reset ke 0.",
+                f"✅ **Berhasil!** XP dan Level milik {member.mention} telah di-reset ke 0. Total menit voice dan riwayat mingguan tetap tersimpan.",
                 ephemeral=True
             )
         else:

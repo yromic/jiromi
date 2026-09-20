@@ -2,6 +2,7 @@
 import discord
 from discord.ext import commands, tasks
 import time
+from datetime import datetime, timezone
 from utils.badge_data import BADGE_ICONS, BADGE_META
 
 class Leveling(commands.Cog):
@@ -30,6 +31,7 @@ class Leveling(commands.Cog):
             return
 
         try:
+            guild_pass_failed = False
             for guild in self.bot.guilds:
                 # 2. Isolasi Error per Guild
                 # Kita bungkus proses tiap guild agar error di Server A 
@@ -37,6 +39,8 @@ class Leveling(commands.Cog):
                 try:
                     await self._process_guild_voice(guild)
                 except Exception as e:
+                    guild_pass_failed = True
+                    self.bot.voice_health["guild_error"] += 1
                     # Log error spesifik guild, tapi loop lanjut ke guild berikutnya
                     self.bot.logger.error(
                         "VOICE_GUILD_FAIL", 
@@ -44,7 +48,8 @@ class Leveling(commands.Cog):
                         error_obj=e,
                         guild_id=guild.id
                     )
-                    
+            if not guild_pass_failed:
+                self.bot.voice_health["last_heartbeat_at"] = datetime.now(timezone.utc).isoformat()
         except Exception as e:
             # 3. Catch-All Global
             # Jika error terjadi di level teratas (misal self.bot.guilds bermasalah)
@@ -73,23 +78,38 @@ class Leveling(commands.Cog):
             # [Safe Access] Kita gunakan list comprehension yang aman
             active_members = []
             for m in vc.members:
-                if m.bot: continue
+                if m.bot:
+                    self.bot.voice_health["self_deaf_or_bot"] += 1
+                    continue
                 
                 # [FIX SENIOR] Guard attribute access untuk mencegah crash
                 # Jika member disconnect tepat saat loop jalan, m.voice bisa None
-                if not m.voice: continue 
-                if m.voice.self_deaf: continue
+                if not m.voice:
+                    self.bot.voice_health["self_deaf_or_bot"] += 1
+                    continue
+                if m.voice.self_deaf:
+                    self.bot.voice_health["self_deaf_or_bot"] += 1
+                    continue
                 
                 active_members.append(m)
 
             if len(active_members) < config['min_members_voice']:
+                self.bot.voice_health["below_min_members"] += len(active_members)
                 continue
 
             # Proses XP per Member
             for member in active_members:
                 try:
                     # Cek eligibility (DB Call)
-                    if not await self.db.is_eligible(member, vc):
+                    filters = await self.db.get_filters(guild.id)
+                    if not await self.db.is_channel_allowed(guild.id, vc.id):
+                        self.bot.voice_health["channel_filter"] += 1
+                        continue
+                    role_blacklist = {f['target_id'] for f in filters if f['type'] == 'role' and f['category'] == 'exclude'}
+                    role_whitelist = {f['target_id'] for f in filters if f['type'] == 'role' and f['category'] == 'allow'}
+                    member_roles = {role.id for role in member.roles}
+                    if member_roles & role_blacklist or (role_whitelist and not member_roles & role_whitelist):
+                        self.bot.voice_health["role_filter"] += 1
                         continue
 
                     await self.process_voice_xp(member, config)
@@ -103,6 +123,7 @@ class Leveling(commands.Cog):
                         error_obj=e,
                         guild_id=guild.id
                     )
+                    self.bot.voice_health["member_error"] += 1
 
 
     async def process_voice_xp(self, member, config):
@@ -112,6 +133,7 @@ class Leveling(commands.Cog):
         if is_muted:
             self.mute_tracker[key] = self.mute_tracker.get(key, 0) + 1
             if self.mute_tracker[key] > 5:
+                self.bot.voice_health["muted_limit"] += 1
                 return
         else:
             self.mute_tracker[key] = 0
@@ -126,14 +148,9 @@ class Leveling(commands.Cog):
             config['voice_xp_val']
         )
         
-        # [HOOK] Update Weekly Stats
-        await self.db.update_weekly_stats(
-            guild_id=member.guild.id, 
-            user_id=member.id, 
-            xp_add=xp_gain, 
-            voice_mins_add=minutes,
-            chat_xp_add=0 
-        )
+        self.bot.stats_buffer['voice_xp_events'] += 1
+        self.bot.stats_buffer['voice_minutes'] += minutes
+        self.bot.voice_health['committed_voice_events'] += 1
 
         self.bot.loop.create_task(self._try_send_global_intro(member))
 
@@ -207,8 +224,6 @@ class Leveling(commands.Cog):
                 await self.db.unlock_title(member.id, member.guild.id, "title_the_steady")
                 await send_badge_notification("badge_steady_flame", extra="Mendapatkan Title: **[The Steady]**")
 
-        self.bot.stats_buffer['voice_xp_events'] += 1
-        self.bot.stats_buffer['voice_minutes'] += minutes
 
 
     
@@ -237,23 +252,14 @@ class Leveling(commands.Cog):
             message.guild.id,
             config['chat_xp_val']
         )
+        self.bot.stats_buffer['chat_xp_events'] += 1
         
-        # [HOOK] Update Weekly Stats
-        await self.db.update_weekly_stats(
-            guild_id=message.guild.id,
-            user_id=message.author.id,
-            xp_add=config['chat_xp_val'],
-            voice_mins_add=0, # Voice nol karena ini chat
-            chat_xp_add=config['chat_xp_val'] # [PENTING] Isi kolom chat
-        )
-
         self.bot.loop.create_task(self._try_send_global_intro(message.author))
 
         if result['new_level'] > result['old_level']:
             # [FIX] Pass old_level juga
             await self.handle_level_up(message.author, result['old_level'], result['new_level'])
             
-        self.bot.stats_buffer['chat_xp_events'] += 1
 
     # Di dalam cogs/leveling.py -> handle_level_up()
 

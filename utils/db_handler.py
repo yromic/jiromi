@@ -48,20 +48,39 @@ async def migrate_v4_global_users(conn):
         )
     """)
 
+async def migrate_v5_chat_events(conn):
+    async with conn.execute("PRAGMA table_info(users)") as cursor:
+        columns = {row[1] for row in await cursor.fetchall()}
+    if "total_chat_events" not in columns:
+        await conn.execute("ALTER TABLE users ADD COLUMN total_chat_events INTEGER NOT NULL DEFAULT 0")
+
+async def migrate_v6_weekly_recap_deliveries(conn):
+    await conn.execute("""CREATE TABLE IF NOT EXISTS weekly_recap_deliveries (
+        guild_id INTEGER NOT NULL, week_key TEXT NOT NULL, status TEXT NOT NULL,
+        claimed_at REAL, posted_at REAL, attempts INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT, PRIMARY KEY (guild_id, week_key)
+    )""")
+    await conn.execute("""INSERT OR IGNORE INTO weekly_recap_deliveries
+        (guild_id, week_key, status, posted_at, attempts)
+        SELECT guild_id, last_posted_week_key, 'posted', strftime('%s','now'), 1
+        FROM weekly_config WHERE last_posted_week_key IS NOT NULL AND last_posted_week_key != ''""")
+
 # Update Dictionary MIGRATIONS
 MIGRATIONS = {
     2: migrate_v2_weekly_chat_xp,
     3: migrate_v3_gamification,
-    4: migrate_v4_global_users # <--- Tambahkan ini
+    4: migrate_v4_global_users,
+    5: migrate_v5_chat_events,
+    6: migrate_v6_weekly_recap_deliveries,
 }
 
-async def init_db():
+async def init_db(logger=None):
     """Wrapper untuk inisialisasi database global (Thread-safe)."""
     global _db_instance
     # Pastikan hanya 1 proses yang bisa init dalam satu waktu
     async with _db_init_lock:
         if _db_instance is None:
-            _db_instance = DatabaseHandler()
+            _db_instance = DatabaseHandler(logger=logger)
             await _db_instance.connect()
     return _db_instance
 
@@ -73,13 +92,21 @@ async def close_db():
         _db_instance = None
 
 class DatabaseHandler:
-    def __init__(self, db_path="database/schema.db"):
+    def __init__(self, db_path="database/schema.db", logger=None):
         self.db_path = db_path
         self._conn = None  # Single Connection
         self._write_lock = asyncio.Lock()  # Serialize Writes
         self._config_cache = {} 
         self._filter_cache = {}
         self.TTL = 60
+        self.logger = logger
+
+    def _log_db_failure(self, level, event, query, exc):
+        safe_query = " ".join(str(query).split())[:500]
+        if self.logger:
+            self.logger.error(event, "Database operation failed", error_obj=exc, operation=safe_query)
+        else:
+            print(f"{event}: {exc} | {safe_query}")
 
     async def connect(self):
         """Membuka koneksi database persisten."""
@@ -245,135 +272,104 @@ class DatabaseHandler:
                 await self._conn.execute(query, vars)
                 await self._conn.commit()
         except Exception as e:
-            print(f"❌ DB WRITE ERROR: {e} | Query: {query}")
-            raise e
+            self._log_db_failure("ERROR", "DB_WRITE_FAIL", query, e)
+            raise
 
     async def fetch_one(self, query, vars=()):
-        """Execute READ query (TANPA Lock, mengandalkan WAL)."""
+        """Execute a read under the shared-connection lock."""
         if not self._conn: 
             await self.connect()
 
         try:
-            # Langsung execute tanpa nunggu antrean tulis
-            async with self._conn.execute(query, vars) as cursor:
-                return await cursor.fetchone()
+            async with self._write_lock:
+                async with self._conn.execute(query, vars) as cursor:
+                    return await cursor.fetchone()
         except Exception as e:
-            print(f"❌ DB READ ERROR: {e}")
-            return None
+            self._log_db_failure("ERROR", "DB_READ_FAIL", query, e)
+            raise
 
     async def fetch_all(self, query, vars=()):
-        """Execute READ ALL query (TANPA Lock)."""
+        """Execute a read under the shared-connection lock."""
         if not self._conn: 
             await self.connect()
 
         try:
-            # Langsung execute, biarkan SQLite WAL yang mengatur concurrency
-            async with self._conn.execute(query, vars) as cursor:
-                return await cursor.fetchall()
+            async with self._write_lock:
+                async with self._conn.execute(query, vars) as cursor:
+                    return await cursor.fetchall()
         except Exception as e:
-            print(f"❌ DB READ ALL ERROR: {e}")
-            return []
+            self._log_db_failure("ERROR", "DB_READ_FAIL", query, e)
+            raise
     # --- USER DATA & XP LOGIC ---
 
     async def get_user_data(self, user_id, guild_id):
         user = await self.fetch_one(
-            "SELECT xp, level, total_voice_mins, last_chat_ts FROM users WHERE user_id = ? AND guild_id = ?",
+            "SELECT xp, level, total_voice_mins, last_chat_ts, total_chat_events FROM users WHERE user_id = ? AND guild_id = ?",
             (user_id, guild_id)
         )
         if not user:
             # Jika user baru, buat row baru
-            await self.execute("INSERT INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
+            await self.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
             # Return dict default
-            return {"xp": 0, "level": 0, "total_voice_mins": 0, "last_chat_ts": 0}
+            user = await self.fetch_one("SELECT xp, level, total_voice_mins, last_chat_ts, total_chat_events FROM users WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
+            return dict(user)
         
         # [FIX 3] Konversi aiosqlite.Row menjadi standard Dict agar konsisten
         return dict(user)
 
     async def add_voice_time(self, user_id, guild_id, minutes, xp_per_min):
         total_xp_gain = minutes * xp_per_min
-        
         async with self._write_lock:
-            # 1. Atomic Update XP & Voice Mins
-            await self._conn.execute(
-                """
-                UPDATE users 
-                SET xp = xp + ?, total_voice_mins = total_voice_mins + ? 
-                WHERE user_id = ? AND guild_id = ?
-                """,
-                (total_xp_gain, minutes, user_id, guild_id)
-            )
-            await self._conn.commit()
-
-            # 2. Ambil data terbaru
-            cursor = await self._conn.execute(
-                "SELECT xp, level FROM users WHERE user_id = ? AND guild_id = ?",
-                (user_id, guild_id)
-            )
-            row = await cursor.fetchone()
-            
-            # Handle user baru jika belum ada record
-            if not row:
-                 # Logic insert user baru bisa ditaruh di sini atau di event listener
-                 return {"old_level": 0, "new_level": 0}
-
-            current_xp = row['xp']
-            old_level = row['level']
-
-            from utils.math_utils import calculate_level
-            new_level = calculate_level(current_xp)
-
-            if new_level > old_level:
-                await self._conn.execute(
-                    "UPDATE users SET level = ? WHERE user_id = ? AND guild_id = ?",
-                    (new_level, user_id, guild_id)
-                )
+            await self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                await self._ensure_user_tx(user_id, guild_id)
+                cursor = await self._conn.execute("SELECT xp, level FROM users WHERE user_id=? AND guild_id=?", (user_id, guild_id))
+                row = await cursor.fetchone()
+                old_level = row["level"]
+                current_xp = row["xp"] + total_xp_gain
+                from utils.math_utils import calculate_level
+                new_level = calculate_level(current_xp)
+                await self._conn.execute("UPDATE users SET xp=?, level=?, total_voice_mins=total_voice_mins+? WHERE user_id=? AND guild_id=?", (current_xp, new_level, minutes, user_id, guild_id))
+                await self._upsert_weekly_stats_tx(guild_id, user_id, total_xp_gain, minutes, 0)
                 await self._conn.commit()
-
-            return {"old_level": old_level, "new_level": new_level}
+                return {"old_level": old_level, "new_level": new_level}
+            except Exception as e:
+                await self._conn.rollback()
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "add_voice_time transaction", e)
+                raise
 
     async def add_chat_xp(self, user_id, guild_id, xp_amount):
-        # Gunakan Lock Write karena kita melakukan transaksi (Read+Write sekaligus)
         async with self._write_lock:
-            # 1. Atomic Update: Biarkan SQL yang nambah, jangan Python
-            # Kita update XP dan timestamp sekaligus
-            await self._conn.execute(
-                """
-                UPDATE users 
-                SET xp = xp + ?, last_chat_ts = ? 
-                WHERE user_id = ? AND guild_id = ?
-                """,
-                (xp_amount, time.time(), user_id, guild_id)
-            )
-            await self._conn.commit()
-
-            # 2. Ambil data terbaru setelah update untuk cek level up
-            cursor = await self._conn.execute(
-                "SELECT xp, level FROM users WHERE user_id = ? AND guild_id = ?",
-                (user_id, guild_id)
-            )
-            row = await cursor.fetchone()
-            
-            if not row:
-                # Edge case: User belum ada di DB (jarang terjadi karena ada check eligible)
-                # Insert manual jika perlu, atau return
-                return {"old_level": 0, "new_level": 0}
-
-            current_xp = row['xp']
-            old_level = row['level']
-
-            # 3. Hitung Level Baru
-            from utils.math_utils import calculate_level
-            new_level = calculate_level(current_xp)
-
-            # 4. Jika Level Naik, Update Level
-            if new_level > old_level:
-                await self._conn.execute(
-                    "UPDATE users SET level = ? WHERE user_id = ? AND guild_id = ?",
-                    (new_level, user_id, guild_id)
-                )
+            await self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                await self._ensure_user_tx(user_id, guild_id)
+                cursor = await self._conn.execute("SELECT xp, level FROM users WHERE user_id=? AND guild_id=?", (user_id, guild_id))
+                row = await cursor.fetchone()
+                old_level = row["level"]
+                current_xp = row["xp"] + xp_amount
+                from utils.math_utils import calculate_level
+                new_level = calculate_level(current_xp)
+                now = time.time()
+                await self._conn.execute("UPDATE users SET xp=?, level=?, last_chat_ts=?, total_chat_events=total_chat_events+1 WHERE user_id=? AND guild_id=?", (current_xp, new_level, now, user_id, guild_id))
+                await self._upsert_weekly_stats_tx(guild_id, user_id, xp_amount, 0, xp_amount)
                 await self._conn.commit()
-            
-            return {"old_level": old_level, "new_level": new_level}
+                return {"old_level": old_level, "new_level": new_level}
+            except Exception as e:
+                await self._conn.rollback()
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "add_chat_xp transaction", e)
+                raise
+
+    async def _ensure_user_tx(self, user_id, guild_id):
+        await self._conn.execute("INSERT OR IGNORE INTO users (user_id, guild_id) VALUES (?, ?)", (user_id, guild_id))
+
+    async def _upsert_weekly_stats_tx(self, guild_id, user_id, xp_add, voice_mins_add, chat_xp_add):
+        await self._conn.execute("""INSERT INTO weekly_stats
+            (guild_id,user_id,week_key,weekly_xp,weekly_voice_mins,weekly_chat_xp,updated_at)
+            VALUES (?,?,?,?,?,?,?) ON CONFLICT(guild_id,user_id,week_key) DO UPDATE SET
+            weekly_xp=weekly_xp+excluded.weekly_xp,
+            weekly_voice_mins=weekly_voice_mins+excluded.weekly_voice_mins,
+            weekly_chat_xp=weekly_chat_xp+excluded.weekly_chat_xp,
+            updated_at=excluded.updated_at""", (guild_id,user_id,self.get_current_week_key(),xp_add,voice_mins_add,chat_xp_add,time.time()))
 
     # --- FILTERS & CONFIG LOGIC ---
 
@@ -402,6 +398,9 @@ class DatabaseHandler:
         return config
 
     async def update_config(self, guild_id, announce_id, voice_xp, chat_xp):
+        if voice_xp < 0 or chat_xp < 0:
+            raise ValueError("XP rates must be nonnegative")
+        await self.execute("INSERT OR IGNORE INTO guild_config (guild_id) VALUES (?)", (guild_id,))
         await self.execute(
             """UPDATE guild_config SET announce_channel_id = ?, voice_xp_val = ?, chat_xp_val = ? 
                WHERE guild_id = ?""",
@@ -586,29 +585,31 @@ class DatabaseHandler:
         Mengubah XP user secara langsung.
         param xp_value: Nilai XP yang akan ditambahkan (mode='add') atau nilai akhir (mode='set').
         """
-        user = await self.get_user_data(user_id, guild_id)
-        current_xp = user['xp']
-        
-        if mode == "add":
-            new_xp = current_xp + xp_value
-        else: # mode "set"
-            new_xp = xp_value
-        
-        if new_xp < 0: 
-            new_xp = 0
-
-        from utils.math_utils import calculate_level
-        new_level = calculate_level(new_xp)
-
-        await self.execute(
-            "UPDATE users SET xp = ?, level = ? WHERE user_id = ? AND guild_id = ?",
-            (new_xp, new_level, user_id, guild_id)
-        )
-        
-        return user['level'], new_level, new_xp
+        if mode not in ("add", "set"):
+            raise ValueError("mode must be 'add' or 'set'")
+        async with self._write_lock:
+            await self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                await self._ensure_user_tx(user_id, guild_id)
+                cursor = await self._conn.execute("SELECT xp, level FROM users WHERE user_id=? AND guild_id=?", (user_id, guild_id))
+                user = await cursor.fetchone()
+                old_level = user["level"]
+                new_xp = max(0, user["xp"] + xp_value if mode == "add" else xp_value)
+                from utils.math_utils import calculate_level
+                new_level = calculate_level(new_xp)
+                await self._conn.execute("UPDATE users SET xp=?, level=? WHERE user_id=? AND guild_id=?", (new_xp,new_level,user_id,guild_id))
+                await self._conn.commit()
+                return old_level, new_level, new_xp
+            except Exception as e:
+                await self._conn.rollback()
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "update_user_xp_direct transaction", e)
+                raise
     
     async def update_min_members_voice(self, guild_id, value):
         """Update jumlah minimal member untuk validasi Voice XP."""
+        if not isinstance(value, int) or value < 1:
+            raise ValueError("min_members_voice must be a positive integer")
+        await self.execute("INSERT OR IGNORE INTO guild_config (guild_id) VALUES (?)", (guild_id,))
         await self.execute(
             "UPDATE guild_config SET min_members_voice = ? WHERE guild_id = ?",
             (value, guild_id)
@@ -616,20 +617,15 @@ class DatabaseHandler:
         self._invalidate_config_cache(guild_id)
         
     async def update_weekly_stats(self, guild_id, user_id, xp_add=0, voice_mins_add=0, chat_xp_add=0):
-        week_key = self.get_current_week_key()
-        now_ts = time.time()
-        
-        # SQL Upsert dengan kolom weekly_chat_xp
-        await self.execute("""
-            INSERT INTO weekly_stats (guild_id, user_id, week_key, weekly_xp, weekly_voice_mins, weekly_chat_xp, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(guild_id, user_id, week_key) 
-            DO UPDATE SET 
-                weekly_xp = weekly_xp + excluded.weekly_xp,
-                weekly_voice_mins = weekly_voice_mins + excluded.weekly_voice_mins,
-                weekly_chat_xp = weekly_chat_xp + excluded.weekly_chat_xp,
-                updated_at = excluded.updated_at
-        """, (guild_id, user_id, week_key, xp_add, voice_mins_add, chat_xp_add, now_ts))
+        async with self._write_lock:
+            await self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                await self._upsert_weekly_stats_tx(guild_id, user_id, xp_add, voice_mins_add, chat_xp_add)
+                await self._conn.commit()
+            except Exception as e:
+                await self._conn.rollback()
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "update_weekly_stats transaction", e)
+                raise
         
     async def get_weekly_leaderboard(self, guild_id, metric="weekly_voice_mins", limit=10):
         week_key = self.get_current_week_key()
@@ -859,26 +855,44 @@ class DatabaseHandler:
             (user_id, guild_id)
         )
 
-    async def claim_weekly_recap(self, guild_id, current_week):
+    async def claim_weekly_recap(self, guild_id, current_week, now_ts=None, lease_seconds=3600):
         """
         Mencoba 'mengklaim' jatah posting minggu ini secara atomik.
         Return: True jika berhasil klaim (belum diposting), False jika sudah.
         """
-        # Gunakan lock write karena ini operasi UPDATE
+        now_ts = now_ts or time.time()
         async with self._write_lock:
-            # Logic SQL: Update HANYA JIKA minggu di DB beda dengan minggu sekarang
-            query = """
-                UPDATE weekly_config
-                SET last_posted_week_key = ?
-                WHERE guild_id = ? 
-                AND (last_posted_week_key IS NULL OR last_posted_week_key != ?)
-            """
-            cursor = await self._conn.execute(query, (current_week, guild_id, current_week))
-            await self._conn.commit()
-            
-            # Jika rowcount = 1, artinya update berhasil (kita yang menang)
-            # Jika rowcount = 0, artinya kondisi WHERE tidak terpenuhi (sudah diposting orang lain/loop sebelumnya)
-            return cursor.rowcount == 1
+            await self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                cursor = await self._conn.execute("""INSERT INTO weekly_recap_deliveries
+                    (guild_id,week_key,status,claimed_at,attempts) VALUES (?,?,'pending',?,1)
+                    ON CONFLICT(guild_id,week_key) DO UPDATE SET status='pending', claimed_at=excluded.claimed_at,
+                    attempts=weekly_recap_deliveries.attempts+1,last_error=NULL
+                    WHERE weekly_recap_deliveries.status IN ('failed','pending')
+                    AND (weekly_recap_deliveries.status='failed' OR weekly_recap_deliveries.claimed_at <= ?)""",
+                    (guild_id,current_week,now_ts,now_ts-lease_seconds))
+                await self._conn.commit()
+                return cursor.rowcount == 1
+            except Exception as e:
+                await self._conn.rollback()
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "claim_weekly_recap transaction", e)
+                raise
+
+    async def finish_weekly_recap(self, guild_id, week_key, status, error=None):
+        if status not in ("posted", "empty", "failed"):
+            raise ValueError("invalid weekly recap status")
+        now = time.time()
+        async with self._write_lock:
+            await self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                await self._conn.execute("UPDATE weekly_recap_deliveries SET status=?, posted_at=?, last_error=? WHERE guild_id=? AND week_key=?", (status, now if status == "posted" else None, str(error)[:500] if error else None, guild_id, week_key))
+                if status == "posted":
+                    await self._conn.execute("UPDATE weekly_config SET last_posted_week_key=? WHERE guild_id=?", (week_key,guild_id))
+                await self._conn.commit()
+            except Exception as e:
+                await self._conn.rollback()
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "finish_weekly_recap transaction", e)
+                raise
         
     async def _run_migrations(self):
         """Menjalankan migrasi database secara aman & atomic."""

@@ -357,6 +357,7 @@ class WeeklyStats(commands.Cog):
         if not channel:
             # Auto-disable jika channel hilang
             await self.db.execute("UPDATE weekly_config SET is_enabled = 0 WHERE guild_id = ?", (guild_id,))
+            await self.db.finish_weekly_recap(guild_id, current_week, "failed", "recap channel unavailable")
             return
 
         # 2. Persiapan Data Minggu Lalu
@@ -372,7 +373,9 @@ class WeeklyStats(commands.Cog):
         """, (guild_id, prev_week_key))
 
         # Jika tidak ada data minggu lalu, stop
-        if not prev_data: return
+        if not prev_data:
+            await self.db.finish_weekly_recap(guild_id, current_week, "empty")
+            return
 
         # 3. FIX VARIABEL SCOPE & LOGIKA (Saran Senior)
         desc = ""
@@ -436,9 +439,12 @@ class WeeklyStats(commands.Cog):
 
         try:
             await channel.send(embed=embed)
-
-        except (discord.Forbidden, discord.HTTPException, discord.NotFound, asyncio.TimeoutError) as e:
+            # At-least-once: a process loss after Discord accepts the send but before
+            # this state update can cause a retry after the pending lease expires.
+            await self.db.finish_weekly_recap(guild_id, current_week, "posted")
+        except Exception as e:
             self.bot.logger.error("WEEKLY_SEND_FAIL", f"Gagal kirim ke {channel.id}", error_obj=e)
+            await self.db.finish_weekly_recap(guild_id, current_week, "failed", str(e))
 
     # [FIX SENIOR 3] Tambahkan Error Handler Khusus Loop
     # GANTI method ini sepenuhnya

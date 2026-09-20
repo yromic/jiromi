@@ -163,14 +163,14 @@ class Profile(commands.Cog):
         elif v_mins < 600: voice_desc = "Aktif bersuara"
         else: voice_desc = "Suara familiar komunitas"
         
-        chat_count = user_data['xp'] // 5 
+        chat_count = user_data.get('total_chat_events', 0)
         if chat_count < 50: chat_desc = "Menyapa sesekali"
         elif chat_count < 500: chat_desc = "Aktif berdiskusi"
         else: chat_desc = "Aktif merangkai percakapan"
 
         embed.add_field(
             name="Kehadiran", 
-            value=f"🎙️ Voice: {voice_desc} ({v_mins}m)\n💬 Chat: {chat_desc}", 
+            value=f"🎙️ Voice: {voice_desc} ({v_mins}m)\n💬 Chat: {chat_desc} ({chat_count:,} pesan)",
             inline=False
         )
 

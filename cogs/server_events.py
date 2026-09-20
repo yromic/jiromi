@@ -29,6 +29,7 @@ class ServerEvents(commands.Cog):
             "username": member.name,
             "server": guild.name,
             "member_count": guild.member_count,
+            "count": guild.member_count,
             "boost_count": guild.premium_subscription_count
         }
 

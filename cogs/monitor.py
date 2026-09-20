@@ -42,6 +42,13 @@ class Monitor(commands.Cog):
                 "chat_ev": self.bot.stats_buffer.get("chat_xp_events", 0),
                 "voice_ev": self.bot.stats_buffer.get("voice_xp_events", 0),
                 "voice_mins": self.bot.stats_buffer.get("voice_minutes", 0),
+                "voice_below_min": self.bot.voice_health.get("below_min_members", 0),
+                "voice_bot_self_deaf": self.bot.voice_health.get("self_deaf_or_bot", 0),
+                "voice_filtered_channel": self.bot.voice_health.get("channel_filter", 0),
+                "voice_filtered_role": self.bot.voice_health.get("role_filter", 0),
+                "voice_muted_limit": self.bot.voice_health.get("muted_limit", 0),
+                "voice_member_errors": self.bot.voice_health.get("member_error", 0),
+                "voice_guild_errors": self.bot.voice_health.get("guild_error", 0),
             }
 
             # 5. Log ke Console/File (Memory Only, No DB Access)
@@ -54,6 +61,8 @@ class Monitor(commands.Cog):
                 "voice_minutes": 0,
                 "cmd_usage": 0
             })
+            for key in ("below_min_members", "self_deaf_or_bot", "channel_filter", "role_filter", "muted_limit", "member_error", "guild_error"):
+                self.bot.voice_health[key] = 0
 
         except Exception as e:
             # Bug Kelas 1 Fix: Catch-All di dalam body loop

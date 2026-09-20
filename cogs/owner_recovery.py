@@ -94,8 +94,8 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
     @app_commands.check(is_bot_owner)
     async def grant_user(self, interaction: discord.Interaction, member: discord.Member, amount: int, mode: app_commands.Choice[str]):
         # Safety Guard (Saran Senior No. 5)
-        if amount > MAX_XP_ACTION:
-            return await interaction.response.send_message(f"⛔ **Safety Limit:** Maksimal {MAX_XP_ACTION:,} XP per aksi.", ephemeral=True)
+        if amount < 0 or amount > MAX_XP_ACTION:
+            return await interaction.response.send_message(f"⛔ **Safety Limit:** Nilai harus 0 sampai {MAX_XP_ACTION:,} XP per aksi.", ephemeral=True)
 
         view = ConfirmView(author_id=interaction.user.id)
         embed = discord.Embed(
@@ -135,8 +135,8 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
     @app_commands.check(is_bot_owner)
     async def grant_mass(self, interaction: discord.Interaction, role: discord.Role, amount: int):
         # Safety Guard
-        if amount > MAX_XP_ACTION:
-            return await interaction.response.send_message(f"⛔ **Safety Limit:** Maksimal {MAX_XP_ACTION:,} XP per aksi.", ephemeral=True)
+        if amount < 0 or amount > MAX_XP_ACTION:
+            return await interaction.response.send_message(f"⛔ **Safety Limit:** Nilai harus 0 sampai {MAX_XP_ACTION:,} XP per aksi.", ephemeral=True)
 
         members = [m for m in role.members if not m.bot] # Filter bot (Saran Senior No. 4)
         count = len(members)

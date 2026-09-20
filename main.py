@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from utils.db_handler import init_db, close_db
 from utils.logger import JiromiLogger
 import signal
+from typing import Any, Dict
 
 load_dotenv()  
 
@@ -35,9 +36,10 @@ class PresenceBot(commands.Bot):
             "voice_minutes": 0,
             "cmd_usage": 0
         }
+        self.voice_health: Dict[str, Any] = {"last_heartbeat_at": None, "committed_voice_events": 0, "below_min_members": 0, "self_deaf_or_bot": 0, "channel_filter": 0, "role_filter": 0, "muted_limit": 0, "member_error": 0, "guild_error": 0}
 
     async def setup_hook(self):
-        self.db = await init_db()
+        self.db = await init_db(logger=self.logger)
         self.logger.info("SYSTEM", "Database initialized (Shared Connection).")
 
         for filename in os.listdir("./cogs"):
@@ -47,6 +49,9 @@ class PresenceBot(commands.Bot):
                     self.logger.info("COG_LOAD", f"Loaded: {filename}")
                 except Exception as e:
                     self.logger.error("COG_FAIL", f"Failed: {filename}", e)
+
+        if not self.get_cog("Leveling"):
+            raise RuntimeError("Required Leveling cog failed to load; refusing to start without XP service")
 
         await self.tree.sync()
         self.logger.info("SYSTEM", "Slash commands synced.")
@@ -91,11 +96,21 @@ async def perform_graceful_shutdown(bot):
                 await bot.unload_extension(f"cogs.{cog_name.lower() if cog_name != 'WeeklyStats' else 'weekly_stats'}")
             except Exception as e:
                 print(f"[WARN] Gagal stop {cog_name}: {e}")
+
+    backup_cog = bot.get_cog("OwnerBackup")
+    if backup_cog and backup_cog.auto_backup_task.is_running():
+        task = backup_cog.auto_backup_task.get_task()
+        backup_cog.auto_backup_task.cancel()
+        if task:
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
     
     await asyncio.sleep(1)
 
     print("[BACKUP] Running FINAL Database Backup...")
-    backup_cog = bot.get_cog("OwnerBackup") 
+    backup_cog = bot.get_cog("OwnerBackup")
     
     
     if backup_cog:

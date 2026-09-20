@@ -176,6 +176,7 @@ class HelpSystem(commands.Cog):
                 "• `{username}` → Nama user (contoh: Udin)\n"
                 "• `{server}` → Nama server\n"
                 "• `{member_count}` → Total member server\n"
+                "• `{count}` → Alias untuk total member server\n"
                 "• `{boost_count}` → Total Nitro Boost\n\n"
                 
                 "**Contoh Kalimat Real:**\n"
