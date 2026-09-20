@@ -140,6 +140,7 @@ class WeeklyStats(commands.Cog):
         activity = await self.db.fetch_one("""SELECT COUNT(*) AS participants, COALESCE(SUM(weekly_voice_mins),0) AS minutes FROM weekly_stats WHERE guild_id = ? AND week_key = ?""", (guild.id, week))
         top_user = await self.db.fetch_one("""SELECT user_id, weekly_voice_mins, weekly_xp FROM weekly_stats WHERE guild_id = ? AND week_key = ? ORDER BY weekly_voice_mins DESC, weekly_xp DESC LIMIT 1""", (guild.id, week))
         delivery = await self.db.fetch_one("""SELECT status, posted_at, last_error FROM weekly_recap_deliveries WHERE guild_id = ? ORDER BY COALESCE(posted_at, claimed_at) DESC LIMIT 1""", (guild.id,))
+        last_success = await self.db.fetch_one("""SELECT week_key, posted_at FROM weekly_recap_deliveries WHERE guild_id = ? AND status = 'posted' AND posted_at IS NOT NULL ORDER BY posted_at DESC LIMIT 1""", (guild.id,))
         enabled = bool(config and config["is_enabled"])
         channel = guild.get_channel(config["recap_channel_id"]) if config else None
         if enabled and channel:
@@ -148,14 +149,21 @@ class WeeklyStats(commands.Cog):
             state, color, recovery, channel_text = "Perlu perhatian", discord.Color.orange(), "Channel tidak tersedia. Jalankan `/weekly enable` dan pilih channel yang masih dapat diakses bot.", "Channel tersimpan sudah tidak tersedia"
         else:
             state, color, recovery, channel_text = "Tidak aktif", discord.Color.light_grey(), "Jalankan `/weekly enable` untuk mulai mengirim rekap.", channel.mention if channel else "Belum ada channel yang tersedia"
-        if delivery and delivery["status"] == "posted" and delivery["posted_at"]:
-            last = discord.utils.format_dt(datetime.fromtimestamp(delivery["posted_at"], timezone.utc), style="R")
+        if last_success:
+            last = f"{discord.utils.format_dt(datetime.fromtimestamp(last_success['posted_at'], timezone.utc), style='R')} (minggu {last_success['week_key']})"
         elif delivery and delivery["status"] == "failed":
-            last, recovery = "Pengiriman terakhir gagal", "Pengiriman terakhir gagal. Periksa channel lalu jalankan `/weekly enable` untuk memilih ulang channel."
+            recovery = "Pengiriman terakhir gagal. Periksa channel lalu jalankan `/weekly enable` untuk memilih ulang channel."
         elif delivery and delivery["status"] == "pending":
-            last, recovery = "Rekap sedang menunggu percobaan pengiriman", "Tunggu pengecekan rekap berikutnya. Jika tetap tidak terkirim, periksa channel lalu jalankan `/weekly enable`."
+            recovery = "Tunggu pengecekan rekap berikutnya. Jika tetap tidak terkirim, periksa channel lalu jalankan `/weekly enable`."
+        last = last if last_success else "Belum ada rekap yang berhasil dikirim"
+        if delivery and delivery["status"] == "failed":
+            latest_attempt = "Percobaan terbaru gagal. Periksa channel dan izinnya."
+        elif delivery and delivery["status"] == "pending":
+            latest_attempt = "Rekap sedang menunggu percobaan pengiriman."
+        elif delivery and delivery["status"] == "empty":
+            latest_attempt = "Tidak ada aktivitas pada periode rekap terakhir."
         else:
-            last = "Belum ada rekap yang berhasil dikirim"
+            latest_attempt = "Tidak ada kegagalan atau percobaan tertunda terbaru."
         if top_user:
             member = guild.get_member(top_user["user_id"])
             name = member.display_name if member else f"User-{top_user['user_id']}"
@@ -168,6 +176,7 @@ class WeeklyStats(commands.Cog):
         embed.add_field(name="Status", value=f"{state}\nChannel: {channel_text}", inline=False)
         embed.add_field(name="Jadwal", value=f"Rekap berikutnya: {discord.utils.format_dt(self._next_recap_time(), style='R')}\nPengecekan berikutnya: {next_check_text}", inline=False)
         embed.add_field(name="Pengiriman terakhir", value=last, inline=False)
+        embed.add_field(name="Percobaan terbaru", value=latest_attempt, inline=False)
         embed.add_field(name="Aktivitas minggu ini", value=preview, inline=False)
         embed.add_field(name="Jika perlu bantuan", value=recovery, inline=False)
         await interaction.followup.send(embed=embed, ephemeral=True)
@@ -184,6 +193,9 @@ class WeeklyStats(commands.Cog):
 
     async def _process_single_guild_recap(self, config, current_week):
         guild_id, guild = config["guild_id"], self.bot.get_guild(config["guild_id"])
+        checkpoint = config["last_posted_week_key"]
+        if checkpoint and current_week <= checkpoint:
+            return
         if not guild or not await self.db.claim_weekly_recap(guild_id, current_week): return
         channel = guild.get_channel(config["recap_channel_id"])
         if not channel:
