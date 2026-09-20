@@ -408,6 +408,34 @@ class DatabaseHandler:
         )
         self._invalidate_config_cache(guild_id)
 
+    async def update_guild_xp_config(self, guild_id, announce_id, voice_xp, chat_xp, announcement_mode, min_members_voice):
+        """Atomically save every XP setting owned by the setup wizard."""
+        if voice_xp < 0 or chat_xp < 0:
+            raise ValueError("XP rates must be nonnegative")
+        if announcement_mode not in {"quiet", "balanced", "loud"}:
+            raise ValueError("announcement_mode is invalid")
+        if not isinstance(min_members_voice, int) or min_members_voice < 1:
+            raise ValueError("min_members_voice must be a positive integer")
+        if not self._conn:
+            await self.connect()
+        async with self._write_lock:
+            await self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                await self._conn.execute("INSERT OR IGNORE INTO guild_config (guild_id) VALUES (?)", (guild_id,))
+                await self._conn.execute(
+                    """UPDATE guild_config
+                       SET announce_channel_id = ?, voice_xp_val = ?, chat_xp_val = ?,
+                           announcement_mode = ?, min_members_voice = ?
+                       WHERE guild_id = ?""",
+                    (announce_id, voice_xp, chat_xp, announcement_mode, min_members_voice, guild_id),
+                )
+                await self._conn.commit()
+            except Exception as exc:
+                await self._conn.rollback()
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "update_guild_xp_config transaction", exc)
+                raise
+        self._invalidate_config_cache(guild_id)
+
     async def is_channel_allowed(self, guild_id, channel_id):
         """Cek apakah channel spesifik diperbolehkan (untuk Voice Engine)."""
         filters = await self.get_filters(guild_id)
@@ -601,6 +629,7 @@ class DatabaseHandler:
         """
         Mengubah XP user secara langsung.
         param xp_value: Nilai XP yang akan ditambahkan (mode='add') atau nilai akhir (mode='set').
+        Return: old_xp, old_level, new_level, new_xp dari transaksi yang sama.
         """
         if mode not in ("add", "set"):
             raise ValueError("mode must be 'add' or 'set'")
@@ -610,13 +639,14 @@ class DatabaseHandler:
                 await self._ensure_user_tx(user_id, guild_id)
                 cursor = await self._conn.execute("SELECT xp, level FROM users WHERE user_id=? AND guild_id=?", (user_id, guild_id))
                 user = await cursor.fetchone()
+                old_xp = user["xp"]
                 old_level = user["level"]
-                new_xp = max(0, user["xp"] + xp_value if mode == "add" else xp_value)
+                new_xp = max(0, old_xp + xp_value if mode == "add" else xp_value)
                 from utils.math_utils import calculate_level
                 new_level = calculate_level(new_xp)
                 await self._conn.execute("UPDATE users SET xp=?, level=? WHERE user_id=? AND guild_id=?", (new_xp,new_level,user_id,guild_id))
                 await self._conn.commit()
-                return old_level, new_level, new_xp
+                return old_xp, old_level, new_level, new_xp
             except Exception as e:
                 await self._conn.rollback()
                 self._log_db_failure("ERROR", "DB_WRITE_FAIL", "update_user_xp_direct transaction", e)

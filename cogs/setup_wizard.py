@@ -282,22 +282,13 @@ class SetupWizardView(ui.View):
         await interaction.response.defer() # Defer biar gak timeout kalau DB lambat
         
         try:
-            # 1. Update Config Dasar
-            await self.bot.db.update_config(
+            await self.bot.db.update_guild_xp_config(
                 self.draft.guild_id,
                 self.draft.announce_channel_id,
                 self.draft.voice_xp_val,
-                self.draft.chat_xp_val
-            )
-            # 2. Update Mode
-            await self.bot.db.update_announcement_mode(
-                self.draft.guild_id,
-                self.draft.announcement_mode
-            )
-            # 3. Update Min Member
-            await self.bot.db.update_min_members_voice(
-                self.draft.guild_id,
-                self.draft.min_members_voice
+                self.draft.chat_xp_val,
+                self.draft.announcement_mode,
+                self.draft.min_members_voice,
             )
             
             final_embed = discord.Embed(

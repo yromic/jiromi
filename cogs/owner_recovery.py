@@ -104,9 +104,12 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
         old_xp = current["xp"] if current else 0
         old_level = current["level"] if current else 0
         if mode.value == "add":
-            action_text = f"Tambah {amount:,} XP. Total berubah dari {old_xp:,} menjadi {old_xp + amount:,} XP."
+            action_text = (
+                f"Tambah {amount:,} XP. Snapshot saat ini: {old_xp:,} XP; perkiraan total: {old_xp + amount:,} XP. "
+                "Nilai final akan ditampilkan setelah disimpan."
+            )
         else:
-            action_text = f"Atur total XP dari {old_xp:,} menjadi {amount:,} XP."
+            action_text = f"Atur total XP menjadi {amount:,} XP. Snapshot saat ini: {old_xp:,} XP."
             if amount < old_xp:
                 action_text += " Nilai yang lebih rendah dapat menurunkan level dan tidak mencabut role reward yang sudah ada."
 
@@ -124,7 +127,7 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
             return
 
         # Eksekusi
-        old_lvl, new_lvl, total_xp = await self.db.update_user_xp_direct(member.id, interaction.guild.id, amount, mode.value)
+        old_xp, old_lvl, new_lvl, total_xp = await self.db.update_user_xp_direct(member.id, interaction.guild.id, amount, mode.value)
         
         # Apply Role
         roles_added, roles_failed = [], []
@@ -186,7 +189,7 @@ class OwnerRecovery(commands.GroupCog, name="recovery"):
         
         for member in members:
             try:
-                old_lvl, new_lvl, _ = await self.db.update_user_xp_direct(member.id, interaction.guild.id, amount, "add")
+                _, old_lvl, new_lvl, _ = await self.db.update_user_xp_direct(member.id, interaction.guild.id, amount, "add")
                 if new_lvl > old_lvl:
                     leveled_up += 1
                     _, failed = await self._apply_roles_silent(interaction.guild, member, new_lvl)

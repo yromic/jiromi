@@ -152,7 +152,7 @@ class AdminConfig(commands.GroupCog, name="xp"):
     async def add_reward(self, interaction: discord.Interaction, level: int, role: discord.Role):
         bot_member = interaction.guild.me
 
-        if level < 1:
+        if level < 1 or level > 2_147_483_647:
             await interaction.response.send_message("Level reward harus dari 1 sampai 2.147.483.647.", ephemeral=True)
             return
         
