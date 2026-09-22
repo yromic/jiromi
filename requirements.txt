@@ -1,0 +1,18 @@
+# ==========================================
+# JIROMI DISCORD BOT - DEPENDENCIES
+# ==========================================
+
+# Core Discord Bot API & Gateway Engine
+discord.py>=2.3.2
+
+# Asynchronous SQLite Driver (WAL Mode & Non-blocking I/O)
+aiosqlite>=0.20.0
+
+# Environment Variable Loader (.env configuration)
+python-dotenv>=1.0.0
+
+# Terminal Color Formatting for JiromiLogger
+colorama>=0.4.6
+
+# Voice/Audio Support Compatibility for Python 3.13+
+audioop-lts>=0.2.1; python_version >= "3.13"
