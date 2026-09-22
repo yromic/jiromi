@@ -54,14 +54,6 @@ async def migrate_v5_chat_events(conn):
     if "total_chat_events" not in columns:
         await conn.execute("ALTER TABLE users ADD COLUMN total_chat_events INTEGER NOT NULL DEFAULT 0")
 
-async def migrate_v8_repair_chat_events_column(conn):
-    """Repair databases whose schema version advanced without this column."""
-    await migrate_v5_chat_events(conn)
-
-async def migrate_v9_repair_weekly_recap_deliveries(conn):
-    """Repair databases whose schema version advanced without recap tracking."""
-    await migrate_v6_weekly_recap_deliveries(conn)
-
 async def migrate_v6_weekly_recap_deliveries(conn):
     await conn.execute("""CREATE TABLE IF NOT EXISTS weekly_recap_deliveries (
         guild_id INTEGER NOT NULL, week_key TEXT NOT NULL, status TEXT NOT NULL,
@@ -73,6 +65,30 @@ async def migrate_v6_weekly_recap_deliveries(conn):
         SELECT guild_id, last_posted_week_key, 'posted', strftime('%s','now'), 1
         FROM weekly_config WHERE last_posted_week_key IS NOT NULL AND last_posted_week_key != ''""")
 
+async def migrate_v8_repair_chat_events_column(conn):
+    """Repair databases whose schema version advanced without this column."""
+    await migrate_v5_chat_events(conn)
+
+async def migrate_v9_repair_weekly_recap_deliveries(conn):
+    """Repair databases whose schema version advanced without recap tracking."""
+    await migrate_v6_weekly_recap_deliveries(conn)
+
+async def migrate_v10_top_friends(conn):
+    """Migrasi V10: Menambah tabel user_friendships untuk fitur Top Voice Friends."""
+    print("🔄 Applying Migration V10: Create user_friendships table...")
+    await conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_friendships (
+            guild_id INTEGER NOT NULL,
+            user_id_1 INTEGER NOT NULL,
+            user_id_2 INTEGER NOT NULL,
+            together_voice_mins INTEGER DEFAULT 0,
+            last_together_at REAL DEFAULT 0,
+            PRIMARY KEY (guild_id, user_id_1, user_id_2)
+        )
+    """)
+    await conn.execute("CREATE INDEX IF NOT EXISTS idx_friendships_u1 ON user_friendships(guild_id, user_id_1)")
+    await conn.execute("CREATE INDEX IF NOT EXISTS idx_friendships_u2 ON user_friendships(guild_id, user_id_2)")
+
 # Update Dictionary MIGRATIONS
 MIGRATIONS = {
     2: migrate_v2_weekly_chat_xp,
@@ -82,6 +98,7 @@ MIGRATIONS = {
     6: migrate_v6_weekly_recap_deliveries,
     8: migrate_v8_repair_chat_events_column,
     9: migrate_v9_repair_weekly_recap_deliveries,
+    10: migrate_v10_top_friends,
 }
 
 async def init_db(logger=None):
@@ -210,13 +227,23 @@ class DatabaseHandler:
                 has_seen_jiromi_intro INTEGER DEFAULT 0,
                 first_intro_at DATETIME DEFAULT NULL
             )""",
+            """CREATE TABLE IF NOT EXISTS user_friendships (
+                guild_id INTEGER NOT NULL,
+                user_id_1 INTEGER NOT NULL,
+                user_id_2 INTEGER NOT NULL,
+                together_voice_mins INTEGER DEFAULT 0,
+                last_together_at REAL DEFAULT 0,
+                PRIMARY KEY (guild_id, user_id_1, user_id_2)
+            )""",
         ]
 
         # [cite_start]2. Definisi Index (Agar performa cepat) [cite: 38-39]
         indexes = [
             "CREATE INDEX IF NOT EXISTS idx_users_xp ON users(guild_id, xp DESC)",
             "CREATE INDEX IF NOT EXISTS idx_weekly_stats_rank ON weekly_stats(guild_id, week_key, weekly_voice_mins DESC)",
-            "CREATE INDEX IF NOT EXISTS idx_filters_lookup ON filters(guild_id, type)"
+            "CREATE INDEX IF NOT EXISTS idx_filters_lookup ON filters(guild_id, type)",
+            "CREATE INDEX IF NOT EXISTS idx_friendships_u1 ON user_friendships(guild_id, user_id_1)",
+            "CREATE INDEX IF NOT EXISTS idx_friendships_u2 ON user_friendships(guild_id, user_id_2)"
         ]
 
         # 3. Definisi Tabel Meta Versioning [PENTING]
@@ -1013,3 +1040,49 @@ class DatabaseHandler:
                     first_intro_at = excluded.first_intro_at
             """, (user_id, now))
             await self._conn.commit()
+
+    # --- TOP FRIENDS (CO-PRESENCE TRACKING) ---
+
+    async def record_co_presence_batch(self, batch_data):
+        """
+        Menyimpan batch akumulasi waktu voice bersama ke user_friendships.
+        batch_data: list of tuple (guild_id, user_id_1, user_id_2, minutes, timestamp)
+        di mana user_id_1 selalu < user_id_2.
+        """
+        if not batch_data:
+            return
+
+        if not self._conn:
+            await self.connect()
+
+        query = """
+            INSERT INTO user_friendships (guild_id, user_id_1, user_id_2, together_voice_mins, last_together_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(guild_id, user_id_1, user_id_2) DO UPDATE SET
+                together_voice_mins = together_voice_mins + excluded.together_voice_mins,
+                last_together_at = excluded.last_together_at
+        """
+        async with self._write_lock:
+            try:
+                await self._conn.executemany(query, batch_data)
+                await self._conn.commit()
+            except Exception as e:
+                self._log_db_failure("ERROR", "DB_WRITE_FAIL", "record_co_presence_batch", e)
+                raise
+
+    async def get_top_voice_friends(self, guild_id: int, user_id: int, limit: int = 3):
+        """
+        Mengambil daftar teman teratas berdasarkan total waktu voice bersama di guild tertentu.
+        Return: list of dict {'friend_id': int, 'together_voice_mins': int}
+        """
+        query = """
+            SELECT 
+                CASE WHEN user_id_1 = ? THEN user_id_2 ELSE user_id_1 END AS friend_id,
+                together_voice_mins
+            FROM user_friendships
+            WHERE guild_id = ? AND (user_id_1 = ? OR user_id_2 = ?) AND together_voice_mins > 0
+            ORDER BY together_voice_mins DESC
+            LIMIT ?
+        """
+        rows = await self.fetch_all(query, (user_id, guild_id, user_id, user_id, limit))
+        return [dict(r) for r in rows]

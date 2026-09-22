@@ -199,6 +199,29 @@ class Profile(commands.Cog):
             inline=False,
         )
 
+        # BLOK 2.5: Teman Terdekat (Voice Buddies)
+        top_friends = await self.db.get_top_voice_friends(interaction.guild.id, member.id, limit=3)
+        if top_friends:
+            medals = ["🥇", "🥈", "🥉"]
+            lines = []
+            for i, f in enumerate(top_friends):
+                mins = f['together_voice_mins']
+                if mins >= 60:
+                    dur_str = f"{mins // 60}j {mins % 60}m"
+                else:
+                    dur_str = f"{mins}m"
+                medal = medals[i] if i < len(medals) else f"#{i+1}"
+                lines.append(f"{medal} <@{f['friend_id']}> — `{dur_str} bersama`")
+            friends_val = "\n".join(lines)
+        else:
+            friends_val = "*Belum ada riwayat voice bersama member lain.*"
+
+        embed.add_field(
+            name="Teman Terdekat (Voice)",
+            value=friends_val,
+            inline=False,
+        )
+
         # BLOK 3: Milestone & Badge
         if badges:
             BADGE_NAMES = {

@@ -2,6 +2,7 @@
 import discord
 from discord.ext import commands, tasks
 import time
+import itertools
 from datetime import datetime, timezone
 from utils.badge_data import BADGE_ICONS, BADGE_META
 
@@ -12,10 +13,14 @@ class Leveling(commands.Cog):
         self.mute_tracker = {}
         self.failed_roles_cache = {} # [FIX] Ubah jadi Dict untuk simpan timestamp
         self.CACHE_TTL = 3600 # [FIX] TTL 1 Jam (3600 detik)
+        self.friendship_buffer = {} # key: (guild_id, min_user_id, max_user_id) -> minutes
+        self._friendship_flush_ticks = 0
         self.voice_heartbeat.start()
 
     def cog_unload(self):
         self.voice_heartbeat.cancel()
+        if self.friendship_buffer:
+            self.bot.loop.create_task(self.flush_friendships())
 
     # [FIX] Gantikan method voice_heartbeat yang lama dengan dua method ini:
 
@@ -50,6 +55,11 @@ class Leveling(commands.Cog):
                     )
             if not guild_pass_failed:
                 self.bot.voice_health["last_heartbeat_at"] = datetime.now(timezone.utc).isoformat()
+
+            # Flush friendship buffer setiap 5 menit (5 siklus) atau jika buffer >= 100 entri
+            self._friendship_flush_ticks += 1
+            if self._friendship_flush_ticks >= 5 or len(self.friendship_buffer) >= 100:
+                await self.flush_friendships()
         except Exception as e:
             # 3. Catch-All Global
             # Jika error terjadi di level teratas (misal self.bot.guilds bermasalah)
@@ -59,6 +69,22 @@ class Leveling(commands.Cog):
                 "Critical error pada voice heartbeat loop", 
                 error_obj=e
             )
+
+    async def flush_friendships(self):
+        """Menyimpan data buffer kebersamaan voice (friendship) ke database secara batch."""
+        if not self.friendship_buffer:
+            self._friendship_flush_ticks = 0
+            return
+
+        try:
+            items = list(self.friendship_buffer.items())
+            self.friendship_buffer.clear()
+            self._friendship_flush_ticks = 0
+            now = time.time()
+            batch = [(gid, u1, u2, mins, now) for (gid, u1, u2), mins in items]
+            await self.db.record_co_presence_batch(batch)
+        except Exception as e:
+            self.bot.logger.error("FRIENDSHIP_FLUSH_FAIL", "Gagal flush friendship buffer", error_obj=e)
 
     
 
@@ -98,6 +124,7 @@ class Leveling(commands.Cog):
                 continue
 
             # Proses XP per Member
+            credited_members = []
             for member in active_members:
                 try:
                     # Cek eligibility (DB Call)
@@ -112,7 +139,8 @@ class Leveling(commands.Cog):
                         self.bot.voice_health["role_filter"] += 1
                         continue
 
-                    await self.process_voice_xp(member, config)
+                    if await self.process_voice_xp(member, config):
+                        credited_members.append(member)
                     
                 except Exception as e:
                     # [Fail-Soft per Member]
@@ -125,6 +153,12 @@ class Leveling(commands.Cog):
                     )
                     self.bot.voice_health["member_error"] += 1
 
+            # Catat co-presence untuk pasangan teman jika kapasitas room wajar (2 s.d. 10 member)
+            if 2 <= len(credited_members) <= 10:
+                for m1, m2 in itertools.combinations(credited_members, 2):
+                    pair = (guild.id, min(m1.id, m2.id), max(m1.id, m2.id))
+                    self.friendship_buffer[pair] = self.friendship_buffer.get(pair, 0) + 1
+
 
     async def process_voice_xp(self, member, config):
         key = (member.guild.id, member.id)
@@ -134,7 +168,7 @@ class Leveling(commands.Cog):
             self.mute_tracker[key] = self.mute_tracker.get(key, 0) + 1
             if self.mute_tracker[key] > 5:
                 self.bot.voice_health["muted_limit"] += 1
-                return
+                return False
         else:
             self.mute_tracker[key] = 0
             
@@ -223,6 +257,8 @@ class Leveling(commands.Cog):
             if await self.db.unlock_badge(member.id, member.guild.id, "badge_steady_flame"):
                 await self.db.unlock_title(member.id, member.guild.id, "title_the_steady")
                 await send_badge_notification("badge_steady_flame", extra="Mendapatkan Title: **[The Steady]**")
+
+        return True
 
 
 
