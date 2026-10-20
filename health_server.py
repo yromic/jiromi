@@ -15,6 +15,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 class _HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802 - required by BaseHTTPRequestHandler
+        if self.path == "/":
+            self._respond(HTTPStatus.OK, b"Jiromi is running\n")
+            return
+
         if self.path == "/live":
             self._respond(HTTPStatus.OK, b"ok\n")
             return
