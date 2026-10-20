@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: jiromi
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 120
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: JIROMI_DB_PATH
+        value: database/schema.db
+      - key: JIROMI_LOG_DIR
+        value: logs
+      - key: JIROMI_BACKUP_DIR
+        value: backups
