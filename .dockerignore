@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+venv/
+__pycache__/
+*.pyc
+logs/
+backups/
+database/*.db-wal
+database/*.db-shm
+database/*.db-journal
+docs/
+.superpowers/
+.worktrees/
