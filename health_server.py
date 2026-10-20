@@ -1,4 +1,4 @@
-"""Small optional HTTP health server for Render Web Services.
+"""Small optional HTTP status and health server for hosted services.
 
 The Discord bot remains the asyncio application. This server runs in its own
 thread and only exposes liveness/readiness information; it does not touch the
@@ -16,7 +16,31 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 class _HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802 - required by BaseHTTPRequestHandler
         if self.path == "/":
-            self._respond(HTTPStatus.OK, b"Jiromi is running\n")
+            self._respond_html(
+                HTTPStatus.OK,
+                """<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Jiromi Status</title>
+    <style>
+      body { background: #111827; color: #f9fafb; font: 16px system-ui, sans-serif;
+             margin: 0; min-height: 100vh; display: grid; place-items: center; }
+      main { max-width: 34rem; padding: 2rem; text-align: center; }
+      .status { color: #34d399; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Jiromi Discord Bot</h1>
+      <p class="status">● Online</p>
+      <p>HTTP service berjalan normal.</p>
+    </main>
+  </body>
+</html>
+""",
+            )
             return
 
         if self.path == "/live":
@@ -38,6 +62,14 @@ class _HealthHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _respond_html(self, status: HTTPStatus, body: str):
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        encoded_body = body.encode("utf-8")
+        self.send_header("Content-Length", str(len(encoded_body)))
+        self.end_headers()
+        self.wfile.write(encoded_body)
 
     def log_message(self, _format, *_args):
         # Render already captures process logs; avoid noisy access logs.
