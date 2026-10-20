@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 from utils.db_handler import init_db, close_db
 from utils.logger import JiromiLogger
 import signal
+import threading
 from typing import Any, Dict
+from health_server import HealthServer
 
 load_dotenv()  
 
@@ -29,6 +31,8 @@ class PresenceBot(commands.Bot):
         self.is_shutting_down = False
 
         self.shutdown_complete = asyncio.Event()
+        self.health_ready = threading.Event()
+        self.health_server = HealthServer(self.health_ready)
 
         self.stats_buffer = {
             "chat_xp_events": 0,
@@ -61,8 +65,12 @@ class PresenceBot(commands.Bot):
         await super().close()
 
     async def on_ready(self):
+        self.health_ready.set()
         self.logger.info("BOT_READY", f"Logged in as: {self.user.name} ({self.user.id})")
         self.logger.info("BOT_READY", f"Connected to {len(self.guilds)} guilds.")
+
+    async def on_disconnect(self):
+        self.health_ready.clear()
 
     async def on_guild_join(self, guild):
         self.logger.audit(
@@ -83,6 +91,8 @@ class PresenceBot(commands.Bot):
 async def perform_graceful_shutdown(bot):
     if bot.is_shutting_down: return
     bot.is_shutting_down = True
+    bot.health_ready.clear()
+    bot.health_server.stop()
     
     print("\n[SHUTDOWN] Shutdown Signal Received. Preparing Cleanup...")
     
@@ -155,6 +165,8 @@ async def main():
     bot = PresenceBot()
 
     try:
+        # Start before Discord login so Render can detect the port immediately.
+        bot.health_server.start()
         await bot.login(token)
         register_signals(bot)
         

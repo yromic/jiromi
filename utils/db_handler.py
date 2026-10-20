@@ -1,6 +1,7 @@
 # utils/db_handler.py
 import aiosqlite
 import os
+import shutil
 import time
 import asyncio
 from datetime import datetime, timezone, timedelta
@@ -119,8 +120,8 @@ async def close_db():
         _db_instance = None
 
 class DatabaseHandler:
-    def __init__(self, db_path="database/schema.db", logger=None):
-        self.db_path = db_path
+    def __init__(self, db_path=None, logger=None):
+        self.db_path = db_path or os.getenv("JIROMI_DB_PATH", "database/schema.db")
         self._conn = None  # Single Connection
         self._write_lock = asyncio.Lock()  # Serialize Writes
         self._config_cache = {} 
@@ -137,8 +138,16 @@ class DatabaseHandler:
 
     async def connect(self):
         """Membuka koneksi database persisten."""
-        if not os.path.exists('database'):
-            os.makedirs('database')
+        database_dir = os.path.dirname(os.path.abspath(self.db_path))
+        os.makedirs(database_dir, exist_ok=True)
+
+        # A Render persistent disk starts empty. Seed it once from the database
+        # committed in Git, without ever overwriting an existing live database.
+        seed_path = os.path.abspath("database/schema.db")
+        target_path = os.path.abspath(self.db_path)
+        if target_path != seed_path and not os.path.exists(target_path) and os.path.exists(seed_path):
+            shutil.copy2(seed_path, target_path)
+            print(f"Database seeded from {seed_path} to {target_path}")
 
         self._conn = await aiosqlite.connect(self.db_path)
         self._conn.row_factory = aiosqlite.Row

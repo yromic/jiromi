@@ -11,6 +11,15 @@ venv/
 logs/
 *.log
 
+# Local/runtime backups are not source artifacts.
+backups/
+
+# SQLite runtime files. Commit only the database file itself; WAL/SHM/journal
+# files are temporary and must not be transferred between running instances.
+database/*.db-wal
+database/*.db-shm
+database/*.db-journal
+
 # OS
 .DS_Store
 Thumbs.db

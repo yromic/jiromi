@@ -56,7 +56,7 @@ class OwnerBackup(commands.GroupCog, name="owner"):
 
     async def perform_backup_logic(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_folder = "backups"
+        backup_folder = os.getenv("JIROMI_BACKUP_DIR", "backups")
         os.makedirs(backup_folder, exist_ok=True)
         temp_db_name = os.path.join(backup_folder, f"schema_backup_{timestamp}.db")
         zip_name = os.path.join(backup_folder, f"backup_{timestamp}.zip")

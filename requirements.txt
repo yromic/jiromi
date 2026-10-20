@@ -1,18 +1,22 @@
-# ==========================================
-# JIROMI DISCORD BOT - DEPENDENCIES
-# ==========================================
+# Jiromi Discord Bot - runtime dependencies
+# Python: 3.10+ (the source uses PEP 604 union types)
+#
+# These are the project's direct dependencies. Transitive dependencies such as
+# aiohttp are installed automatically by discord.py.
 
-# Core Discord Bot API & Gateway Engine
-discord.py>=2.3.2
+# Discord gateway, slash commands, cogs, tasks, and UI views.
+discord.py>=2.3.2,<3.0
 
-# Asynchronous SQLite Driver (WAL Mode & Non-blocking I/O)
-aiosqlite>=0.20.0
+# Async SQLite access used by DatabaseHandler and backup operations.
+aiosqlite>=0.20.0,<1.0
 
-# Environment Variable Loader (.env configuration)
-python-dotenv>=1.0.0
+# Loads DISCORD_TOKEN and other settings from .env.
+python-dotenv>=1.0.0,<2.0
 
-# Terminal Color Formatting for JiromiLogger
-colorama>=0.4.6
+# Cross-platform terminal colors used by JiromiLogger.
+colorama>=0.4.6,<1.0
 
-# Voice/Audio Support Compatibility for Python 3.13+
+# Required by discord.py on Python 3.13+, where audioop was removed from the
+# standard library. Jiromi does not use Discord voice playback/recording, so
+# PyNaCl and FFmpeg are intentionally not required.
 audioop-lts>=0.2.1; python_version >= "3.13"

@@ -7,8 +7,9 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 class JiromiLogger:
-    def __init__(self, log_dir="logs"):
-        self.log_dir = log_dir
+    def __init__(self, log_dir=None):
+        self.log_dir = log_dir or os.getenv("JIROMI_LOG_DIR", "logs")
+        log_dir = self.log_dir
         self.jsonl_file = os.path.join(log_dir, "jiromi.jsonl")
         
         if not os.path.exists(log_dir):
